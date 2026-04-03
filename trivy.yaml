@@ -1,0 +1,8 @@
+# Trivy filesystem scan defaults — override via CLI flags in package.json scripts.
+# https://aquasecurity.github.io/trivy/latest/docs/references/configuration/config-file/
+scan:
+  skip-dirs:
+    - node_modules
+    - dist
+    - coverage
+    - .git
