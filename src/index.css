@@ -1,36 +1,51 @@
-:root {
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@import './styles/trade-harmonizer-icons.css';
 
-  --rp-bg: #0f1419;
-  --rp-surface: #1a222c;
-  --rp-fg: #e8edf2;
-  --rp-muted: #8b98a5;
-  --rp-border: #2a3542;
-  --rp-accent: #3b82f6;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+@layer base {
+  :root {
+    line-height: 1.5;
+    font-weight: 400;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 
-body {
-  margin: 0;
-  min-height: 100vh;
-}
+    /* Trade Harmonizer theme tokens (see trade-harmonizer/src/app/globals.css) */
+    --primary-color: #e3a602;
+    --secondary-color: #ffc221;
+    --hover-color: #fffbea;
+    --text-on-primary-color: #ffffff;
 
-#root {
-  min-height: 100vh;
+    --rp-heading: #000000;
+    --rp-fg: #333333;
+    --rp-muted: #666666;
+    --rp-description: #333333;
+    --rp-disabled: #cccccc;
+    --rp-page: #ffffff;
+    --rp-bg: #ffffff;
+    --rp-surface: #f9f9f9;
+    --rp-input: #f9f9f9;
+    --rp-border: #f2f2f2;
+    --rp-accent: #e3a602;
+    --rp-icon: #e3a602;
+    --rp-success: #22c55e;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply min-h-screen bg-bgColor font-sans text-rp-fg;
+    margin: 0;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
 }

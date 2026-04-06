@@ -1,12 +1,14 @@
 import { configureStore } from '@reduxjs/toolkit'
 
-import authReducer from '@/features/auth/authSlice'
+import authReducer from '@/app/features/auth/authSlice'
+import sideBarReducer from '@/app/features/ui/sideBarSlice'
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
+    sideBar: sideBarReducer,
   },
-  devTools: import.meta.env.DEV,
+  devTools: process.env.NODE_ENV !== 'production',
 })
 
 export type RootState = ReturnType<typeof store.getState>
