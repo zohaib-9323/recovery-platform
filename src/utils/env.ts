@@ -3,6 +3,6 @@
  * @see https://create-react-app.dev/docs/adding-custom-environment-variables/
  */
 export const env = {
-  apiBaseUrl: process.env.REACT_APP_API_BASE_URL ?? '',
+  apiBaseUrl: process.env.REACT_APP_API_BASE_URL ?? 'https://predev.tradeharmonizer.co.uk',
   appName: process.env.REACT_APP_APP_NAME ?? 'Recovery Platform',
 } as const

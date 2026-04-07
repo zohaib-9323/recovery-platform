@@ -2,21 +2,31 @@ import { type FormEvent, useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, KeyRound, Mail } from 'lucide-react'
 
-import { setCredentials } from '@/app/features/auth/authSlice'
-import { useAppDispatch } from '@/app/redux-hooks'
+import { useLoginMutation } from '@/app/services/recoveryApi'
 import { AppLogo } from '@/components/brand/app-logo'
 import { LoginButton } from '@/components/buttons'
 import { InputField } from '@/components/fields'
 import { Card, CardContent } from '@/components/ui/card'
-import { DEMO_EMAIL, DEMO_PASSWORD } from '@/config/auth'
 import { useAuth } from '@/app/hooks/useAuth'
 import { isValidEmail, isValidPassword, PASSWORD_RULES_HINT } from '@/lib/validation'
 
+function getErrorMessage(err: unknown): string {
+  if (err && typeof err === 'object' && 'data' in err) {
+    const data = (err as { data?: unknown }).data
+    if (typeof data === 'object' && data !== null && 'message' in data) {
+      const m = (data as { message?: unknown }).message
+      if (typeof m === 'string' && m.length > 0) return m
+    }
+    if (typeof data === 'string' && data.length > 0) return data
+  }
+  return 'Invalid email or password.'
+}
+
 export function LoginPage() {
-  const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const location = useLocation()
   const { isAuthenticated } = useAuth()
+  const [login, { isLoading }] = useLoginMutation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -45,7 +55,7 @@ export function LoginPage() {
     isValidEmail(trimmedEmail) &&
     isValidPassword(trimmedPassword)
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError(null)
 
@@ -54,22 +64,12 @@ export function LoginPage() {
       return
     }
 
-    if (trimmedEmail !== DEMO_EMAIL || trimmedPassword !== DEMO_PASSWORD) {
-      setError('Invalid email or password.')
-      return
+    try {
+      await login({ email: trimmedEmail, password: trimmedPassword }).unwrap()
+      navigate(from, { replace: true })
+    } catch (err) {
+      setError(getErrorMessage(err))
     }
-
-    dispatch(
-      setCredentials({
-        user: {
-          id: 'usr_demo',
-          email: trimmedEmail,
-          displayName: 'Recovery Analyst',
-        },
-        token: 'demo-token',
-      }),
-    )
-    navigate(from, { replace: true })
   }
 
   return (
@@ -132,7 +132,11 @@ export function LoginPage() {
               }
             />
             <div className="flex justify-end">
-              <button type="button" className="text-sm font-semibold text-rp-icon hover:underline">
+              <button
+                type="button"
+                className="text-sm font-semibold text-rp-icon hover:underline"
+                onClick={() => navigate('/forgot-password')}
+              >
                 Forgot Password?
               </button>
             </div>
@@ -144,14 +148,9 @@ export function LoginPage() {
             </p>
           ) : null}
 
-          <LoginButton type="submit" disabled={!canSubmit}>
-            Login
+          <LoginButton type="submit" disabled={!canSubmit || isLoading}>
+            {isLoading ? 'Signing in…' : 'Login'}
           </LoginButton>
-
-          <p className="text-center text-xs text-rp-muted">
-            Demo: <span className="font-mono text-rp-fg">{DEMO_EMAIL}</span> /{' '}
-            <span className="font-mono text-rp-fg">{DEMO_PASSWORD}</span>
-          </p>
         </form>
       </CardContent>
     </Card>
