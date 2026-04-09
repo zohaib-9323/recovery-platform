@@ -10,6 +10,15 @@ import type {
   RequestPasswordResetBody,
   ResetPasswordBody,
 } from '@/types/auth-api'
+import type {
+  RecoveryApiEnvelope,
+  RecoveryChangePasswordBody,
+  RecoveryDeleteRequestBody,
+  RecoveryPreferences,
+  RecoveryPreferencesBody,
+  RecoveryProfilePatchBody,
+  RecoveryUserProfile,
+} from '@/types/recovery-user-api'
 import { env } from '@/utils/env'
 
 type StateWithAuth = { auth: AuthState }
@@ -65,6 +74,7 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 export const recoveryApi = createApi({
   reducerPath: 'recoveryApi',
   baseQuery: baseQueryWithReauth,
+  tagTypes: ['RecoveryProfile', 'RecoveryPreferences'],
   endpoints: (builder) => ({
     login: builder.mutation<RecoveryAuthEnvelope, LoginRequestBody>({
       query: (body) => ({
@@ -103,8 +113,67 @@ export const recoveryApi = createApi({
         body,
       }),
     }),
+    getRecoveryProfile: builder.query<RecoveryApiEnvelope<RecoveryUserProfile>, void>({
+      query: () => ({ url: '/recovery/users/profile', method: 'GET' }),
+      providesTags: [{ type: 'RecoveryProfile', id: 'ME' }],
+    }),
+    patchRecoveryProfile: builder.mutation<
+      RecoveryApiEnvelope<RecoveryUserProfile>,
+      RecoveryProfilePatchBody
+    >({
+      query: (body) => ({
+        url: '/recovery/users/profile',
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: [{ type: 'RecoveryProfile', id: 'ME' }],
+    }),
+    getRecoveryPreferences: builder.query<RecoveryApiEnvelope<RecoveryPreferences>, void>({
+      query: () => ({ url: '/recovery/users/preferences', method: 'GET' }),
+      providesTags: [{ type: 'RecoveryPreferences', id: 'ME' }],
+    }),
+    postRecoveryPreferences: builder.mutation<
+      RecoveryApiEnvelope<RecoveryPreferences>,
+      RecoveryPreferencesBody
+    >({
+      query: (body) => ({
+        url: '/recovery/users/preferences',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: [{ type: 'RecoveryPreferences', id: 'ME' }],
+    }),
+    postRecoveryDeleteRequest: builder.mutation<
+      RecoveryApiEnvelope<unknown>,
+      RecoveryDeleteRequestBody
+    >({
+      query: (body) => ({
+        url: '/recovery/users/delete-request',
+        method: 'POST',
+        body,
+      }),
+    }),
+    postRecoveryChangePassword: builder.mutation<
+      RecoveryApiEnvelope<unknown>,
+      RecoveryChangePasswordBody
+    >({
+      query: (body) => ({
+        url: '/recovery/auth/change-password',
+        method: 'POST',
+        body,
+      }),
+    }),
   }),
 })
 
-export const { useLoginMutation, useRequestPasswordResetMutation, useResetPasswordMutation } =
-  recoveryApi
+export const {
+  useLoginMutation,
+  useRequestPasswordResetMutation,
+  useResetPasswordMutation,
+  useGetRecoveryProfileQuery,
+  usePatchRecoveryProfileMutation,
+  useGetRecoveryPreferencesQuery,
+  usePostRecoveryPreferencesMutation,
+  usePostRecoveryDeleteRequestMutation,
+  usePostRecoveryChangePasswordMutation,
+} = recoveryApi

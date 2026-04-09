@@ -10,4 +10,5 @@ export const recoverySidebarItems: RecoverySidebarItem[] = [
   { key: 'dashboard', label: 'Dashboard', icon: 'icon-home', link: '/dashboard' },
   { key: 'shipments', label: 'All Shipments', icon: 'icon-box', link: '/shipments' },
   { key: 'inbox', label: 'Inbox', icon: 'icon-mail', link: '/inbox' },
+  { key: 'settings', label: 'Settings', icon: 'icon-settings', link: '/settings' },
 ]
