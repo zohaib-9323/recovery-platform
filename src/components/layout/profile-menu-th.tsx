@@ -57,6 +57,16 @@ export function ProfileMenuTh({ avatarUrl, name, email }: ProfileMenuThProps) {
             className="w-full px-4 py-2 text-left text-sm text-rp-fg hover:bg-bgColor"
             onClick={() => {
               setOpen(false)
+              navigate('/settings')
+            }}
+          >
+            Settings
+          </button>
+          <button
+            type="button"
+            className="w-full px-4 py-2 text-left text-sm text-rp-fg hover:bg-bgColor"
+            onClick={() => {
+              setOpen(false)
               dispatch(logout())
               navigate('/login')
             }}

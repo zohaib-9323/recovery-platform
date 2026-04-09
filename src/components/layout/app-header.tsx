@@ -98,7 +98,11 @@ export function AppHeader() {
                   </div>
                 ) : null}
                 <div className="relative ml-2 h-10 min-w-10 smallScreen:ml-5">
-                  <ProfileMenuTh name={user?.displayName ?? 'User'} email={user?.email ?? ''} />
+                  <ProfileMenuTh
+                    name={user?.displayName ?? 'User'}
+                    email={user?.email ?? ''}
+                    avatarUrl={user?.profilePic}
+                  />
                 </div>
               </div>
             </div>

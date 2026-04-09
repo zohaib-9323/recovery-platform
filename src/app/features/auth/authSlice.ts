@@ -10,12 +10,14 @@ export type AuthState = {
   status: 'idle' | 'loading'
 }
 
-const initialState: AuthState = {
+export const authInitialState: AuthState = {
   user: null,
   token: null,
   refreshToken: null,
   status: 'idle',
 }
+
+const initialState = authInitialState
 
 const authSlice = createSlice({
   name: 'auth',
@@ -45,11 +47,18 @@ const authSlice = createSlice({
       state.token = null
       state.refreshToken = null
     },
+    /** Merge fields into the current user (e.g. after profile update). */
+    updateUserFields: (state, action: PayloadAction<Partial<User>>) => {
+      if (state.user) {
+        state.user = { ...state.user, ...action.payload }
+      }
+    },
     setAuthStatus: (state, action: PayloadAction<AuthState['status']>) => {
       state.status = action.payload
     },
   },
 })
 
-export const { setCredentials, applyTokens, logout, setAuthStatus } = authSlice.actions
+export const { setCredentials, applyTokens, logout, setAuthStatus, updateUserFields } =
+  authSlice.actions
 export default authSlice.reducer
