@@ -9,6 +9,7 @@ import { useAppDispatch } from '@/app/redux-hooks'
 import { InputField } from '@/components/fields'
 import { Button } from '@/components/ui/button'
 import { getRtkErrorMessage } from '@/lib/api-errors'
+import { reportRuntimeError } from '@/lib/error-reporting'
 import type { RecoveryUserProfile } from '@/types/recovery-user-api'
 
 import { buildProfilePatch, type ProfileFormValues } from './build-profile-patch'
@@ -98,7 +99,8 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
     if (pendingFile) {
       try {
         profilePicPayload = await fileToDataUrl(pendingFile)
-      } catch {
+      } catch (error) {
+        reportRuntimeError('edit-profile:file-read', error)
         onBanner({ type: 'err', text: 'Could not read the image. Try another file.' })
         return
       }

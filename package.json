@@ -9,11 +9,14 @@
     "typecheck": "tsc --noEmit",
     "test": "craco test",
     "eject": "react-scripts eject",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings=0",
+    "dep:cycles": "madge --circular --extensions ts,tsx --ts-config ./tsconfig.json ./src",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:ci": "CI=true craco test --watchAll=false",
+    "test:coverage": "CI=true craco test --watchAll=false --coverage",
     "trivy:scan": "trivy fs --config trivy.yaml --scanners vuln,secret --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL .",
+    "security:audit": "npm audit --audit-level=high",
     "prepare": "husky"
   },
   "lint-staged": {
@@ -36,7 +39,8 @@
     "react-router-dom": "^6.28.0",
     "react-scripts": "5.0.1",
     "tailwind-merge": "^2.6.0",
-    "web-vitals": "^4.2.4"
+    "web-vitals": "^4.2.4",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@craco/craco": "^7.1.0",
@@ -57,11 +61,19 @@
     "globals": "^15.14.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
+    "madge": "^8.0.0",
     "postcss": "^8.4.49",
     "prettier": "^3.8.1",
     "tailwindcss": "^3.4.17",
     "typescript": "~5.6.3",
     "typescript-eslint": "^8.18.2"
+  },
+  "overrides": {
+    "@tootallnate/once": "^3.0.1",
+    "nth-check": "^2.1.1",
+    "serialize-javascript": "^7.0.0",
+    "underscore": "^1.13.7",
+    "webpack-dev-server": "^5.2.2"
   },
   "browserslist": {
     "production": [

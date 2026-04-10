@@ -1,5 +1,6 @@
-/** @type {import('tailwindcss').Config} */
-module.exports = {
+import type { Config } from 'tailwindcss'
+
+const config: Config = {
   content: ['./src/**/*.{js,jsx,ts,tsx}'],
   theme: {
     extend: {
@@ -7,7 +8,6 @@ module.exports = {
         smallScreen: '500px',
       },
       colors: {
-        /* Design tokens — recovery platform */
         'rp-heading': '#000000',
         'rp-fg': '#333333',
         'rp-muted': '#666666',
@@ -31,7 +31,6 @@ module.exports = {
         black: '#000000',
         lightYellowThree: '#FCF6E6',
         humburgerIcon: '#CCCCCC',
-        /** Stat / trend negative (matches TH-style `redOne`) */
         redOne: '#DC2626',
       },
       fontFamily: {
@@ -53,3 +52,5 @@ module.exports = {
   },
   plugins: [],
 }
+
+export default config

@@ -30,6 +30,9 @@ export default defineConfig([
         version: 'detect',
       },
     },
+    rules: {
+      'no-console': ['error', { allow: ['warn', 'error'] }],
+    },
   },
   {
     files: ['src/components/ui/label.tsx'],
