@@ -69,10 +69,12 @@ export const CheckboxField = forwardRef<HTMLInputElement, CheckboxFieldProps>(
     return (
       <div className={containerClassName}>
         <label
-          htmlFor={label != null && label !== '' ? id : undefined}
+          htmlFor={label !== null && label !== undefined && label !== '' ? id : undefined}
           className={cn(
             'inline-flex cursor-pointer items-center gap-2',
-            label == null || label === '' ? 'justify-center' : 'text-sm font-medium text-rp-fg',
+            label === null || label === undefined || label === ''
+              ? 'justify-center'
+              : 'text-sm font-medium text-rp-fg',
             disabled && 'cursor-not-allowed opacity-70',
             labelLayoutClassName,
           )}
@@ -112,7 +114,7 @@ export const CheckboxField = forwardRef<HTMLInputElement, CheckboxFieldProps>(
               />
             )}
           </span>
-          {label != null && label !== '' ? (
+          {label !== null && label !== undefined && label !== '' ? (
             <span className={cn('select-none', labelClassName)}>{label}</span>
           ) : null}
         </label>
