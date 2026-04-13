@@ -17,7 +17,7 @@ import { buildProfilePatch, type ProfileFormValues } from './build-profile-patch
 const PLACEHOLDER_AVATAR = `${process.env.PUBLIC_URL}/images/no-profile.png`
 const MAX_IMAGE_BYTES = 1_500_000
 
-function fileToDataUrl(file: File, t: (key: string) => string) {
+function fileToDataUrl(file: File, t: (key: string) => string): Promise<string> {
   return new Promise((resolve, reject) => {
     const r = new FileReader()
     r.onload = () => resolve(String(r.result))
