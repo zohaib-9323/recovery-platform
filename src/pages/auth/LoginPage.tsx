@@ -8,19 +8,8 @@ import { LoginButton } from '@/components/buttons'
 import { InputField } from '@/components/fields'
 import { Card, CardContent } from '@/components/ui/card'
 import { useAuth } from '@/app/hooks/useAuth'
+import { getErrorMessage } from '@/lib/api-errors'
 import { isValidEmail, isValidPassword, PASSWORD_RULES_HINT } from '@/lib/validation'
-
-function getErrorMessage(err: unknown): string {
-  if (err && typeof err === 'object' && 'data' in err) {
-    const data = (err as { data?: unknown }).data
-    if (typeof data === 'object' && data !== null && 'message' in data) {
-      const m = (data as { message?: unknown }).message
-      if (typeof m === 'string' && m.length > 0) return m
-    }
-    if (typeof data === 'string' && data.length > 0) return data
-  }
-  return 'Invalid email or password.'
-}
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -68,7 +57,7 @@ export function LoginPage() {
       await login({ email: trimmedEmail, password: trimmedPassword }).unwrap()
       navigate(from, { replace: true })
     } catch (err) {
-      setError(getErrorMessage(err))
+      setError(getErrorMessage(err, 'Invalid email or password.'))
     }
   }
 
