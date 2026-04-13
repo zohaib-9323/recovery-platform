@@ -4,14 +4,15 @@ import { TableHeader, TableListing, TableShell } from '@/components/table'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import type { InboxAttachment } from '@/data/mock/inbox'
+import { useI18n } from '@/i18n/useI18n'
 import { cn } from '@/lib/utils'
 
 const thCell = 'bg-[#F1F1F1] px-4 py-3 text-left text-xs font-semibold text-[#666666] sm:px-6'
 
-function statusLabel(status: InboxAttachment['status']): string {
-  if (status === 'passed') return 'Passed'
-  if (status === 'failed') return 'Failed'
-  return 'Pending'
+function statusLabel(status: InboxAttachment['status'], t: (key: string) => string): string {
+  if (status === 'passed') return t('inbox.attachments.status.passed')
+  if (status === 'failed') return t('inbox.attachments.status.failed')
+  return t('inbox.attachments.status.pending')
 }
 
 function statusClass(status: InboxAttachment['status']): string {
@@ -26,8 +27,9 @@ export type InboxAttachmentsTableProps = {
 }
 
 export function InboxAttachmentsTable({ attachments, className }: InboxAttachmentsTableProps) {
+  const { t } = useI18n()
   if (attachments.length === 0) {
-    return <p className="text-sm text-rp-muted">No attachments for this message.</p>
+    return <p className="text-sm text-rp-muted">{t('inbox.attachments.empty')}</p>
   }
 
   return (
@@ -36,10 +38,10 @@ export function InboxAttachmentsTable({ attachments, className }: InboxAttachmen
         <TableShell>
           <TableHeader>
             <tr>
-              <th className={thCell}>Attachment</th>
-              <th className={thCell}>Size</th>
-              <th className={thCell}>Status</th>
-              <th className={cn(thCell, 'text-right')}>Action</th>
+              <th className={thCell}>{t('inbox.attachments.col.attachment')}</th>
+              <th className={thCell}>{t('inbox.attachments.col.size')}</th>
+              <th className={thCell}>{t('inbox.attachments.col.status')}</th>
+              <th className={cn(thCell, 'text-right')}>{t('inbox.attachments.col.action')}</th>
             </tr>
           </TableHeader>
           <TableListing>
@@ -50,12 +52,12 @@ export function InboxAttachmentsTable({ attachments, className }: InboxAttachmen
                 <td
                   className={cn('px-4 py-3 text-sm font-medium sm:px-6', statusClass(row.status))}
                 >
-                  {statusLabel(row.status)}
+                  {statusLabel(row.status, t)}
                 </td>
                 <td className="px-4 py-3 text-right sm:px-6">
                   <Button type="button" variant="outline" size="sm" className="gap-1.5">
                     <Download className="h-4 w-4" strokeWidth={2} aria-hidden />
-                    Download
+                    {t('inbox.attachments.download')}
                   </Button>
                 </td>
               </tr>

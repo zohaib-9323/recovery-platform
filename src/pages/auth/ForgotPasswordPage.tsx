@@ -8,6 +8,7 @@ import { LoginButton } from '@/components/buttons'
 import { InputField } from '@/components/fields'
 import { SuccessPopup } from '@/components/popup'
 import { Card, CardContent } from '@/components/ui/card'
+import { useI18n } from '@/i18n/useI18n'
 import { isValidEmail } from '@/lib/validation'
 
 function readApiMessage(error: unknown, fallback: string): string {
@@ -22,6 +23,7 @@ function readApiMessage(error: unknown, fallback: string): string {
 }
 
 export function ForgotPasswordPage() {
+  const { t } = useI18n()
   const [email, setEmail] = useState('')
   const [showSuccess, setShowSuccess] = useState(false)
   const [submittedEmail, setSubmittedEmail] = useState('')
@@ -31,21 +33,21 @@ export function ForgotPasswordPage() {
   const trimmedEmail = email.trim()
   const emailError =
     trimmedEmail.length > 0 && !isValidEmail(trimmedEmail)
-      ? 'Enter a valid email address.'
+      ? t('auth.forgot.enterValidEmail')
       : undefined
   const canSubmit = isValidEmail(trimmedEmail)
 
   const successDescription = useMemo(() => {
-    if (!submittedEmail) return "We've sent an email with password reset instructions."
-    return `We've sent an email with password reset information to ${submittedEmail}.`
-  }, [submittedEmail])
+    if (!submittedEmail) return t('auth.forgot.successNoEmail')
+    return t('auth.forgot.successWithEmail', { email: submittedEmail })
+  }, [submittedEmail, t])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError(null)
 
     if (!isValidEmail(trimmedEmail)) {
-      setError('Please enter a valid email address.')
+      setError(t('auth.forgot.pleaseEnterValidEmail'))
       return
     }
 
@@ -54,7 +56,7 @@ export function ForgotPasswordPage() {
       setSubmittedEmail(trimmedEmail)
       setShowSuccess(true)
     } catch (err) {
-      setError(readApiMessage(err, 'Failed to send reset link.'))
+      setError(readApiMessage(err, t('auth.forgot.failedToSend')))
     }
   }
 
@@ -67,10 +69,11 @@ export function ForgotPasswordPage() {
         <CardContent className="flex flex-col gap-4 p-0">
           <div className="flex flex-col items-center gap-3 text-center">
             <AppLogo size="lg" />
-            <h1 className="text-4xl font-bold leading-tight text-rp-heading">Forgot Password?</h1>
+            <h1 className="text-4xl font-bold leading-tight text-rp-heading">
+              {t('auth.forgot.title')}
+            </h1>
             <p className="max-w-[430px] text-base text-rp-description">
-              Enter the email you used to create your account so we can send you a link for
-              resetting your password.
+              {t('auth.forgot.description')}
             </p>
           </div>
 
@@ -79,10 +82,10 @@ export function ForgotPasswordPage() {
               fieldType="email"
               id="forgot-email"
               name="forgot-email"
-              label="Email Address"
+              label={t('auth.forgot.emailLabel')}
               autoComplete="email"
               leftIcon={<Mail strokeWidth={2} />}
-              placeholder="johndoe@email.com"
+              placeholder={t('auth.forgot.emailPlaceholder')}
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value.replace(/\s/g, ''))
@@ -99,14 +102,14 @@ export function ForgotPasswordPage() {
             ) : null}
 
             <LoginButton type="submit" disabled={!canSubmit || isLoading}>
-              {isLoading ? 'Sending...' : 'Send'}
+              {isLoading ? t('auth.forgot.sending') : t('auth.forgot.send')}
             </LoginButton>
           </form>
 
           <p className="text-sm text-rp-description">
-            Go back to login?{' '}
+            {t('auth.forgot.backToLogin')}{' '}
             <Link to="/login" className="font-semibold text-rp-heading hover:underline">
-              Login ↗
+              {t('auth.forgot.loginLink')}
             </Link>
           </p>
         </CardContent>
@@ -114,9 +117,9 @@ export function ForgotPasswordPage() {
 
       <SuccessPopup
         open={showSuccess}
-        title="Check Your Email!"
+        title={t('auth.forgot.popupTitle')}
         description={successDescription}
-        actionLabel="Resend Email"
+        actionLabel={t('auth.forgot.popupAction')}
         onAction={() => {
           setShowSuccess(false)
           void requestReset({ email: submittedEmail || trimmedEmail })

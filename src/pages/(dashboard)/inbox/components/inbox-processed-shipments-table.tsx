@@ -4,6 +4,7 @@ import { TableHeader, TableListing, TableShell } from '@/components/table'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import type { InboxShipmentRow } from '@/data/mock/inbox'
+import { useI18n } from '@/i18n/useI18n'
 import { cn } from '@/lib/utils'
 
 const thCell = 'bg-[#F1F1F1] px-4 py-3 text-left text-xs font-semibold text-[#666666] sm:px-6'
@@ -17,10 +18,9 @@ export function InboxProcessedShipmentsTable({
   rows,
   className,
 }: InboxProcessedShipmentsTableProps) {
+  const { t } = useI18n()
   if (rows.length === 0) {
-    return (
-      <p className="text-sm text-rp-muted">No processed shipments linked to this message yet.</p>
-    )
+    return <p className="text-sm text-rp-muted">{t('inbox.processed.empty')}</p>
   }
 
   return (
@@ -29,11 +29,11 @@ export function InboxProcessedShipmentsTable({
         <TableShell>
           <TableHeader>
             <tr>
-              <th className={thCell}>Shipment Title</th>
-              <th className={thCell}>Date</th>
-              <th className={thCell}>Ship Via</th>
-              <th className={thCell}>PO #</th>
-              <th className={cn(thCell, 'text-right')}>Actions</th>
+              <th className={thCell}>{t('inbox.processed.col.title')}</th>
+              <th className={thCell}>{t('inbox.processed.col.date')}</th>
+              <th className={thCell}>{t('inbox.processed.col.shipVia')}</th>
+              <th className={thCell}>{t('inbox.processed.col.po')}</th>
+              <th className={cn(thCell, 'text-right')}>{t('inbox.processed.col.actions')}</th>
             </tr>
           </TableHeader>
           <TableListing>
@@ -49,7 +49,7 @@ export function InboxProcessedShipmentsTable({
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
-                    aria-label="View"
+                    aria-label={t('common.view')}
                   >
                     <Eye className="h-4 w-4 text-rp-icon" />
                   </Button>

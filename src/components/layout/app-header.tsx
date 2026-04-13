@@ -6,10 +6,12 @@ import { useAppDispatch, useAppSelector } from '@/app/redux-hooks'
 import { useMediaQuery } from '@/app/hooks/useMediaQuery'
 import { getHrefLink, getSideBarTitle } from '@/lib/tradeHarmonizerNav'
 import { useAuth } from '@/app/hooks/useAuth'
+import { useI18n } from '@/i18n/useI18n'
 
 import { ProfileMenuTh } from '@/components/layout/profile-menu-th'
 
 export function AppHeader() {
+  const { t } = useI18n()
   const pathName = useLocation().pathname
   const dispatch = useAppDispatch()
   const expanded = useAppSelector((s) => s.sideBar.sideBarExpanded)
@@ -48,7 +50,11 @@ export function AppHeader() {
                 <button
                   type="button"
                   onClick={() => dispatch(setSideBarExpanded(!expanded))}
-                  aria-label={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
+                  aria-label={
+                    expanded
+                      ? t('layout.appHeader.collapseSidebar')
+                      : t('layout.appHeader.expandSidebar')
+                  }
                 >
                   <span
                     className={`${
@@ -77,7 +83,7 @@ export function AppHeader() {
                   onClick={toggleMenu}
                   className="flex items-center justify-center rounded-md bg-yellow p-2"
                   id="notificationBell"
-                  aria-label="Notifications"
+                  aria-label={t('layout.appHeader.notifications')}
                 >
                   <span className="icon-bell text-large text-white" />
                 </button>
@@ -87,19 +93,19 @@ export function AppHeader() {
                     ref={popupRef}
                     className="absolute right-0 top-full z-50 mt-2 w-80 rounded-lg border border-bottomBorder bg-white p-4 shadow-lg"
                   >
-                    <p className="text-sm text-rp-fg">No notifications (UI placeholder).</p>
+                    <p className="text-sm text-rp-fg">{t('layout.appHeader.noNotifications')}</p>
                     <button
                       type="button"
                       className="mt-2 text-sm font-semibold text-yellow"
                       onClick={() => setNotificationPopup(false)}
                     >
-                      Close
+                      {t('common.close')}
                     </button>
                   </div>
                 ) : null}
                 <div className="relative ml-2 h-10 min-w-10 smallScreen:ml-5">
                   <ProfileMenuTh
-                    name={user?.displayName ?? 'User'}
+                    name={user?.displayName ?? t('layout.appHeader.profileFallbackName')}
                     email={user?.email ?? ''}
                     avatarUrl={user?.profilePic}
                   />

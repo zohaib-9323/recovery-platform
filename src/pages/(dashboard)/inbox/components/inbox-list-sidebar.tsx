@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { ShipmentsSearchInput } from '@/pages/(dashboard)/shipments/components/shipments-search-input'
 import { cn } from '@/lib/utils'
 import type { InboxEmail } from '@/data/mock/inbox'
+import { useI18n } from '@/i18n/useI18n'
 
 import { InboxEmailListItem } from './inbox-email-list-item'
 
@@ -30,6 +31,7 @@ export function InboxListSidebar({
   onSelect,
   className,
 }: InboxListSidebarProps) {
+  const { t } = useI18n()
   const [search, setSearch] = useState('')
   const filtered = useMemo(() => filterEmails(emails, search), [emails, search])
 
@@ -41,9 +43,10 @@ export function InboxListSidebar({
       )}
     >
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-rp-border px-4 py-3">
-        <h2 className="text-sm font-semibold text-rp-fg">Incoming</h2>
+        <h2 className="text-sm font-semibold text-rp-fg">{t('inbox.sidebar.incoming')}</h2>
         <span className="text-xs text-rp-muted">
-          {filtered.length} {filtered.length === 1 ? 'email' : 'emails'}
+          {filtered.length}{' '}
+          {filtered.length === 1 ? t('common.emailCount.one') : t('common.emailCount.other')}
         </span>
       </div>
       <div className="shrink-0 border-b border-rp-border p-3">
@@ -51,13 +54,13 @@ export function InboxListSidebar({
           id="inbox-search"
           value={search}
           onChange={setSearch}
-          placeholder="Search"
+          placeholder={t('common.search')}
           className="!max-w-none"
         />
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3">
         {filtered.length === 0 ? (
-          <p className="px-1 text-sm text-rp-muted">No messages match your search.</p>
+          <p className="px-1 text-sm text-rp-muted">{t('inbox.sidebar.empty')}</p>
         ) : (
           filtered.map((email) => (
             <InboxEmailListItem

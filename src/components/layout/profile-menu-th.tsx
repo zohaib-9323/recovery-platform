@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { logout } from '@/app/features/auth/authSlice'
 import { useAppDispatch } from '@/app/redux-hooks'
+import { useI18n } from '@/i18n/useI18n'
 
 const defaultAvatar = `${process.env.PUBLIC_URL}/images/no-profile.png`
 
@@ -13,6 +14,7 @@ type ProfileMenuThProps = {
 }
 
 export function ProfileMenuTh({ avatarUrl, name, email }: ProfileMenuThProps) {
+  const { t } = useI18n()
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
@@ -37,7 +39,7 @@ export function ProfileMenuTh({ avatarUrl, name, email }: ProfileMenuThProps) {
       >
         <img
           src={resolvedSrc}
-          alt="Profile"
+          alt={t('layout.profileMenu.avatarAlt')}
           width={40}
           height={40}
           className="h-10 w-10 rounded-full border-2 border-lightYellowThree object-cover"
@@ -60,7 +62,7 @@ export function ProfileMenuTh({ avatarUrl, name, email }: ProfileMenuThProps) {
               navigate('/settings')
             }}
           >
-            Settings
+            {t('layout.profileMenu.settings')}
           </button>
           <button
             type="button"
@@ -71,7 +73,7 @@ export function ProfileMenuTh({ avatarUrl, name, email }: ProfileMenuThProps) {
               navigate('/login')
             }}
           >
-            Sign out
+            {t('layout.profileMenu.signOut')}
           </button>
         </div>
       ) : null}

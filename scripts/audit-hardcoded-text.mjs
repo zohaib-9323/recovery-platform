@@ -17,6 +17,29 @@ const SKIP_PROP_VALUES = new Set(['button'])
 
 const normalizeWhitespace = (value) => value.replace(/\s+/g, ' ').trim()
 
+const isCodeLikeSnippet = (value) => {
+  // The regex-based scanner can capture TS/JS fragments in .tsx files.
+  // Filter obvious code snippets so audit output focuses on UI-facing text.
+  if (
+    value.startsWith('//') ||
+    value.startsWith('/*') ||
+    value.includes('i18n-ignore-next-line') ||
+    /[{}[\];]|=>|::|&&|\|\||\)\s*:\s*null\}?/.test(value) ||
+    /\b(const|let|var|return|function|export|import|type|interface)\b/.test(value) ||
+    /\b(forwardRef|VariantProps|ReadonlySet|Promise)\b/.test(value) ||
+    /\b(useState|removeEventListener|filterEmails)\s*\(/.test(value)
+  ) {
+    return true
+  }
+
+  // Ignore fragments that look like multiline code continuations.
+  if (/[.=]\w+\s*=/.test(value) || /\bif\s*\(/.test(value)) {
+    return true
+  }
+
+  return false
+}
+
 const getLineNumber = (source, index) => {
   let line = 1
   for (let i = 0; i < index; i += 1) {
@@ -71,7 +94,7 @@ const collectFindings = (content, lines) => {
   let textMatch = textNodeRegex.exec(content)
   while (textMatch) {
     const rawText = normalizeWhitespace(textMatch[1])
-    if (rawText && !SKIP_TEXT_SNIPPETS.has(rawText)) {
+    if (rawText && !SKIP_TEXT_SNIPPETS.has(rawText) && !isCodeLikeSnippet(rawText)) {
       const line = getLineNumber(content, textMatch.index)
       if (!shouldIgnoreByComment(lines, line)) {
         findings.push({ type: 'jsx-text', line, snippet: rawText })

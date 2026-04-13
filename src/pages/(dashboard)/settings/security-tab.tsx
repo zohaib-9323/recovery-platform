@@ -7,6 +7,7 @@ import { usePostRecoveryChangePasswordMutation } from '@/app/services/recoveryAp
 import { useAppDispatch } from '@/app/redux-hooks'
 import { InputField } from '@/components/fields'
 import { Button } from '@/components/ui/button'
+import { useI18n } from '@/i18n/useI18n'
 import { getRtkErrorMessage } from '@/lib/api-errors'
 import { isValidPassword, PASSWORD_RULES_HINT } from '@/lib/validation'
 import { cn } from '@/lib/utils'
@@ -35,6 +36,7 @@ function Pill({ ok, children }: { ok: boolean; children: React.ReactNode }) {
 }
 
 export function SecurityTab() {
+  const { t } = useI18n()
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const [changePassword, { isLoading }] = usePostRecoveryChangePasswordMutation()
@@ -63,7 +65,7 @@ export function SecurityTab() {
         confirmPassword: confirmPassword.trim(),
       }).unwrap()
       if (res.status === false) {
-        setBanner({ type: 'err', text: res.message ?? 'Could not change password.' })
+        setBanner({ type: 'err', text: res.message ?? t('settings.security.changeFailed') })
         return
       }
       dispatch(logout())
@@ -77,7 +79,7 @@ export function SecurityTab() {
 
   return (
     <form onSubmit={handleSubmit} className="flex max-w-lg flex-col gap-4">
-      <h2 className="mb-2 text-xl font-semibold text-rp-fg">Change password</h2>
+      <h2 className="mb-2 text-xl font-semibold text-rp-fg">{t('settings.security.title')}</h2>
       {banner ? (
         <p
           role={banner.type === 'err' ? 'alert' : 'status'}
@@ -91,7 +93,7 @@ export function SecurityTab() {
         fieldType="password"
         id="rp-cur-pw"
         name="currentPassword"
-        label="Current password"
+        label={t('settings.security.currentPassword')}
         type={showCur ? 'text' : 'password'}
         autoComplete="current-password"
         leftIcon={<KeyRound strokeWidth={2} />}
@@ -100,7 +102,7 @@ export function SecurityTab() {
             type="button"
             className="text-rp-muted hover:text-rp-fg"
             onClick={() => setShowCur((s) => !s)}
-            aria-label={showCur ? 'Hide password' : 'Show password'}
+            aria-label={showCur ? t('common.hidePassword') : t('common.showPassword')}
           >
             {showCur ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
           </button>
@@ -116,7 +118,7 @@ export function SecurityTab() {
         fieldType="password"
         id="rp-new-pw"
         name="newPassword"
-        label="New password"
+        label={t('settings.security.newPassword')}
         description={PASSWORD_RULES_HINT}
         type={showNew ? 'text' : 'password'}
         autoComplete="new-password"
@@ -126,7 +128,7 @@ export function SecurityTab() {
             type="button"
             className="text-rp-muted hover:text-rp-fg"
             onClick={() => setShowNew((s) => !s)}
-            aria-label={showNew ? 'Hide password' : 'Show password'}
+            aria-label={showNew ? t('common.hidePassword') : t('common.showPassword')}
           >
             {showNew ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
           </button>
@@ -139,18 +141,18 @@ export function SecurityTab() {
       />
 
       <div className="flex flex-wrap gap-2">
-        <Pill ok={v.length}>Length ≥ 8</Pill>
-        <Pill ok={v.lowercase}>Lowercase</Pill>
-        <Pill ok={v.uppercase}>Uppercase</Pill>
-        <Pill ok={v.digit}>Number</Pill>
-        <Pill ok={v.special}>Special character</Pill>
+        <Pill ok={v.length}>{t('settings.security.rule.length')}</Pill>
+        <Pill ok={v.lowercase}>{t('settings.security.rule.lowercase')}</Pill>
+        <Pill ok={v.uppercase}>{t('settings.security.rule.uppercase')}</Pill>
+        <Pill ok={v.digit}>{t('settings.security.rule.number')}</Pill>
+        <Pill ok={v.special}>{t('settings.security.rule.special')}</Pill>
       </div>
 
       <InputField
         fieldType="password"
         id="rp-cf-pw"
         name="confirmPassword"
-        label="Confirm new password"
+        label={t('settings.security.confirmNewPassword')}
         type={showCf ? 'text' : 'password'}
         autoComplete="new-password"
         leftIcon={<KeyRound strokeWidth={2} />}
@@ -159,7 +161,7 @@ export function SecurityTab() {
             type="button"
             className="text-rp-muted hover:text-rp-fg"
             onClick={() => setShowCf((s) => !s)}
-            aria-label={showCf ? 'Hide password' : 'Show password'}
+            aria-label={showCf ? t('common.hidePassword') : t('common.showPassword')}
           >
             {showCf ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
           </button>
@@ -169,16 +171,16 @@ export function SecurityTab() {
           setConfirm(e.target.value)
           setBanner(null)
         }}
-        error={confirmPassword.length > 0 && !match ? 'Passwords do not match.' : undefined}
+        error={confirmPassword.length > 0 && !match ? t('settings.security.notMatch') : undefined}
       />
 
       {match && confirmPassword.length > 0 ? (
-        <p className="text-xs text-rp-success">Passwords match.</p>
+        <p className="text-xs text-rp-success">{t('settings.security.match')}</p>
       ) : null}
 
       <div className="flex justify-end pt-2">
         <Button type="submit" disabled={!canSubmit}>
-          {isLoading ? 'Updating…' : 'Change password'}
+          {isLoading ? t('settings.security.updating') : t('settings.security.submit')}
         </Button>
       </div>
     </form>

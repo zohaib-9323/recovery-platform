@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { t } from '@/i18n/useI18n'
 
 const LOGO_SRC = `${process.env.PUBLIC_URL}/images/app-logo.svg`
 
@@ -15,7 +16,7 @@ export function AppLogo({ className, size = 'md' }: AppLogoProps) {
     return (
       <img
         src={LOGO_SRC}
-        alt="Trade Harmonizer"
+        alt={t('layout.brand')}
         className={cn('h-9 w-auto max-h-10 shrink-0 object-contain object-left md:h-10', className)}
       />
     )
@@ -24,7 +25,7 @@ export function AppLogo({ className, size = 'md' }: AppLogoProps) {
   return (
     <img
       src={LOGO_SRC}
-      alt="Trade Harmonizer"
+      alt={t('layout.brand')}
       width={px}
       height={px}
       className={cn('shrink-0 object-contain object-left', className)}

@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect } from 'react'
 import { X } from 'lucide-react'
 
+import { useI18n } from '@/i18n/useI18n'
 import { cn } from '@/lib/utils'
 
 type PopupProps = {
@@ -20,6 +21,7 @@ export function Popup({
   showCloseButton = false,
   closeOnBackdrop = true,
 }: PopupProps) {
+  const { t } = useI18n()
   useEffect(() => {
     if (!open) return
     const onKeyDown = (e: KeyboardEvent) => {
@@ -35,7 +37,7 @@ export function Popup({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4">
       <button
         type="button"
-        aria-label="Close popup overlay"
+        aria-label={t('popup.closeOverlay')}
         className="absolute inset-0 cursor-default"
         onClick={() => {
           if (closeOnBackdrop) onClose?.()
@@ -52,7 +54,7 @@ export function Popup({
         {showCloseButton ? (
           <button
             type="button"
-            aria-label="Close popup"
+            aria-label={t('popup.close')}
             className="absolute right-4 top-4 rounded p-1 text-rp-icon hover:bg-rp-surface"
             onClick={() => onClose?.()}
           >

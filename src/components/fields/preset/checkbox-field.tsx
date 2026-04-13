@@ -30,6 +30,7 @@ export type CheckboxFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'ty
   labelLayoutClassName?: string
 }
 
+// i18n-ignore-next-line
 function mergeRefs<T>(a: Ref<T> | undefined, b: Ref<T> | null) {
   return (node: T | null) => {
     if (typeof a === 'function') a(node)
