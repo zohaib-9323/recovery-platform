@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { logout } from '@/app/features/auth/authSlice'
+import { useGetRecoveryProfileQuery } from '@/app/services/recoveryApi'
+import { useAuth } from '@/app/hooks/useAuth'
 import { useAppDispatch } from '@/app/redux-hooks'
 
 const defaultAvatar = `${process.env.PUBLIC_URL}/images/no-profile.png`
@@ -15,9 +17,18 @@ type ProfileMenuThProps = {
 export function ProfileMenuTh({ avatarUrl, name, email }: ProfileMenuThProps) {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
+  const { isAuthenticated } = useAuth()
+  const { data: profileData } = useGetRecoveryProfileQuery(undefined, {
+    skip: !isAuthenticated,
+  })
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-  const resolvedSrc = avatarUrl || defaultAvatar
+
+  const resolvedSrc = useMemo(() => {
+    const fromAuth = avatarUrl?.trim()
+    const fromProfile = profileData?.content?.profilePic?.trim()
+    return fromAuth || fromProfile || defaultAvatar
+  }, [avatarUrl, profileData?.content?.profilePic])
 
   useEffect(() => {
     const handle = (e: MouseEvent) => {
@@ -34,10 +45,13 @@ export function ProfileMenuTh({ avatarUrl, name, email }: ProfileMenuThProps) {
         onClick={() => setOpen((o) => !o)}
         className="flex items-center space-x-2 focus:outline-none"
         aria-expanded={open}
+        aria-label="Open profile menu"
       >
         <img
+          key={resolvedSrc}
           src={resolvedSrc}
-          alt="Profile"
+          alt=""
+          role="presentation"
           width={40}
           height={40}
           className="h-10 w-10 rounded-full border-2 border-lightYellowThree object-cover"

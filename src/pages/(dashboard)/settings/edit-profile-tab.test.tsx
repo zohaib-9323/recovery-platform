@@ -60,6 +60,14 @@ describe('EditProfileTab', () => {
 
     render(<EditProfileTab />)
 
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled()
+
+    fireEvent.change(screen.getByLabelText('Last name'), { target: { value: 'Walker' } })
+    expect(screen.getByRole('button', { name: 'Save changes' })).not.toBeDisabled()
+
+    fireEvent.change(screen.getByLabelText('Last name'), { target: { value: 'Stone' } })
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled()
+
     fireEvent.change(screen.getByLabelText('Last name'), { target: { value: 'Walker' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 

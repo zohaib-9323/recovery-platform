@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { updateUserFields } from '@/app/features/auth/authSlice'
 import {
@@ -65,6 +65,11 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
     }
   }, [previewUrl])
 
+  const hasUnsavedChanges = useMemo(() => {
+    if (pendingFile !== null) return true
+    return Object.keys(buildProfilePatch(profile, form, null)).length > 0
+  }, [profile, form, pendingFile])
+
   const updateField = (key: keyof ProfileFormValues, value: string) => {
     setForm((f) => ({ ...f, [key]: value }))
     onBanner(null)
@@ -120,22 +125,31 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
       }
       const next = res.content ?? profile
       setPendingFile(null)
-      if (next.profilePic?.trim()) {
-        setPreviewUrl(next.profilePic)
-      } else {
-        setPreviewUrl(PLACEHOLDER_AVATAR)
-      }
-      const displayName = [next.firstName, next.lastName]
+
+      const refetchResult = await refetch()
+      const fresh = refetchResult?.data?.content
+
+      const identity = fresh ?? next
+      const displayName = [identity.firstName, identity.lastName]
         .map((s) => s?.trim())
         .filter(Boolean)
         .join(' ')
+
+      const headerPic =
+        fresh?.profilePic?.trim() ||
+        profilePicPayload?.trim() ||
+        next.profilePic?.trim() ||
+        profile.profilePic?.trim() ||
+        ''
+
+      setPreviewUrl(headerPic ? headerPic : PLACEHOLDER_AVATAR)
+
       dispatch(
         updateUserFields({
           displayName: displayName || undefined,
-          profilePic: next.profilePic?.trim() || undefined,
+          ...(headerPic ? { profilePic: headerPic } : {}),
         }),
       )
-      await refetch()
       onBanner({ type: 'ok', text: res.message ?? 'Profile updated.' })
     } catch (err) {
       onBanner({ type: 'err', text: getRtkErrorMessage(err) })
@@ -249,7 +263,7 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
       </div>
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={saving}>
+        <Button type="submit" disabled={saving || !hasUnsavedChanges}>
           {saving ? 'Saving…' : 'Save changes'}
         </Button>
       </div>
