@@ -2,7 +2,9 @@ import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolk
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 
 import { applyTokens, logout, type AuthState } from '@/app/features/auth/authSlice'
+import { reportRuntimeError } from '@/lib/error-reporting'
 import { refreshSession } from '@/services/authSession'
+import { runBaseQueryWithReauth } from '@/app/services/reauth'
 import type {
   ApiMessageEnvelope,
   LoginRequestBody,
@@ -53,22 +55,22 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
   api,
   extraOptions,
 ) => {
-  const argObj = typeof args === 'string' ? { url: args } : args
-  const url = typeof argObj.url === 'string' ? argObj.url : ''
-  const skipReauth = isAuthUrl(url)
-
-  let result = await rawBaseQuery(args, api, extraOptions)
-
-  if (result.error && result.error.status === 401 && !skipReauth) {
-    const ok = await refreshSession(api.dispatch, () => api.getState() as StateWithAuth)
-    if (ok) {
-      result = await rawBaseQuery(args, api, extraOptions)
-    } else {
-      api.dispatch(logout())
-    }
-  }
-
-  return result
+  return runBaseQueryWithReauth<FetchBaseQueryError>(
+    args as unknown as Record<string, unknown> | string,
+    {
+      dispatch: api.dispatch,
+      getState: () => api.getState() as StateWithAuth,
+    },
+    extraOptions,
+    (a, c, e) =>
+      rawBaseQuery(a as string | FetchArgs, c as Parameters<typeof rawBaseQuery>[1], e as object),
+    (dispatch, getState) =>
+      refreshSession(
+        dispatch as Parameters<typeof refreshSession>[0],
+        () => getState() as StateWithAuth,
+      ),
+    logout,
+  ) as ReturnType<BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError>>
 }
 
 export const recoveryApi = createApi({
@@ -94,8 +96,9 @@ export const recoveryApi = createApi({
               }),
             )
           }
-        } catch {
-          /* error surfaced to caller */
+        } catch (error) {
+          // Sensitive path: caller gets the rejection; we still report for observability.
+          reportRuntimeError('recovery-api:login-onQueryStarted', error)
         }
       },
     }),

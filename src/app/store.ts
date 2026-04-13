@@ -1,30 +1,10 @@
 import { configureStore } from '@reduxjs/toolkit'
 
-import authReducer, { authInitialState } from '@/app/features/auth/authSlice'
+import authReducer from '@/app/features/auth/authSlice'
+import { buildAuthPreload } from '@/app/authPreload'
 import { recoveryApi } from '@/app/services/recoveryApi'
 import sideBarReducer from '@/app/features/ui/sideBarSlice'
-import { userFromAccessToken } from '@/lib/jwt'
-import {
-  clearPersistedSession,
-  loadPersistedSession,
-  persistAuthState,
-} from '@/services/authStorage'
-
-function buildAuthPreload() {
-  const persisted = loadPersistedSession()
-  if (!persisted) return undefined
-  const user = userFromAccessToken(persisted.accessToken)
-  if (!user) {
-    clearPersistedSession()
-    return undefined
-  }
-  return {
-    ...authInitialState,
-    token: persisted.accessToken,
-    refreshToken: persisted.refreshToken,
-    user,
-  }
-}
+import { persistAuthState } from '@/services/authStorage'
 
 const authPreload = buildAuthPreload()
 
@@ -41,8 +21,17 @@ export const store = configureStore({
 
 store.subscribe(() => {
   const { token, refreshToken } = store.getState().auth
+  if (storeSubscribeCache.token === token && storeSubscribeCache.refreshToken === refreshToken) {
+    return
+  }
+  storeSubscribeCache = { token, refreshToken }
   persistAuthState(token, refreshToken)
 })
+
+let storeSubscribeCache: { token: string | null; refreshToken: string | null } = {
+  token: store.getState().auth.token,
+  refreshToken: store.getState().auth.refreshToken,
+}
 
 export type RootState = ReturnType<typeof store.getState>
 export type AppDispatch = typeof store.dispatch

@@ -1,6 +1,8 @@
 import type { Dispatch } from '@reduxjs/toolkit'
 
 import { applyTokens } from '@/app/features/auth/authSlice'
+import { reportRuntimeError } from '@/lib/error-reporting'
+import { recoveryAuthSchema } from '@/lib/schemas/api'
 import type { RecoveryAuthEnvelope } from '@/types/auth-api'
 import { env } from '@/utils/env'
 
@@ -25,8 +27,9 @@ export async function refreshSession(dispatch: Dispatch, getState: GetAuthSlice)
 
   let data: RecoveryAuthEnvelope
   try {
-    data = (await res.json()) as RecoveryAuthEnvelope
-  } catch {
+    data = recoveryAuthSchema.parse(await res.json()) as RecoveryAuthEnvelope
+  } catch (error) {
+    reportRuntimeError('auth-session:parse-refresh-response', error)
     return false
   }
 

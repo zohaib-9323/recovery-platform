@@ -18,6 +18,8 @@ export const messages: Record<string, string> = {
   'layout.profileMenu.avatarAlt': 'Profile',
   'layout.profileMenu.settings': 'Settings',
   'layout.profileMenu.signOut': 'Sign out',
+  'layout.profileMenu.openMenu': 'Open profile menu',
+  'errors.boundary.generic': 'Something went wrong. Please refresh the page.',
   'auth.login.title': 'Recovery Platform',
   'auth.login.subtitle': 'Email Document Intake Platform',
   'auth.login.emailLabel': 'Email Address',

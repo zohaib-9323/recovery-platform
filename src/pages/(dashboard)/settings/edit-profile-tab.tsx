@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { updateUserFields } from '@/app/features/auth/authSlice'
 import {
@@ -10,7 +10,7 @@ import { InputField } from '@/components/fields'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n/useI18n'
 import { getRtkErrorMessage } from '@/lib/api-errors'
-import type { RecoveryUserProfile } from '@/types/recovery-user-api'
+import type { RecoveryApiEnvelope, RecoveryUserProfile } from '@/types/recovery-user-api'
 
 import { buildProfilePatch, type ProfileFormValues } from './build-profile-patch'
 
@@ -35,7 +35,9 @@ function toDateInputValue(iso: string | undefined): string {
 type EditProfileFormProps = {
   profile: RecoveryUserProfile
   formInstance: number
-  refetch: () => Promise<unknown>
+  refetch: () => Promise<{
+    data?: RecoveryApiEnvelope<RecoveryUserProfile>
+  }>
   onBanner: (b: { type: 'ok' | 'err'; text: string } | null) => void
 }
 
@@ -65,6 +67,11 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
       }
     }
   }, [previewUrl])
+
+  const hasUnsavedChanges = useMemo(() => {
+    if (pendingFile !== null) return true
+    return Object.keys(buildProfilePatch(profile, form, null)).length > 0
+  }, [profile, form, pendingFile])
 
   const updateField = (key: keyof ProfileFormValues, value: string) => {
     setForm((f) => ({ ...f, [key]: value }))
@@ -120,19 +127,29 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
       }
       const next = res.content ?? profile
       setPendingFile(null)
-      if (next.profilePic?.trim()) {
-        setPreviewUrl(next.profilePic)
-      } else {
-        setPreviewUrl(PLACEHOLDER_AVATAR)
-      }
-      const displayName = [next.firstName, next.lastName]
+
+      const refetchResult = await refetch()
+      const fresh = refetchResult?.data?.content
+
+      const identity = fresh ?? next
+      const displayName = [identity.firstName, identity.lastName]
         .map((s) => s?.trim())
         .filter(Boolean)
         .join(' ')
+
+      const headerPic =
+        fresh?.profilePic?.trim() ||
+        profilePicPayload?.trim() ||
+        next.profilePic?.trim() ||
+        profile.profilePic?.trim() ||
+        ''
+
+      setPreviewUrl(headerPic ? headerPic : PLACEHOLDER_AVATAR)
+
       dispatch(
         updateUserFields({
           displayName: displayName || undefined,
-          profilePic: next.profilePic?.trim() || undefined,
+          ...(headerPic ? { profilePic: headerPic } : {}),
         }),
       )
       await refetch()
@@ -249,7 +266,7 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
       </div>
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={saving}>
+        <Button type="submit" disabled={saving || !hasUnsavedChanges}>
           {saving ? t('common.saving') : t('common.saveChanges')}
         </Button>
       </div>

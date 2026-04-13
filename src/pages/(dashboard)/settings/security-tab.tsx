@@ -52,7 +52,10 @@ export function SecurityTab() {
   const rules = ruleStatus(newPassword)
   const newOk = isValidPassword(newPassword)
   const match = newPassword.length > 0 && newPassword === confirmPassword
-  const canSubmit = currentPassword.trim().length > 0 && newOk && match && !isLoading
+  const curT = currentPassword.trim()
+  const newT = newPassword.trim()
+  const sameAsCurrent = newT.length > 0 && curT.length > 0 && curT === newT
+  const canSubmit = curT.length > 0 && newOk && match && !sameAsCurrent && !isLoading
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -138,6 +141,9 @@ export function SecurityTab() {
           setNew(e.target.value)
           setBanner(null)
         }}
+        error={
+          sameAsCurrent ? 'New password must be different from the current password.' : undefined
+        }
       />
 
       <div className="flex flex-wrap gap-2">

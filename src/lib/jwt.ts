@@ -1,4 +1,5 @@
 import type { User } from '@/types'
+import { reportRuntimeError } from '@/lib/error-reporting'
 
 type JwtPayload = {
   sub?: string
@@ -15,7 +16,8 @@ function decodeJwtPayload(token: string): JwtPayload | null {
     const payload = parts[1]
     const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
     return JSON.parse(json) as JwtPayload
-  } catch {
+  } catch (error) {
+    reportRuntimeError('jwt:decode', error)
     return null
   }
 }
