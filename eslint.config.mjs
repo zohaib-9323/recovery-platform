@@ -30,12 +30,28 @@ export default defineConfig([
         version: 'detect',
       },
     },
+    rules: {
+      'max-lines': ['error', { max: 500, skipBlankLines: true, skipComments: true }],
+      'no-console': 'error',
+      'no-debugger': 'error',
+      eqeqeq: ['error', 'always'],
+      curly: ['error', 'all'],
+      'no-var': 'error',
+      'prefer-const': 'error',
+    },
   },
   {
     files: ['src/components/ui/label.tsx'],
     rules: {
       // Reusable label + `htmlFor`; control often lives in another component (e.g. FieldInput), so static analysis cannot prove the association.
       'jsx-a11y/label-has-associated-control': 'off',
+    },
+  },
+  {
+    files: ['**/*.test.tsx', '**/*.spec.tsx'],
+    rules: {
+      'max-lines': 'off',
+      'no-console': 'off',
     },
   },
   eslintConfigPrettier,
