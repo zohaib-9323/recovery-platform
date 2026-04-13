@@ -10,7 +10,7 @@ import { InputField } from '@/components/fields'
 import { Button } from '@/components/ui/button'
 import { getRtkErrorMessage } from '@/lib/api-errors'
 import { reportRuntimeError } from '@/lib/error-reporting'
-import type { RecoveryUserProfile } from '@/types/recovery-user-api'
+import type { RecoveryApiEnvelope, RecoveryUserProfile } from '@/types/recovery-user-api'
 
 import { buildProfilePatch, type ProfileFormValues } from './build-profile-patch'
 
@@ -35,7 +35,9 @@ function toDateInputValue(iso: string | undefined): string {
 type EditProfileFormProps = {
   profile: RecoveryUserProfile
   formInstance: number
-  refetch: () => Promise<unknown>
+  refetch: () => Promise<{
+    data?: RecoveryApiEnvelope<RecoveryUserProfile>
+  }>
   onBanner: (b: { type: 'ok' | 'err'; text: string } | null) => void
 }
 
