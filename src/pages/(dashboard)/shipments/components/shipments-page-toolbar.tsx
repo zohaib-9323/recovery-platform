@@ -1,6 +1,7 @@
 import { Plus } from 'lucide-react'
 
 import { PrimaryButton } from '@/components/buttons'
+import { useI18n } from '@/i18n/useI18n'
 import { ShipmentsSearchInput } from './shipments-search-input'
 import { cn } from '@/lib/utils'
 
@@ -17,6 +18,7 @@ export function ShipmentsPageToolbar({
   onAddShipment,
   className,
 }: ShipmentsPageToolbarProps) {
+  const { t } = useI18n()
   return (
     <div
       className={cn(
@@ -24,7 +26,9 @@ export function ShipmentsPageToolbar({
         className,
       )}
     >
-      <h1 className="text-xl font-bold text-rp-heading sm:text-2xl">All Shipments</h1>
+      <h1 className="text-xl font-bold text-rp-heading sm:text-2xl">
+        {t('shipments.toolbar.title')}
+      </h1>
       <div className="flex w-full flex-col gap-3 sm:w-auto sm:min-w-0 sm:flex-1 sm:flex-row sm:items-center sm:justify-end sm:gap-4">
         <ShipmentsSearchInput
           value={search}
@@ -37,7 +41,7 @@ export function ShipmentsPageToolbar({
           onClick={onAddShipment}
         >
           <Plus className="h-4 w-4" strokeWidth={2.5} aria-hidden />
-          Add New Shipment
+          {t('shipments.toolbar.addShipment')}
         </PrimaryButton>
       </div>
     </div>

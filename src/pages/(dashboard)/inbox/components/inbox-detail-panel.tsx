@@ -1,4 +1,5 @@
 import type { InboxEmail } from '@/data/mock/inbox'
+import { useI18n } from '@/i18n/useI18n'
 import { cn } from '@/lib/utils'
 
 import { InboxAttachmentsTable } from './inbox-attachments-table'
@@ -10,6 +11,7 @@ export type InboxDetailPanelProps = {
 }
 
 export function InboxDetailPanel({ email, className }: InboxDetailPanelProps) {
+  const { t } = useI18n()
   if (!email) {
     return (
       <section
@@ -19,10 +21,8 @@ export function InboxDetailPanel({ email, className }: InboxDetailPanelProps) {
         )}
       >
         <div>
-          <p className="text-base font-semibold text-rp-fg">Select a message</p>
-          <p className="mt-2 text-sm text-rp-muted">
-            Choose an email from the list to view details.
-          </p>
+          <p className="text-base font-semibold text-rp-fg">{t('inbox.detail.emptyTitle')}</p>
+          <p className="mt-2 text-sm text-rp-muted">{t('inbox.detail.emptyDescription')}</p>
         </div>
       </section>
     )
@@ -39,13 +39,16 @@ export function InboxDetailPanel({ email, className }: InboxDetailPanelProps) {
         <h1 className="text-xl font-bold text-rp-heading md:text-2xl">{email.subject}</h1>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-rp-muted">
           <span>
-            <span className="font-medium text-rp-fg">From:</span> {email.fromAddress}
+            <span className="font-medium text-rp-fg">{t('inbox.detail.from')}</span>{' '}
+            {email.fromAddress}
           </span>
           <span>
-            <span className="font-medium text-rp-fg">Received</span> {email.receivedDetail}
+            <span className="font-medium text-rp-fg">{t('inbox.detail.received')}</span>{' '}
+            {email.receivedDetail}
           </span>
           <span>
-            <span className="font-medium text-rp-fg">Domain:</span> {email.domain}
+            <span className="font-medium text-rp-fg">{t('inbox.detail.domain')}</span>{' '}
+            {email.domain}
           </span>
         </div>
       </header>
@@ -53,23 +56,29 @@ export function InboxDetailPanel({ email, className }: InboxDetailPanelProps) {
       <div className="rounded-xl border border-rp-border bg-rp-bg p-4 shadow-sm">
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="rounded-lg border border-rp-border bg-rp-surface/80 px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-rp-muted">Tenant</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-rp-muted">
+              {t('inbox.detail.tenant')}
+            </p>
             <p className="mt-1 text-sm font-medium text-rp-fg">{email.tenant}</p>
           </div>
           <div className="rounded-lg border border-rp-border bg-rp-surface/80 px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-rp-muted">Received</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-rp-muted">
+              {t('inbox.detail.received')}
+            </p>
             <p className="mt-1 text-sm font-medium text-rp-fg">{email.tenantReceivedAt}</p>
           </div>
         </div>
 
         <div className="mt-6">
-          <h2 className="mb-3 text-sm font-semibold text-rp-fg">Attachments</h2>
+          <h2 className="mb-3 text-sm font-semibold text-rp-fg">{t('inbox.detail.attachments')}</h2>
           <InboxAttachmentsTable attachments={email.attachments} />
         </div>
       </div>
 
       <div>
-        <h2 className="mb-3 text-base font-semibold text-rp-fg">Processed Shipments</h2>
+        <h2 className="mb-3 text-base font-semibold text-rp-fg">
+          {t('inbox.detail.processedShipments')}
+        </h2>
         <InboxProcessedShipmentsTable rows={email.shipments} />
       </div>
     </section>

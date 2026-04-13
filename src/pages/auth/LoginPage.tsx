@@ -8,10 +8,23 @@ import { LoginButton } from '@/components/buttons'
 import { InputField } from '@/components/fields'
 import { Card, CardContent } from '@/components/ui/card'
 import { useAuth } from '@/app/hooks/useAuth'
-import { getErrorMessage } from '@/lib/api-errors'
+import { useI18n } from '@/i18n/useI18n'
 import { isValidEmail, isValidPassword, PASSWORD_RULES_HINT } from '@/lib/validation'
 
+function getErrorMessage(err: unknown, fallback: string): string {
+  if (err && typeof err === 'object' && 'data' in err) {
+    const data = (err as { data?: unknown }).data
+    if (typeof data === 'object' && data !== null && 'message' in data) {
+      const m = (data as { message?: unknown }).message
+      if (typeof m === 'string' && m.length > 0) return m
+    }
+    if (typeof data === 'string' && data.length > 0) return data
+  }
+  return fallback
+}
+
 export function LoginPage() {
+  const { t } = useI18n()
   const navigate = useNavigate()
   const location = useLocation()
   const { isAuthenticated } = useAuth()
@@ -31,7 +44,7 @@ export function LoginPage() {
   const trimmedPassword = password.trim()
   const emailError =
     trimmedEmail.length > 0 && !isValidEmail(trimmedEmail)
-      ? 'Enter a valid email address.'
+      ? t('auth.login.enterValidEmail')
       : undefined
   const passwordError =
     trimmedPassword.length > 0 && !isValidPassword(trimmedPassword)
@@ -49,7 +62,7 @@ export function LoginPage() {
     setError(null)
 
     if (!isValidEmail(trimmedEmail) || !isValidPassword(trimmedPassword)) {
-      setError('Please correct the highlighted fields.')
+      setError(t('auth.login.fixFields'))
       return
     }
 
@@ -57,7 +70,7 @@ export function LoginPage() {
       await login({ email: trimmedEmail, password: trimmedPassword }).unwrap()
       navigate(from, { replace: true })
     } catch (err) {
-      setError(getErrorMessage(err, 'Invalid email or password.'))
+      setError(getErrorMessage(err, t('auth.login.invalidCredentials')))
     }
   }
 
@@ -69,8 +82,8 @@ export function LoginPage() {
       <CardContent className="flex flex-col gap-[10px] p-0">
         <div className="flex flex-col items-center gap-[10px] text-center">
           <AppLogo size="lg" />
-          <h1 className="text-2xl font-bold text-rp-heading">Recovery Platform</h1>
-          <p className="text-sm text-rp-description">Email Document Intake Platform</p>
+          <h1 className="text-2xl font-bold text-rp-heading">{t('auth.login.title')}</h1>
+          <p className="text-sm text-rp-description">{t('auth.login.subtitle')}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-[10px]">
@@ -78,10 +91,10 @@ export function LoginPage() {
             fieldType="email"
             id="email"
             name="email"
-            label="Email Address"
+            label={t('auth.login.emailLabel')}
             autoComplete="email"
             leftIcon={<Mail strokeWidth={2} />}
-            placeholder="Enter Email Address"
+            placeholder={t('auth.login.emailPlaceholder')}
             value={email}
             onChange={(e) => {
               setEmail(e.target.value.replace(/\s/g, ''))
@@ -96,12 +109,12 @@ export function LoginPage() {
               fieldType="password"
               id="password"
               name="password"
-              label="Password"
+              label={t('auth.login.passwordLabel')}
               description={PASSWORD_RULES_HINT}
               type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
               leftIcon={<KeyRound strokeWidth={2} />}
-              placeholder="Enter Password"
+              placeholder={t('auth.login.passwordPlaceholder')}
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value.trim())
@@ -114,7 +127,7 @@ export function LoginPage() {
                   type="button"
                   className="rounded p-1 text-rp-icon hover:bg-rp-accent/10"
                   onClick={() => setShowPassword((s) => !s)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? t('common.hidePassword') : t('common.showPassword')}
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
@@ -126,7 +139,7 @@ export function LoginPage() {
                 className="text-sm font-semibold text-rp-icon hover:underline"
                 onClick={() => navigate('/forgot-password')}
               >
-                Forgot Password?
+                {t('auth.login.forgotPassword')}
               </button>
             </div>
           </div>
@@ -138,7 +151,7 @@ export function LoginPage() {
           ) : null}
 
           <LoginButton type="submit" disabled={!canSubmit || isLoading}>
-            {isLoading ? 'Signing in…' : 'Login'}
+            {isLoading ? t('auth.login.signingIn') : t('auth.login.submit')}
           </LoginButton>
         </form>
       </CardContent>

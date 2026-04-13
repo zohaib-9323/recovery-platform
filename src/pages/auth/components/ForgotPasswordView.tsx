@@ -6,6 +6,7 @@ import { LoginButton } from '@/components/buttons'
 import { InputField } from '@/components/fields'
 import { SuccessPopup } from '@/components/popup'
 import { Card, CardContent } from '@/components/ui/card'
+import { useI18n } from '@/i18n/useI18n'
 
 type ForgotPasswordViewProps = {
   email: string
@@ -34,6 +35,7 @@ export function ForgotPasswordView({
   onSuccessAction,
   onSuccessClose,
 }: ForgotPasswordViewProps) {
+  const { t } = useI18n()
   return (
     <>
       <Card
@@ -43,10 +45,11 @@ export function ForgotPasswordView({
         <CardContent className="flex flex-col gap-4 p-0">
           <div className="flex flex-col items-center gap-3 text-center">
             <AppLogo size="lg" />
-            <h1 className="text-4xl font-bold leading-tight text-rp-heading">Forgot Password?</h1>
+            <h1 className="text-4xl font-bold leading-tight text-rp-heading">
+              {t('auth.forgot.title')}
+            </h1>
             <p className="max-w-[430px] text-base text-rp-description">
-              Enter the email you used to create your account so we can send you a link for
-              resetting your password.
+              {t('auth.forgot.description')}
             </p>
           </div>
 
@@ -61,10 +64,10 @@ export function ForgotPasswordView({
               fieldType="email"
               id="forgot-email"
               name="forgot-email"
-              label="Email Address"
+              label={t('auth.forgot.emailLabel')}
               autoComplete="email"
               leftIcon={<Mail strokeWidth={2} />}
-              placeholder="johndoe@email.com"
+              placeholder={t('auth.forgot.emailPlaceholder')}
               value={email}
               onChange={(e) => onEmailChange(e.target.value)}
               error={emailError}
@@ -78,14 +81,14 @@ export function ForgotPasswordView({
             ) : null}
 
             <LoginButton type="submit" disabled={!canSubmit || isLoading}>
-              {isLoading ? 'Sending...' : 'Send'}
+              {isLoading ? t('auth.forgot.sending') : t('auth.forgot.send')}
             </LoginButton>
           </form>
 
           <p className="text-sm text-rp-description">
-            Go back to login?{' '}
+            {t('auth.forgot.backToLogin')}{' '}
             <Link to="/login" className="font-semibold text-rp-heading hover:underline">
-              Login ↗
+              {t('auth.forgot.loginLink')}
             </Link>
           </p>
         </CardContent>
@@ -93,9 +96,9 @@ export function ForgotPasswordView({
 
       <SuccessPopup
         open={showSuccess}
-        title="Check Your Email!"
+        title={t('auth.forgot.popupTitle')}
         description={successDescription}
-        actionLabel="Resend Email"
+        actionLabel={t('auth.forgot.popupAction')}
         onAction={() => {
           void onSuccessAction()
         }}

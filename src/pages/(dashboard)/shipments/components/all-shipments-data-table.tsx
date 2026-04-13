@@ -6,6 +6,7 @@ import { CheckboxField } from '@/components/fields'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import type { ShipmentRow } from '@/data/mock/dashboard'
+import { useI18n } from '@/i18n/useI18n'
 import { cn } from '@/lib/utils'
 
 const thCell = 'bg-[#F1F1F1] px-4 py-3 text-left text-xs font-semibold text-[#666666] sm:px-6'
@@ -33,18 +34,19 @@ export function AllShipmentsDataTable({
   onToggleRow,
   className,
 }: AllShipmentsDataTableProps) {
+  const { t } = useI18n()
   return (
     <Card padding="none" className={cn('overflow-hidden border-rp-border shadow-sm', className)}>
       <CardContent className="p-0">
         <TableShell>
           <TableHeader>
             <tr>
-              <th className={cn(thCell, 'w-10 sm:w-12')} aria-label="Select" />
-              <th className={thCell}>Shipment Title</th>
-              <th className={thCell}>Date</th>
-              <th className={thCell}>Ship Via</th>
-              <th className={thCell}>PO #</th>
-              <th className={cn(thCell, 'text-right')}>Actions</th>
+              <th className={cn(thCell, 'w-10 sm:w-12')} aria-label={t('shipments.all.select')} />
+              <th className={thCell}>{t('shipments.all.col.title')}</th>
+              <th className={thCell}>{t('shipments.table.col.date')}</th>
+              <th className={thCell}>{t('shipments.all.col.shipVia')}</th>
+              <th className={thCell}>{t('shipments.table.col.po')}</th>
+              <th className={cn(thCell, 'text-right')}>{t('shipments.table.col.actions')}</th>
             </tr>
           </TableHeader>
           <TableListing>
@@ -52,7 +54,7 @@ export function AllShipmentsDataTable({
               <tr key={row.id} className="hover:bg-rp-surface/40">
                 <td className="px-4 py-3 sm:px-6">
                   <CheckboxField
-                    aria-label={`Select ${row.title}`}
+                    aria-label={t('shipments.all.selectRow', { title: row.title })}
                     checked={selectedIds.has(row.id)}
                     onChange={() => onToggleRow(row.id)}
                   />
@@ -67,7 +69,7 @@ export function AllShipmentsDataTable({
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
-                    aria-label="View"
+                    aria-label={t('common.view')}
                   >
                     <Eye className="h-4 w-4 text-rp-icon" />
                   </Button>

@@ -2,6 +2,7 @@ import { ChevronFirst, ChevronLast, ChevronLeft, ChevronRight } from 'lucide-rea
 
 import { Button } from '@/components/ui/button'
 import { DropdownField } from '@/components/fields'
+import { useI18n } from '@/i18n/useI18n'
 import { cn } from '@/lib/utils'
 
 export type TablePaginationProps = {
@@ -23,6 +24,7 @@ export function TablePagination({
   onPageSizeChange,
   className,
 }: TablePaginationProps) {
+  const { t } = useI18n()
   return (
     <div
       className={cn(
@@ -33,7 +35,7 @@ export function TablePagination({
       <DropdownField
         id="table-pagination-page-size"
         layout="inline"
-        label="Rows per page"
+        label={t('table.pagination.rowsPerPage')}
         labelClassName="shrink-0 text-sm font-normal text-rp-muted"
         options={pageSizes.map((n) => ({ value: String(n), label: String(n) }))}
         value={String(pageSize)}
@@ -42,7 +44,7 @@ export function TablePagination({
 
       <div className="flex items-center gap-2">
         <span className="text-sm text-rp-muted">
-          Page {page} of {pageCount}
+          {t('table.pagination.pageOf', { page, pageCount })}
         </span>
         <div className="flex items-center gap-0.5">
           <Button
@@ -52,7 +54,7 @@ export function TablePagination({
             className="h-8 w-8"
             disabled={page <= 1}
             onClick={() => onPageChange(1)}
-            aria-label="First page"
+            aria-label={t('table.pagination.firstPage')}
           >
             <ChevronFirst className="h-4 w-4" />
           </Button>
@@ -63,7 +65,7 @@ export function TablePagination({
             className="h-8 w-8"
             disabled={page <= 1}
             onClick={() => onPageChange(page - 1)}
-            aria-label="Previous page"
+            aria-label={t('table.pagination.previousPage')}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -74,7 +76,7 @@ export function TablePagination({
             className="h-8 w-8"
             disabled={page >= pageCount}
             onClick={() => onPageChange(page + 1)}
-            aria-label="Next page"
+            aria-label={t('table.pagination.nextPage')}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -85,7 +87,7 @@ export function TablePagination({
             className="h-8 w-8"
             disabled={page >= pageCount}
             onClick={() => onPageChange(pageCount)}
-            aria-label="Last page"
+            aria-label={t('table.pagination.lastPage')}
           >
             <ChevronLast className="h-4 w-4" />
           </Button>

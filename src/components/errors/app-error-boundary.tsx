@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 
+import { t } from '@/i18n/useI18n'
 import { reportRuntimeError } from '@/lib/error-reporting'
 
 type AppErrorBoundaryProps = {
@@ -28,7 +29,7 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
       return (
         <div className="m-6 rounded-lg border border-rp-border bg-rp-surface p-4">
           <p className="text-sm text-rp-fg" role="alert">
-            Something went wrong. Please refresh the page.
+            {t('errors.boundary.generic')}
           </p>
         </div>
       )
