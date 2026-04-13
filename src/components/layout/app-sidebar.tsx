@@ -3,8 +3,9 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 import { useAppSelector } from '@/app/redux-hooks'
 import { recoverySidebarItems } from '@/data/recovery-sidebar-items'
+import { t } from '@/i18n/useI18n'
 
-const BRAND = 'Trade Harmonizer'
+const BRAND = t('layout.brand')
 
 export function AppSidebar() {
   const navigate = useNavigate()
@@ -32,7 +33,7 @@ export function AppSidebar() {
           <div className="flex w-fit flex-shrink-0 items-center">
             <img
               src={`${process.env.PUBLIC_URL}/images/app-logo.svg`}
-              alt="Trade Harmonizer"
+              alt={t('layout.brand')}
               width={30}
               height={30}
               className="h-[30px] w-[30px] object-contain"

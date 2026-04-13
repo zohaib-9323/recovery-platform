@@ -9,8 +9,19 @@ import { InputField } from '@/components/fields'
 import { Card, CardContent } from '@/components/ui/card'
 import { useAuth } from '@/app/hooks/useAuth'
 import { useI18n } from '@/i18n/useI18n'
-import { getErrorMessage } from '@/lib/api-errors'
 import { isValidEmail, isValidPassword, PASSWORD_RULES_HINT } from '@/lib/validation'
+
+function getErrorMessage(err: unknown, fallback: string): string {
+  if (err && typeof err === 'object' && 'data' in err) {
+    const data = (err as { data?: unknown }).data
+    if (typeof data === 'object' && data !== null && 'message' in data) {
+      const m = (data as { message?: unknown }).message
+      if (typeof m === 'string' && m.length > 0) return m
+    }
+    if (typeof data === 'string' && data.length > 0) return data
+  }
+  return fallback
+}
 
 export function LoginPage() {
   const { t } = useI18n()
@@ -55,6 +66,7 @@ export function LoginPage() {
     setError(null)
 
     if (!isValidEmail(trimmedEmail) || !isValidPassword(trimmedPassword)) {
+      setError(t('auth.login.fixFields'))
       setError(t('auth.login.fixFields'))
       return
     }

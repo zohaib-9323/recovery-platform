@@ -8,8 +8,8 @@ import {
 import { useAppDispatch } from '@/app/redux-hooks'
 import { InputField } from '@/components/fields'
 import { Button } from '@/components/ui/button'
+import { useI18n } from '@/i18n/useI18n'
 import { getRtkErrorMessage } from '@/lib/api-errors'
-import { reportRuntimeError } from '@/lib/error-reporting'
 import type { RecoveryApiEnvelope, RecoveryUserProfile } from '@/types/recovery-user-api'
 
 import { buildProfilePatch, type ProfileFormValues } from './build-profile-patch'
@@ -17,11 +17,11 @@ import { buildProfilePatch, type ProfileFormValues } from './build-profile-patch
 const PLACEHOLDER_AVATAR = `${process.env.PUBLIC_URL}/images/no-profile.png`
 const MAX_IMAGE_BYTES = 1_500_000
 
-function fileToDataUrl(file: File): Promise<string> {
+function fileToDataUrl(file: File, t: (key: string) => string): Promise<string> {
   return new Promise((resolve, reject) => {
     const r = new FileReader()
     r.onload = () => resolve(String(r.result))
-    r.onerror = () => reject(new Error('Could not read file'))
+    r.onerror = () => reject(new Error(t('settings.edit.fileReadError')))
     r.readAsDataURL(file)
   })
 }
@@ -42,6 +42,7 @@ type EditProfileFormProps = {
 }
 
 function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfileFormProps) {
+  const { t } = useI18n()
   const dispatch = useAppDispatch()
   const fileRef = useRef<HTMLInputElement>(null)
   const [patchProfile, { isLoading: saving }] = usePatchRecoveryProfileMutation()
@@ -83,11 +84,11 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
     if (!file) return
     const okTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp']
     if (!okTypes.includes(file.type)) {
-      onBanner({ type: 'err', text: 'Please upload a JPEG, PNG, or WebP image.' })
+      onBanner({ type: 'err', text: t('settings.edit.uploadTypeError') })
       return
     }
     if (file.size > MAX_IMAGE_BYTES) {
-      onBanner({ type: 'err', text: 'Image is too large (max ~1.5MB).' })
+      onBanner({ type: 'err', text: t('settings.edit.uploadSizeError') })
       return
     }
     setPendingFile(file)
@@ -105,24 +106,23 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
     let profilePicPayload: string | null = null
     if (pendingFile) {
       try {
-        profilePicPayload = await fileToDataUrl(pendingFile)
-      } catch (error) {
-        reportRuntimeError('edit-profile:file-read', error)
-        onBanner({ type: 'err', text: 'Could not read the image. Try another file.' })
+        profilePicPayload = await fileToDataUrl(pendingFile, t)
+      } catch {
+        onBanner({ type: 'err', text: t('settings.edit.uploadReadError') })
         return
       }
     }
 
     const patch = buildProfilePatch(profile, form, pendingFile ? profilePicPayload : null)
     if (Object.keys(patch).length === 0) {
-      onBanner({ type: 'err', text: 'No changes to save.' })
+      onBanner({ type: 'err', text: t('settings.edit.noChanges') })
       return
     }
 
     try {
       const res = await patchProfile(patch).unwrap()
       if (res.status === false) {
-        onBanner({ type: 'err', text: res.message ?? 'Update failed.' })
+        onBanner({ type: 'err', text: res.message ?? t('settings.edit.updateFailed') })
         return
       }
       const next = res.content ?? profile
@@ -152,7 +152,8 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
           ...(headerPic ? { profilePic: headerPic } : {}),
         }),
       )
-      onBanner({ type: 'ok', text: res.message ?? 'Profile updated.' })
+      await refetch()
+      onBanner({ type: 'ok', text: res.message ?? t('settings.edit.updated') })
     } catch (err) {
       onBanner({ type: 'err', text: getRtkErrorMessage(err) })
     }
@@ -184,7 +185,7 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
             <label
               htmlFor={`rp-profile-pic-${formInstance}`}
               className="absolute bottom-1 right-0 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-rp-surface shadow"
-              aria-label="Change profile photo"
+              aria-label={t('settings.edit.changePhoto')}
             >
               <span className="icon-edit-pencil text-rp-fg" />
             </label>
@@ -196,7 +197,7 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
             fieldType="text"
             id="rp-first"
             name="firstName"
-            label="First name"
+            label={t('settings.edit.firstName')}
             value={form.firstName}
             onChange={(e) => updateField('firstName', e.target.value)}
             maxLength={80}
@@ -205,7 +206,7 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
             fieldType="text"
             id="rp-last"
             name="lastName"
-            label="Last name"
+            label={t('settings.edit.lastName')}
             value={form.lastName}
             onChange={(e) => updateField('lastName', e.target.value)}
             maxLength={80}
@@ -214,14 +215,14 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
             fieldType="text"
             id="rp-email"
             name="email"
-            label="Email"
+            label={t('settings.edit.email')}
             value={profile.email ?? ''}
             onChange={() => {}}
             disabled
           />
           <div className="flex flex-col gap-2">
             <label htmlFor="rp-dob" className="font-semibold text-rp-fg">
-              Date of birth
+              {t('settings.edit.dateOfBirth')}
             </label>
             <input
               id="rp-dob"
@@ -235,7 +236,7 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
             fieldType="text"
             id="rp-country"
             name="country"
-            label="Country"
+            label={t('settings.edit.country')}
             value={form.country}
             onChange={(e) => updateField('country', e.target.value)}
             maxLength={120}
@@ -244,7 +245,7 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
             fieldType="text"
             id="rp-city"
             name="city"
-            label="City"
+            label={t('settings.edit.city')}
             value={form.city}
             onChange={(e) => updateField('city', e.target.value)}
             maxLength={120}
@@ -254,7 +255,7 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
               fieldType="text"
               id="rp-phone"
               name="phone"
-              label="Phone"
+              label={t('settings.edit.phone')}
               placeholder="+447700900123"
               value={form.phone}
               onChange={(e) => updateField('phone', e.target.value)}
@@ -266,7 +267,7 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
 
       <div className="flex justify-end">
         <Button type="submit" disabled={saving || !hasUnsavedChanges}>
-          {saving ? 'Saving…' : 'Save changes'}
+          {saving ? t('common.saving') : t('common.saveChanges')}
         </Button>
       </div>
     </form>
@@ -274,6 +275,7 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
 }
 
 export function EditProfileTab() {
+  const { t } = useI18n()
   const { data, isLoading, isFetching, error, refetch, fulfilledTimeStamp } =
     useGetRecoveryProfileQuery()
   const instanceKey = fulfilledTimeStamp ?? 0
@@ -285,13 +287,13 @@ export function EditProfileTab() {
   if (error) {
     return (
       <p className="text-sm text-red-600" role="alert">
-        Could not load your profile. Please refresh the page.
+        {t('settings.edit.loadError')}
       </p>
     )
   }
 
   if (loading || !profile) {
-    return <p className="text-sm text-rp-muted">Loading profile…</p>
+    return <p className="text-sm text-rp-muted">{t('settings.edit.loading')}</p>
   }
 
   return (

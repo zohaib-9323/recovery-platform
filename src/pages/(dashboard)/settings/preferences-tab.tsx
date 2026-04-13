@@ -6,6 +6,7 @@ import {
 } from '@/app/services/recoveryApi'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { useI18n } from '@/i18n/useI18n'
 import { getRtkErrorMessage } from '@/lib/api-errors'
 import { listTimezones } from '@/lib/timezones'
 import type { RecoveryPreferences } from '@/types/recovery-user-api'
@@ -20,6 +21,7 @@ type PreferencesFormProps = {
 }
 
 function PreferencesForm({ baseline, instanceKey }: PreferencesFormProps) {
+  const { t } = useI18n()
   const [postPreferences, { isLoading: saving }] = usePostRecoveryPreferencesMutation()
 
   const [currency, setCurrency] = useState(baseline.currency ?? '')
@@ -35,7 +37,7 @@ function PreferencesForm({ baseline, instanceKey }: PreferencesFormProps) {
     e.preventDefault()
     setBanner(null)
     if (!currency.trim() || !timezone.trim()) {
-      setBanner({ type: 'err', text: 'Select both currency and timezone.' })
+      setBanner({ type: 'err', text: t('settings.preferences.requireBoth') })
       return
     }
     try {
@@ -44,10 +46,10 @@ function PreferencesForm({ baseline, instanceKey }: PreferencesFormProps) {
         timezone: timezone.trim(),
       }).unwrap()
       if (res.status === false) {
-        setBanner({ type: 'err', text: res.message ?? 'Could not save preferences.' })
+        setBanner({ type: 'err', text: res.message ?? t('settings.preferences.saveFailed') })
         return
       }
-      setBanner({ type: 'ok', text: res.message ?? 'Preferences saved.' })
+      setBanner({ type: 'ok', text: res.message ?? t('settings.preferences.saved') })
     } catch (err) {
       setBanner({ type: 'err', text: getRtkErrorMessage(err) })
     }
@@ -55,7 +57,7 @@ function PreferencesForm({ baseline, instanceKey }: PreferencesFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="flex max-w-3xl flex-col gap-6">
-      <h2 className="text-lg font-semibold text-rp-fg">Preferences</h2>
+      <h2 className="text-lg font-semibold text-rp-fg">{t('settings.preferences.title')}</h2>
       {banner ? (
         <p
           role={banner.type === 'err' ? 'alert' : 'status'}
@@ -67,7 +69,7 @@ function PreferencesForm({ baseline, instanceKey }: PreferencesFormProps) {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="flex flex-col gap-2">
-          <Label htmlFor={`rp-currency-${instanceKey}`}>Currency</Label>
+          <Label htmlFor={`rp-currency-${instanceKey}`}>{t('settings.preferences.currency')}</Label>
           <select
             id={`rp-currency-${instanceKey}`}
             value={currency}
@@ -77,7 +79,7 @@ function PreferencesForm({ baseline, instanceKey }: PreferencesFormProps) {
             }}
             className="h-11 w-full rounded-[10px] border border-rp-border bg-rp-input px-3 text-sm text-rp-fg focus:outline-none focus:ring-2 focus:ring-rp-accent"
           >
-            <option value="">Select currency</option>
+            <option value="">{t('settings.preferences.currencyPlaceholder')}</option>
             {CURRENCY_OPTIONS.map((c) => (
               <option key={c} value={c}>
                 {c}
@@ -86,7 +88,7 @@ function PreferencesForm({ baseline, instanceKey }: PreferencesFormProps) {
           </select>
         </div>
         <div className="flex flex-col gap-2">
-          <Label htmlFor={`rp-tz-${instanceKey}`}>Timezone</Label>
+          <Label htmlFor={`rp-tz-${instanceKey}`}>{t('settings.preferences.timezone')}</Label>
           <select
             id={`rp-tz-${instanceKey}`}
             value={timezone}
@@ -96,7 +98,7 @@ function PreferencesForm({ baseline, instanceKey }: PreferencesFormProps) {
             }}
             className="h-11 w-full max-w-full rounded-[10px] border border-rp-border bg-rp-input px-3 text-sm text-rp-fg focus:outline-none focus:ring-2 focus:ring-rp-accent"
           >
-            <option value="">Select timezone</option>
+            <option value="">{t('settings.preferences.timezonePlaceholder')}</option>
             {tzOptions.map((z) => (
               <option key={z} value={z}>
                 {z}
@@ -108,7 +110,7 @@ function PreferencesForm({ baseline, instanceKey }: PreferencesFormProps) {
 
       <div className="flex justify-end">
         <Button type="submit" disabled={saving || !dirty}>
-          {saving ? 'Saving…' : 'Save changes'}
+          {saving ? t('common.saving') : t('common.saveChanges')}
         </Button>
       </div>
     </form>
@@ -116,6 +118,7 @@ function PreferencesForm({ baseline, instanceKey }: PreferencesFormProps) {
 }
 
 export function PreferencesTab() {
+  const { t } = useI18n()
   const { data, isLoading, isFetching, error, fulfilledTimeStamp } =
     useGetRecoveryPreferencesQuery()
   const baseline = data?.content ?? {}
@@ -125,13 +128,13 @@ export function PreferencesTab() {
   if (error) {
     return (
       <p className="text-sm text-red-600" role="alert">
-        Could not load preferences.
+        {t('settings.preferences.loadError')}
       </p>
     )
   }
 
   if (loading) {
-    return <p className="text-sm text-rp-muted">Loading preferences…</p>
+    return <p className="text-sm text-rp-muted">{t('settings.preferences.loading')}</p>
   }
 
   return <PreferencesForm key={instanceKey} baseline={baseline} instanceKey={instanceKey} />

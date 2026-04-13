@@ -1,5 +1,6 @@
 import { useSearchParams } from 'react-router-dom'
 
+import { useI18n } from '@/i18n/useI18n'
 import { cn } from '@/lib/utils'
 
 import { DeleteAccountTab } from './delete-account-tab'
@@ -16,6 +17,7 @@ function parseTab(raw: string | null): SettingsTabId {
 }
 
 export function SettingsPage() {
+  const { t } = useI18n()
   const [searchParams, setSearchParams] = useSearchParams()
   const active = parseTab(searchParams.get('tab'))
 
@@ -31,7 +33,7 @@ export function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-base font-semibold text-rp-fg sm:text-lg">Profile settings</h1>
+      <h1 className="text-base font-semibold text-rp-fg sm:text-lg">{t('settings.pageTitle')}</h1>
 
       <div className="flex flex-wrap gap-2 rounded-lg bg-white p-3 shadow-[0px_4px_16px_0px_#4C67641A] sm:p-4">
         {SETTINGS_TABS.map(({ id, label, icon }) => {

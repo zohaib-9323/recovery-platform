@@ -1,1 +1,2 @@
-npm run test:ci
+#!/usr/bin/env sh
+npm run verify

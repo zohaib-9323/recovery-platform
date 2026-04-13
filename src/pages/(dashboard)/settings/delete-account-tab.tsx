@@ -5,11 +5,13 @@ import { usePostRecoveryDeleteRequestMutation } from '@/app/services/recoveryApi
 import { useAuth } from '@/app/hooks/useAuth'
 import { InputField } from '@/components/fields'
 import { Button } from '@/components/ui/button'
+import { useI18n } from '@/i18n/useI18n'
 import { getRtkErrorMessage } from '@/lib/api-errors'
 
 import { LEAVING_REASONS } from './settings-constants'
 
 export function DeleteAccountTab() {
+  const { t } = useI18n()
   const { user } = useAuth()
   const [postDelete, { isLoading }] = usePostRecoveryDeleteRequestMutation()
 
@@ -34,8 +36,8 @@ export function DeleteAccountTab() {
         type: 'err',
         text:
           reasonIndex === LEAVING_REASONS.length - 1 && !customReason.trim()
-            ? 'Please describe your reason.'
-            : 'Enter your password to continue.',
+            ? t('settings.delete.describeReason')
+            : t('settings.delete.enterPassword'),
       })
       return
     }
@@ -50,7 +52,7 @@ export function DeleteAccountTab() {
         reason: resolvedReason,
       }).unwrap()
       if (res.status === false) {
-        setBanner({ type: 'err', text: res.message ?? 'Request failed.' })
+        setBanner({ type: 'err', text: res.message ?? t('settings.delete.requestFailed') })
         setConfirmOpen(false)
         return
       }
@@ -68,9 +70,9 @@ export function DeleteAccountTab() {
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-rp-success text-white">
           <span className="icon-tick text-2xl" aria-hidden />
         </div>
-        <h2 className="text-lg font-semibold text-rp-fg">Deletion request received</h2>
+        <h2 className="text-lg font-semibold text-rp-fg">{t('settings.delete.requestReceived')}</h2>
         <p className="max-w-md text-sm text-rp-muted">
-          Your request will be reviewed. You will be contacted if we need more information.
+          {t('settings.delete.requestReceivedDescription')}
         </p>
       </div>
     )
@@ -78,7 +80,7 @@ export function DeleteAccountTab() {
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">
-      <h2 className="text-lg font-semibold text-rp-fg">Delete account</h2>
+      <h2 className="text-lg font-semibold text-rp-fg">{t('settings.delete.title')}</h2>
       {banner ? (
         <p
           role={banner.type === 'err' ? 'alert' : 'status'}
@@ -89,13 +91,17 @@ export function DeleteAccountTab() {
       ) : null}
 
       <p className="text-sm text-rp-fg">
-        This will request deletion of the account for{' '}
-        <span className="font-semibold text-yellow">{user?.email ?? 'your email'}</span>. Some data
-        may be retained where required by law.
+        {t('settings.delete.summaryPrefix')}{' '}
+        <span className="font-semibold text-yellow">
+          {user?.email ?? t('settings.delete.summaryFallbackEmail')}
+        </span>
+        {t('settings.delete.summarySuffix')}
       </p>
 
       <div>
-        <h3 className="mb-3 text-base font-semibold text-rp-fg">Why are you leaving?</h3>
+        <h3 className="mb-3 text-base font-semibold text-rp-fg">
+          {t('settings.delete.whyLeaving')}
+        </h3>
         <div className="flex flex-col gap-3">
           {LEAVING_REASONS.map((label, index) => (
             <button
@@ -125,7 +131,7 @@ export function DeleteAccountTab() {
         {reasonIndex === LEAVING_REASONS.length - 1 ? (
           <textarea
             className="mt-3 min-h-[100px] w-full rounded-[10px] border border-rp-border bg-rp-input p-3 text-sm text-rp-fg focus:outline-none focus:ring-2 focus:ring-rp-accent"
-            placeholder="Tell us more…"
+            placeholder={t('settings.delete.customReasonPlaceholder')}
             value={customReason}
             onChange={(e) => {
               setCustomReason(e.target.value)
@@ -139,7 +145,7 @@ export function DeleteAccountTab() {
         fieldType="password"
         id="rp-del-pw"
         name="password"
-        label="Current password"
+        label={t('settings.delete.currentPassword')}
         autoComplete="current-password"
         leftIcon={<KeyRound strokeWidth={2} />}
         value={password}
@@ -151,7 +157,7 @@ export function DeleteAccountTab() {
 
       <div className="flex justify-end">
         <Button type="button" variant="destructive" onClick={handleRequestClick}>
-          Delete account
+          {t('settings.delete.requestButton')}
         </Button>
       </div>
 
@@ -160,7 +166,7 @@ export function DeleteAccountTab() {
           <button
             type="button"
             className="absolute inset-0 bg-black/40"
-            aria-label="Close dialog"
+            aria-label={t('settings.delete.confirmCloseDialog')}
             disabled={isLoading}
             onClick={() => setConfirmOpen(false)}
           />
@@ -171,11 +177,9 @@ export function DeleteAccountTab() {
             className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl"
           >
             <h2 id="del-confirm-title" className="text-lg font-semibold text-rp-fg">
-              Send deletion request?
+              {t('settings.delete.confirmTitle')}
             </h2>
-            <p className="mt-2 text-sm text-rp-muted">
-              This submits a request to close your account. You can cancel from this dialog.
-            </p>
+            <p className="mt-2 text-sm text-rp-muted">{t('settings.delete.confirmDescription')}</p>
             <div className="mt-6 flex justify-end gap-2">
               <Button
                 type="button"
@@ -183,7 +187,7 @@ export function DeleteAccountTab() {
                 disabled={isLoading}
                 onClick={() => setConfirmOpen(false)}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button
                 type="button"
@@ -191,7 +195,7 @@ export function DeleteAccountTab() {
                 disabled={isLoading}
                 onClick={submitDelete}
               >
-                {isLoading ? 'Sending…' : 'Send request'}
+                {isLoading ? t('settings.delete.sending') : t('settings.delete.sendRequest')}
               </Button>
             </div>
           </div>

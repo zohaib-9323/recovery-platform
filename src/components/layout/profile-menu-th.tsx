@@ -5,6 +5,7 @@ import { logout } from '@/app/features/auth/authSlice'
 import { useGetRecoveryProfileQuery } from '@/app/services/recoveryApi'
 import { useAuth } from '@/app/hooks/useAuth'
 import { useAppDispatch } from '@/app/redux-hooks'
+import { useI18n } from '@/i18n/useI18n'
 
 const defaultAvatar = `${process.env.PUBLIC_URL}/images/no-profile.png`
 
@@ -15,6 +16,7 @@ type ProfileMenuThProps = {
 }
 
 export function ProfileMenuTh({ avatarUrl, name, email }: ProfileMenuThProps) {
+  const { t } = useI18n()
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const { isAuthenticated } = useAuth()
@@ -45,13 +47,12 @@ export function ProfileMenuTh({ avatarUrl, name, email }: ProfileMenuThProps) {
         onClick={() => setOpen((o) => !o)}
         className="flex items-center space-x-2 focus:outline-none"
         aria-expanded={open}
-        aria-label="Open profile menu"
+        aria-label={t('layout.profileMenu.openMenu')}
       >
         <img
           key={resolvedSrc}
           src={resolvedSrc}
-          alt=""
-          role="presentation"
+          alt={t('layout.profileMenu.avatarAlt')}
           width={40}
           height={40}
           className="h-10 w-10 rounded-full border-2 border-lightYellowThree object-cover"
@@ -74,7 +75,7 @@ export function ProfileMenuTh({ avatarUrl, name, email }: ProfileMenuThProps) {
               navigate('/settings')
             }}
           >
-            Settings
+            {t('layout.profileMenu.settings')}
           </button>
           <button
             type="button"
@@ -85,7 +86,7 @@ export function ProfileMenuTh({ avatarUrl, name, email }: ProfileMenuThProps) {
               navigate('/login')
             }}
           >
-            Sign out
+            {t('layout.profileMenu.signOut')}
           </button>
         </div>
       ) : null}
