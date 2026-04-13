@@ -13,4 +13,8 @@ function requireEnv(name: string): string {
 export const env = {
   apiBaseUrl: requireEnv('REACT_APP_API_BASE_URL'),
   appName: process.env.REACT_APP_APP_NAME ?? 'Recovery Platform',
+  mainSiteUrl: process.env.REACT_APP_MAIN_SITE_URL ?? 'https://dev.tradeharmonizer.co.uk',
+  tenantValidatePath: process.env.REACT_APP_TENANT_VALIDATE_PATH ?? '/tenants/validate',
+  recoveryTenantValidatePath:
+    process.env.REACT_APP_RECOVERY_TENANT_VALIDATE_PATH ?? '/recovery/tenants/validate',
 } as const
