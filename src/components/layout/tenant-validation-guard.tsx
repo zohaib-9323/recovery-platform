@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
 
+import { useI18n } from '@/i18n/useI18n'
 import { env } from '@/utils/env'
 
 type TenantThemeData = {
@@ -200,11 +201,13 @@ async function validateTenantSubdomain(subdomain: string): Promise<TenantValidat
 }
 
 function ValidationLoader() {
+  const { t } = useI18n()
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-rp-bg">
       <div className="flex flex-col items-center gap-4 text-rp-fg">
         <div className="h-10 w-10 animate-spin rounded-full border-2 border-rp-border border-t-rp-accent" />
-        <p className="text-sm font-medium">Validating white label domain...</p>
+        <p className="text-sm font-medium">{t('auth.tenantValidation.validating')}</p>
       </div>
     </div>
   )

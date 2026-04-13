@@ -1,9 +1,11 @@
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
+import { useI18n } from '@/i18n/useI18n'
 import { env } from '@/utils/env'
 
 export function InvalidSubdomainPage() {
+  const { t } = useI18n()
   const [searchParams] = useSearchParams()
 
   const subdomain = searchParams.get('subdomain')
@@ -11,11 +13,11 @@ export function InvalidSubdomainPage() {
 
   const title = useMemo(() => {
     if (!subdomain) {
-      return "This site can't be reached"
+      return t('auth.invalidSubdomain.defaultTitle')
     }
 
-    return `Subdomain '${subdomain}' is not available`
-  }, [subdomain])
+    return t('auth.invalidSubdomain.unavailableTitle', { subdomain })
+  }, [subdomain, t])
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-rp-bg px-4 py-12">
@@ -34,7 +36,7 @@ export function InvalidSubdomainPage() {
         <h1 className="text-center text-2xl font-semibold text-rp-heading">{title}</h1>
 
         <p className="mt-4 text-center text-sm text-rp-muted">
-          Please check the URL and try again, or continue to the main site.
+          {t('auth.invalidSubdomain.description')}
         </p>
 
         <div className="mt-8 flex justify-center">
@@ -42,7 +44,7 @@ export function InvalidSubdomainPage() {
             href={redirectUrl}
             className="inline-flex items-center justify-center rounded-[10px] bg-rp-accent px-5 py-2.5 text-sm font-semibold text-white hover:bg-rp-accent-dark"
           >
-            Go to Main Site
+            {t('auth.invalidSubdomain.goToMainSite')}
           </a>
         </div>
       </div>

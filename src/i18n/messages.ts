@@ -71,6 +71,12 @@ export const messages: Record<string, string> = {
   'auth.reset.popupTitle': 'Password Reset Successfully!',
   'auth.reset.popupDescription': 'Login to your account with your new password.',
   'auth.reset.popupAction': 'Login',
+  'auth.invalidSubdomain.defaultTitle': "This site can't be reached",
+  'auth.invalidSubdomain.unavailableTitle': "Subdomain '{{subdomain}}' is not available",
+  'auth.invalidSubdomain.description':
+    'Please check the URL and try again, or continue to the main site.',
+  'auth.invalidSubdomain.goToMainSite': 'Go to Main Site',
+  'auth.tenantValidation.validating': 'Validating white label domain...',
   'settings.pageTitle': 'Profile settings',
   'settings.delete.requestReceived': 'Deletion request received',
   'settings.delete.requestReceivedDescription':
