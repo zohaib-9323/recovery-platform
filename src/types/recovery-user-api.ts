@@ -48,3 +48,22 @@ export type RecoveryChangePasswordBody = {
   newPassword: string
   confirmPassword: string
 }
+
+export type RecoveryTenantTheme = {
+  _id: string
+  subdomain: string
+  name: string
+  primaryColor: string
+  secondaryColor: string
+  textOnPrimaryColor: string
+  logoUrl?: string
+  status?: string
+}
+
+export type ValidateTenantQuery = {
+  tenant: string
+}
+
+export type ValidateTenantContent = {
+  data: RecoveryTenantTheme
+}

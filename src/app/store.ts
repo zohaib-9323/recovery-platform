@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit'
 
 import authReducer from '@/app/features/auth/authSlice'
+import tenantThemeReducer from '@/app/features/tenant/tenantThemeSlice'
 import { buildAuthPreload } from '@/app/authPreload'
 import { recoveryApi } from '@/app/services/recoveryApi'
 import sideBarReducer from '@/app/features/ui/sideBarSlice'
@@ -11,6 +12,7 @@ const authPreload = buildAuthPreload()
 export const store = configureStore({
   reducer: {
     auth: authReducer,
+    tenantTheme: tenantThemeReducer,
     sideBar: sideBarReducer,
     [recoveryApi.reducerPath]: recoveryApi.reducer,
   },

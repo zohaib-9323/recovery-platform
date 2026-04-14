@@ -7,7 +7,7 @@ import type { InboxShipmentRow } from '@/data/mock/inbox'
 import { useI18n } from '@/i18n/useI18n'
 import { cn } from '@/lib/utils'
 
-const thCell = 'bg-[#F1F1F1] px-4 py-3 text-left text-xs font-semibold text-[#666666] sm:px-6'
+const thCell = 'px-4 py-3 text-left text-xs font-semibold text-rp-muted sm:px-6'
 
 export type InboxProcessedShipmentsTableProps = {
   rows: InboxShipmentRow[]

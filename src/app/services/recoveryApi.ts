@@ -19,7 +19,10 @@ import type {
   RecoveryPreferences,
   RecoveryPreferencesBody,
   RecoveryProfilePatchBody,
+  RecoveryTenantTheme,
   RecoveryUserProfile,
+  ValidateTenantQuery,
+  ValidateTenantContent,
 } from '@/types/recovery-user-api'
 import { env } from '@/utils/env'
 
@@ -166,6 +169,29 @@ export const recoveryApi = createApi({
         body,
       }),
     }),
+    validateTenantSubdomain: builder.query<
+      RecoveryApiEnvelope<ValidateTenantContent>,
+      ValidateTenantQuery
+    >({
+      query: ({ tenant }) => ({
+        url: '/recovery/tenants/validate',
+        method: 'GET',
+        params: { tenant },
+      }),
+      transformResponse: (response: RecoveryApiEnvelope<ValidateTenantContent>) => {
+        const tenantData = response.content?.data
+        if (!tenantData) return response
+
+        return {
+          ...response,
+          content: {
+            data: {
+              ...tenantData,
+            } as RecoveryTenantTheme,
+          },
+        }
+      },
+    }),
   }),
 })
 
@@ -179,4 +205,5 @@ export const {
   usePostRecoveryPreferencesMutation,
   usePostRecoveryDeleteRequestMutation,
   usePostRecoveryChangePasswordMutation,
+  useLazyValidateTenantSubdomainQuery,
 } = recoveryApi
