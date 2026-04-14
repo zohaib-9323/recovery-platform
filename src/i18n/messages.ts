@@ -184,6 +184,11 @@ export const messages: Record<string, string> = {
   'table.pagination.previousPage': 'Back',
   'table.pagination.nextPage': 'Next',
   'table.pagination.lastPage': 'Last',
+  'tenant.invalid.title': "This site can't be reached",
+  'tenant.invalid.subdomainMessage': 'The subdomain {{subdomain}} is not available.',
+  'tenant.invalid.defaultMessage': 'Please check the URL and try again, or visit our main site.',
+  'tenant.invalid.goToMainSite': 'Go to Main Site',
+  'tenant.invalid.contactSupport': 'If you believe this is an error, please contact support.',
   'popup.closeOverlay': 'Close popup overlay',
   'popup.close': 'Close popup',
 }

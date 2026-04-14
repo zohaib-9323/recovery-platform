@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+import { useI18n } from '@/i18n/useI18n'
 
 type InvalidSubdomainPageProps = {
   subdomain?: string
@@ -9,6 +10,8 @@ export const InvalidSubdomainPage: FC<InvalidSubdomainPageProps> = ({
   subdomain,
   redirectUrl = 'https://develop.d2nchgv6eu8hvr.amplifyapp.com/',
 }) => {
+  const { t } = useI18n()
+
   const handleRedirect = () => {
     window.location.href = redirectUrl
   }
@@ -33,16 +36,13 @@ export const InvalidSubdomainPage: FC<InvalidSubdomainPageProps> = ({
             </svg>
           </div>
 
-          <h1 className="mb-4 text-3xl font-bold text-gray-900">This site can&apos;t be reached</h1>
+          <h1 className="mb-4 text-3xl font-bold text-gray-900">{t('tenant.invalid.title')}</h1>
 
           <div className="mb-8 text-lg text-gray-600">
             {subdomain ? (
-              <p>
-                The subdomain <span className="font-semibold text-red-600">{subdomain}</span> is not
-                available.
-              </p>
+              <p>{t('tenant.invalid.subdomainMessage', { subdomain })}</p>
             ) : (
-              <p>Please check the URL and try again, or visit our main site.</p>
+              <p>{t('tenant.invalid.defaultMessage')}</p>
             )}
           </div>
 
@@ -52,12 +52,12 @@ export const InvalidSubdomainPage: FC<InvalidSubdomainPageProps> = ({
               onClick={handleRedirect}
               className="flex w-full justify-center rounded-md border border-transparent bg-blue-600 px-4 py-3 text-sm font-medium text-white shadow-sm transition-colors duration-200 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              Go to Main Site
+              {t('tenant.invalid.goToMainSite')}
             </button>
           </div>
 
           <div className="mt-8 text-sm text-gray-500">
-            <p>If you believe this is an error, please contact support.</p>
+            <p>{t('tenant.invalid.contactSupport')}</p>
           </div>
         </div>
       </div>
