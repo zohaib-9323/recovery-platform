@@ -10,9 +10,33 @@ import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
-const isWin = process.platform === 'win32'
-const npm = isWin ? 'npm.cmd' : 'npm'
+const npmExecPath = process.env.npm_execpath
 const skipTrivy = ['1', 'true', 'yes'].includes((process.env.SKIP_TRIVY || '').toLowerCase())
+
+function runNpm(args) {
+  if (npmExecPath) {
+    return spawnSync(process.execPath, [npmExecPath, ...args], {
+      cwd: root,
+      stdio: 'inherit',
+      env: process.env,
+    })
+  }
+
+  if (process.platform === 'win32') {
+    return spawnSync('npm', args, {
+      cwd: root,
+      stdio: 'inherit',
+      env: process.env,
+      shell: true,
+    })
+  }
+
+  return spawnSync('npm', args, {
+    cwd: root,
+    stdio: 'inherit',
+    env: process.env,
+  })
+}
 
 const checks = [
   {
@@ -69,17 +93,18 @@ for (const check of checks) {
 
   console.log(`- ${check.name}`)
   console.log(`  ${check.detail}\n`)
-  const run = spawnSync(npm, check.args, {
-    cwd: root,
-    stdio: 'inherit',
-    env: process.env,
-  })
-  const ok = run.status === 0
+  const run = runNpm(check.args)
+  if (run.error) {
+    console.error(`Command failed to start: ${check.detail}`)
+    console.error(run.error.message)
+  }
+  const status = run.status ?? (run.error ? 1 : 0)
+  const ok = status === 0
   results.push({
     name: check.name,
     ok,
     skipped: false,
-    status: run.status ?? 1,
+    status,
     detail: check.detail,
   })
 }

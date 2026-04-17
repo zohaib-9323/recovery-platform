@@ -18,8 +18,8 @@
     "i18n:audit": "node scripts/audit-hardcoded-text.mjs",
     "i18n:audit:strict": "node scripts/audit-hardcoded-text.mjs --fail-on-findings",
     "i18n:baseline:update": "node scripts/audit-hardcoded-text.mjs --update-baseline",
-    "test:ci": "CI=true craco test --watchAll=false",
-    "security:trivy": "sh scripts/trivy-fs.sh",
+    "test:ci": "cross-env CI=true craco test --watchAll=false",
+    "security:trivy": "trivy fs --scanners vuln --severity CRITICAL --exit-code 1 --skip-dirs node_modules,build,dist,coverage,.git .",
     "trivy:scan": "trivy fs --config trivy.yaml --scanners vuln,secret --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL .",
     "security:audit": "npm audit --audit-level=high",
     "prepare": "husky"
@@ -58,6 +58,7 @@
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "autoprefixer": "^10.4.20",
+    "cross-env": "^7.0.3",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jsx-a11y": "^6.10.2",
@@ -77,8 +78,7 @@
     "@tootallnate/once": "^3.0.1",
     "nth-check": "^2.1.1",
     "serialize-javascript": "^7.0.0",
-    "underscore": "^1.13.7",
-    "webpack-dev-server": "^5.2.2"
+    "underscore": "^1.13.7"
   },
   "browserslist": {
     "production": [

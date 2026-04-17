@@ -7,7 +7,9 @@ import { DashboardLayout } from '@/components/layout/dashboard-layout'
 import { GuestRoute } from '@/components/layout/guest-route'
 import { ProtectedRoute } from '@/components/layout/protected-route'
 import { RootRedirect } from '@/components/layout/root-redirect'
+import { TenantValidationGuard } from '@/components/layout/tenant-validation-guard'
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
+import { InvalidSubdomainPage } from '@/pages/auth/InvalidSubdomainPage'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
 import { DashboardHomePage } from '@/pages/(dashboard)/home/DashboardHomePage'
@@ -25,28 +27,32 @@ export function AppRouter() {
     <BrowserRouter>
       <SessionRefreshBoundary>
         <Routes>
-          <Route path="/" element={<RootRedirect />} />
+          <Route path="/invalid-subdomain" element={<InvalidSubdomainPage />} />
 
-          <Route element={<GuestRoute />}>
-            <Route element={<AuthLayout />}>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route element={<TenantValidationGuard />}>
+            <Route path="/" element={<RootRedirect />} />
+
+            <Route element={<GuestRoute />}>
+              <Route element={<AuthLayout />}>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+              </Route>
             </Route>
-          </Route>
 
-          <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard/shipments" element={<Navigate to="/shipments" replace />} />
-            <Route path="/dashboard/inbox" element={<Navigate to="/inbox" replace />} />
-            <Route element={<DashboardLayout />}>
-              <Route path="/dashboard" element={<DashboardHomePage />} />
-              <Route path="/shipments" element={<AllShipmentsPage />} />
-              <Route path="/inbox" element={<InboxPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard/shipments" element={<Navigate to="/shipments" replace />} />
+              <Route path="/dashboard/inbox" element={<Navigate to="/inbox" replace />} />
+              <Route element={<DashboardLayout />}>
+                <Route path="/dashboard" element={<DashboardHomePage />} />
+                <Route path="/shipments" element={<AllShipmentsPage />} />
+                <Route path="/inbox" element={<InboxPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+              </Route>
             </Route>
-          </Route>
 
-          <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
         </Routes>
       </SessionRefreshBoundary>
     </BrowserRouter>

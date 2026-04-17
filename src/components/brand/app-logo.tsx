@@ -1,7 +1,6 @@
-import { useAppSelector } from '@/app/redux-hooks'
-import { resolveTenantLogoUrl } from '@/lib/tenantTheme'
 import { cn } from '@/lib/utils'
-import { t } from '@/i18n/useI18n'
+
+const DEFAULT_LOGO_SRC = `${process.env.PUBLIC_URL}/images/app-logo.svg`
 
 type AppLogoProps = {
   className?: string
@@ -10,16 +9,27 @@ type AppLogoProps = {
 
 const sizeMap = { sm: 40, md: 56, lg: 72 }
 
-/** Product logo from `public/images/app-logo.svg` */
+/**
+ * Product logo — shows the tenant's custom logo when a white-label
+ * theme is active, otherwise falls back to the default app logo.
+ *
+ * The tenant logo URL is stored on `document.documentElement.dataset.tenantLogo`
+ * by `applyTenantTheme()` in the `TenantValidationGuard`.
+ */
 export function AppLogo({ className, size = 'md' }: AppLogoProps) {
-  const tenantLogoUrl = useAppSelector((state) => state.tenantTheme.tenant?.logoUrl)
-  const logoSrc = resolveTenantLogoUrl(tenantLogoUrl)
+  const tenantLogo =
+    typeof document !== 'undefined' ? document.documentElement.dataset.tenantLogo : undefined
+  const tenantName =
+    typeof document !== 'undefined' ? document.documentElement.dataset.tenantName : undefined
+
+  const logoSrc = tenantLogo?.trim() || DEFAULT_LOGO_SRC
+  const alt = tenantName?.trim() || 'Trade Harmonizer'
 
   if (size === 'header') {
     return (
       <img
         src={logoSrc}
-        alt={t('layout.brand')}
+        alt={alt}
         className={cn('h-9 w-auto max-h-10 shrink-0 object-contain object-left md:h-10', className)}
       />
     )
@@ -28,7 +38,7 @@ export function AppLogo({ className, size = 'md' }: AppLogoProps) {
   return (
     <img
       src={logoSrc}
-      alt={t('layout.brand')}
+      alt={alt}
       width={px}
       height={px}
       className={cn('shrink-0 object-contain object-left', className)}

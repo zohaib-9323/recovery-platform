@@ -57,11 +57,16 @@ export function LoginPage() {
     isValidEmail(trimmedEmail) &&
     isValidPassword(trimmedPassword)
 
+  const tenantName =
+    (typeof document !== 'undefined' ? document.documentElement.dataset.tenantName : undefined) ??
+    t('auth.login.title')
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError(null)
 
     if (!isValidEmail(trimmedEmail) || !isValidPassword(trimmedPassword)) {
+      setError(t('auth.login.fixFields'))
       setError(t('auth.login.fixFields'))
       return
     }
@@ -82,7 +87,7 @@ export function LoginPage() {
       <CardContent className="flex flex-col gap-[10px] p-0">
         <div className="flex flex-col items-center gap-[10px] text-center">
           <AppLogo size="lg" />
-          <h1 className="text-2xl font-bold text-rp-heading">{t('auth.login.title')}</h1>
+          <h1 className="text-2xl font-bold text-rp-heading">{tenantName}</h1>
           <p className="text-sm text-rp-description">{t('auth.login.subtitle')}</p>
         </div>
 
