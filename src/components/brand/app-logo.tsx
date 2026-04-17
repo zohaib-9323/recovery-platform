@@ -1,3 +1,5 @@
+import { useAppSelector } from '@/app/redux-hooks'
+import { resolveTenantLogoUrl } from '@/lib/tenantTheme'
 import { cn } from '@/lib/utils'
 
 const DEFAULT_LOGO_SRC = `${process.env.PUBLIC_URL}/images/app-logo.svg`
