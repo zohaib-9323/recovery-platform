@@ -1,4 +1,6 @@
+import { configureStore } from '@reduxjs/toolkit'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { Provider } from 'react-redux'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
 import { ResetPasswordPage } from './ResetPasswordPage'
@@ -14,14 +16,22 @@ jest.mock('@/app/services/recoveryApi', () => ({
   ],
 }))
 
+function makeTestStore() {
+  return configureStore({
+    reducer: (state = { tenantTheme: { tenant: null } }) => state,
+  })
+}
+
 function renderWithRoute(path: string) {
   return render(
-    <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/forgot-password" element={<p>Forgot Password Route</p>} />
-      </Routes>
-    </MemoryRouter>,
+    <Provider store={makeTestStore()}>
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/forgot-password" element={<p>Forgot Password Route</p>} />
+        </Routes>
+      </MemoryRouter>
+    </Provider>,
   )
 }
 

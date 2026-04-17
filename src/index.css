@@ -30,6 +30,7 @@
     --rp-input: #f9f9f9;
     --rp-border: #f2f2f2;
     --rp-accent: #e3a602;
+    --rp-accent-dark: #c48f00;
     --rp-icon: #e3a602;
     --rp-success: #22c55e;
   }
@@ -48,4 +49,13 @@
   #root {
     min-height: 100vh;
   }
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

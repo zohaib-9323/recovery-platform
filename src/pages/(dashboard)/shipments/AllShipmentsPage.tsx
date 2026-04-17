@@ -94,6 +94,7 @@ export function AllShipmentsPage() {
         selectAllIndeterminate={selectAllIndeterminate}
         onSelectAllChange={handleSelectAllPage}
         onExportCsv={handleExportCsv}
+        canExport={filteredRows.length > 0}
       />
       <div className="pt-4">
         <AllShipmentsDataTable

@@ -9,6 +9,8 @@ import type { ShipmentRow } from '@/data/mock/dashboard'
 import { useI18n } from '@/i18n/useI18n'
 import { cn } from '@/lib/utils'
 
+const thCell = 'px-4 py-3 text-left text-xs font-semibold text-rp-muted sm:px-6'
+
 export type ShipmentsDataTableProps = {
   title: string
   viewAllLabel?: string
@@ -46,21 +48,11 @@ export function ShipmentsDataTable({
         <TableShell>
           <TableHeader>
             <tr>
-              <th className="px-6 py-3 bg-[#F1F1F1] text-[#666666]">
-                {t('shipments.table.col.title')}
-              </th>
-              <th className="px-6 py-3 bg-[#F1F1F1] text-[#666666]">
-                {t('shipments.table.col.date')}
-              </th>
-              <th className="px-6 py-3 bg-[#F1F1F1] text-[#666666]">
-                {t('shipments.table.col.po')}
-              </th>
-              <th className="px-6 py-3 bg-[#F1F1F1] text-[#666666]">
-                {t('shipments.table.col.shipVia')}
-              </th>
-              <th className="px-6 py-3 text-right bg-[#F1F1F1] text-[#666666]">
-                {t('shipments.table.col.actions')}
-              </th>
+              <th className={thCell}>{t('shipments.table.col.title')}</th>
+              <th className={thCell}>{t('shipments.table.col.date')}</th>
+              <th className={thCell}>{t('shipments.table.col.po')}</th>
+              <th className={thCell}>{t('shipments.table.col.shipVia')}</th>
+              <th className={cn(thCell, 'text-right')}>{t('shipments.table.col.actions')}</th>
             </tr>
           </TableHeader>
           <TableListing>
