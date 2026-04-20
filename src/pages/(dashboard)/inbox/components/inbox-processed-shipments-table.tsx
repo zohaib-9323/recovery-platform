@@ -1,64 +1,69 @@
-import { Eye } from 'lucide-react'
-
-import { TableHeader, TableListing, TableShell } from '@/components/table'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import type { InboxShipmentRow } from '@/data/mock/inbox'
 import { useI18n } from '@/i18n/useI18n'
 import { cn } from '@/lib/utils'
+import type { InboxShipmentRow } from '@/pages/(dashboard)/inbox/types'
+import { InboxRowActionMenu } from './inbox-row-action-menu'
 
-const thCell = 'px-4 py-3 text-left text-xs font-semibold text-rp-muted sm:px-6'
+const thCell =
+  'px-3 py-3 text-left text-[13px] font-normal leading-[100%] tracking-[0] text-[#000000]'
+const tdCell = 'px-3 py-3 text-[14px] font-normal leading-[100%] tracking-[0] text-[#000000]'
 
 export type InboxProcessedShipmentsTableProps = {
   rows: InboxShipmentRow[]
+  onConvertToUnprocessed?: (processableIndex: number) => Promise<void> | void
+  convertingIndex?: number | null
   className?: string
 }
 
 export function InboxProcessedShipmentsTable({
   rows,
+  onConvertToUnprocessed,
+  convertingIndex = null,
   className,
 }: InboxProcessedShipmentsTableProps) {
   const { t } = useI18n()
   if (rows.length === 0) {
-    return <p className="text-sm text-rp-muted">{t('inbox.processed.empty')}</p>
+    return <p className="text-base font-light text-blackFive">{t('inbox.processed.empty')}</p>
   }
 
   return (
-    <Card padding="none" className={cn('overflow-hidden border-rp-border shadow-sm', className)}>
-      <CardContent className="p-0">
-        <TableShell>
-          <TableHeader>
-            <tr>
-              <th className={thCell}>{t('inbox.processed.col.title')}</th>
-              <th className={thCell}>{t('inbox.processed.col.date')}</th>
-              <th className={thCell}>{t('inbox.processed.col.shipVia')}</th>
-              <th className={thCell}>{t('inbox.processed.col.po')}</th>
-              <th className={cn(thCell, 'text-right')}>{t('inbox.processed.col.actions')}</th>
+    <div className={cn('overflow-x-auto rounded-lg border border-[#E0E0E0]', className)}>
+      <table className="w-full">
+        <thead className="bg-[#F8F8F8]">
+          <tr>
+            <th className={thCell}>{t('inbox.processed.col.title')}</th>
+            <th className={thCell}>{t('inbox.processed.col.date')}</th>
+            <th className={thCell}>{t('inbox.processed.col.shipVia')}</th>
+            <th className={thCell}>{t('inbox.processed.col.po')}</th>
+            <th className={thCell}>{t('inbox.processed.col.actions')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.id} className="border-b border-bottomBorder">
+              <td className={cn('max-w-[280px] truncate', tdCell)} title={row.title}>
+                {row.title}
+              </td>
+              <td className={tdCell}>{row.date}</td>
+              <td className={tdCell}>{row.shipVia}</td>
+              <td className={cn('max-w-[220px] truncate', tdCell)} title={row.po}>
+                {row.po}
+              </td>
+              <td className="px-3 py-3">
+                <InboxRowActionMenu
+                  disabled={convertingIndex === row.sourceIndex}
+                  optionLabel={
+                    convertingIndex === row.sourceIndex
+                      ? t('inbox.actions.converting')
+                      : t('inbox.actions.convertToUnprocessed')
+                  }
+                  optionTextClassName="text-redOne"
+                  onSelect={() => onConvertToUnprocessed?.(row.sourceIndex)}
+                />
+              </td>
             </tr>
-          </TableHeader>
-          <TableListing>
-            {rows.map((row) => (
-              <tr key={row.id} className="hover:bg-rp-surface/40">
-                <td className="px-4 py-3 text-sm font-medium text-rp-fg sm:px-6">{row.title}</td>
-                <td className="px-4 py-3 text-sm text-rp-muted sm:px-6">{row.date}</td>
-                <td className="px-4 py-3 text-sm text-rp-muted sm:px-6">{row.shipVia}</td>
-                <td className="px-4 py-3 text-sm text-rp-fg sm:px-6">{row.po}</td>
-                <td className="px-4 py-3 text-right sm:px-6">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    aria-label={t('common.view')}
-                  >
-                    <Eye className="h-4 w-4 text-rp-icon" />
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </TableListing>
-        </TableShell>
-      </CardContent>
-    </Card>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

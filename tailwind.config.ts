@@ -35,7 +35,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: [
-          'Montserrat',
+          'Lexend',
           'ui-sans-serif',
           'system-ui',
           'sans-serif',
