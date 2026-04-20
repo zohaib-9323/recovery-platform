@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
 
 import { useI18n } from '@/i18n/useI18n'
+import { extractSubdomainFromHostname } from '@/lib/tenantTheme'
 import { env } from '@/utils/env'
 
 type TenantThemeData = {
@@ -43,30 +44,6 @@ const INVALID_SUBDOMAINS = new Set([
   'status',
   'monitor',
 ])
-
-function extractSubdomain(hostname: string): string | null {
-  const loweredHostname = hostname.toLowerCase()
-
-  if (loweredHostname.includes('localhost') || loweredHostname.includes('127.0.0.1')) {
-    const parts = loweredHostname.split('.')
-    if (parts.length >= 2 && parts[0] !== 'www') {
-      return parts[0]
-    }
-    return null
-  }
-
-  if (
-    loweredHostname.includes('tradeharmonizer.co.uk') ||
-    loweredHostname.includes('tradeharmonizer.com')
-  ) {
-    const parts = loweredHostname.split('.')
-    if (parts.length >= 3 && parts[0] !== 'www') {
-      return parts[0]
-    }
-  }
-
-  return null
-}
 
 /**
  * Attempt to darken a hex colour by a given percentage (0-100).
@@ -230,7 +207,7 @@ export function TenantValidationGuard() {
         return
       }
 
-      const extractedSubdomain = extractSubdomain(window.location.hostname)
+      const extractedSubdomain = extractSubdomainFromHostname(window.location.hostname)
       setSubdomain(extractedSubdomain)
 
       if (!extractedSubdomain || MAIN_SUBDOMAINS.has(extractedSubdomain)) {

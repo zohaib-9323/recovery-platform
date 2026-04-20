@@ -1,5 +1,12 @@
 import type { TenantTheme } from '@/app/features/tenant/tenantThemeSlice'
 
+/**
+ * Default Amplify Hosting URL shape is `{branch}.{appId}.amplifyapp.com` (four DNS labels).
+ * A tenant prefix adds one label on the left: `{tenant}.{branch}.{appId}.amplifyapp.com`.
+ */
+const AMPLIFY_APP_HOST_SUFFIX = '.amplifyapp.com'
+const AMPLIFY_DEFAULT_HOST_LABEL_COUNT = 4
+
 const DEFAULT_LOGO_SRC = `${process.env.PUBLIC_URL}/images/app-logo.svg`
 const DEFAULT_THEME = {
   primaryColor: '#e3a602',
@@ -20,6 +27,15 @@ export function extractSubdomainFromHostname(hostname: string): string | null {
 
   if (normalizedHost.endsWith('.localhost') || normalizedHost.endsWith('.127.0.0.1')) {
     return parts[0] && parts[0] !== 'www' ? parts[0] : null
+  }
+
+  if (normalizedHost.endsWith(AMPLIFY_APP_HOST_SUFFIX)) {
+    const amplifyParts = normalizedHost.split('.')
+    if (amplifyParts.length <= AMPLIFY_DEFAULT_HOST_LABEL_COUNT) {
+      return null
+    }
+    const tenant = amplifyParts[0]
+    return tenant && tenant !== 'www' ? tenant : null
   }
 
   if (parts.length < 3) {
