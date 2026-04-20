@@ -9,6 +9,7 @@ import { InputField } from '@/components/fields'
 import { Card, CardContent } from '@/components/ui/card'
 import { useAuth } from '@/app/hooks/useAuth'
 import { useI18n } from '@/i18n/useI18n'
+import { showCustomToast } from '@/lib/showCustomToast'
 import { isValidEmail, isValidPassword, PASSWORD_RULES_HINT } from '@/lib/validation'
 
 function getErrorMessage(err: unknown, fallback: string): string {
@@ -32,7 +33,6 @@ export function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />
@@ -63,11 +63,13 @@ export function LoginPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    setError(null)
 
     if (!isValidEmail(trimmedEmail) || !isValidPassword(trimmedPassword)) {
-      setError(t('auth.login.fixFields'))
-      setError(t('auth.login.fixFields'))
+      showCustomToast({
+        type: 'error',
+        title: t('auth.login.invalidCredentials'),
+        message: t('auth.login.fixFields'),
+      })
       return
     }
 
@@ -75,7 +77,11 @@ export function LoginPage() {
       await login({ email: trimmedEmail, password: trimmedPassword }).unwrap()
       navigate(from, { replace: true })
     } catch (err) {
-      setError(getErrorMessage(err, t('auth.login.invalidCredentials')))
+      showCustomToast({
+        type: 'error',
+        title: t('auth.login.invalidCredentials'),
+        message: getErrorMessage(err, t('auth.login.invalidCredentials')),
+      })
     }
   }
 
@@ -103,7 +109,6 @@ export function LoginPage() {
             value={email}
             onChange={(e) => {
               setEmail(e.target.value.replace(/\s/g, ''))
-              setError(null)
             }}
             error={emailError}
             aria-invalid={Boolean(emailError)}
@@ -123,7 +128,6 @@ export function LoginPage() {
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value.trim())
-                setError(null)
               }}
               error={passwordError}
               aria-invalid={Boolean(passwordError)}
@@ -148,12 +152,6 @@ export function LoginPage() {
               </button>
             </div>
           </div>
-
-          {error ? (
-            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-              {error}
-            </p>
-          ) : null}
 
           <LoginButton type="submit" disabled={!canSubmit || isLoading}>
             {isLoading ? t('auth.login.signingIn') : t('auth.login.submit')}

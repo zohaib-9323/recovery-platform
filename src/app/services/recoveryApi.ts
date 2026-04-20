@@ -45,6 +45,10 @@ function isAuthUrl(url: string | undefined): boolean {
   )
 }
 
+function isFetchBaseQueryErrorLike(error: unknown): error is FetchBaseQueryError {
+  return Boolean(error && typeof error === 'object' && 'status' in error)
+}
+
 const rawBaseQuery = fetchBaseQuery({
   baseUrl,
   prepareHeaders: (headers, { getState, arg }) => {
@@ -105,7 +109,9 @@ export const recoveryApi = createApi({
             )
           }
         } catch (error) {
-          // Sensitive path: caller gets the rejection; we still report for observability.
+          // Invalid credentials and other API rejections are handled by the caller UI.
+          if (isFetchBaseQueryErrorLike(error)) return
+          // Unexpected runtime failures are still reported for observability.
           reportRuntimeError('recovery-api:login-onQueryStarted', error)
         }
       },
