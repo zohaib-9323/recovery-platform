@@ -16,9 +16,10 @@ import {
   applyTenantThemeToDocument,
   extractSubdomainFromHostname,
 } from '@/lib/tenantTheme'
+import { env } from '@/utils/env'
 
 function deriveMainDomainUrl(subdomain: string): string {
-  if (typeof window === 'undefined') return 'https://develop.d2nchgv6eu8hvr.amplifyapp.com/'
+  if (typeof window === 'undefined') return env.mainSiteUrl
 
   const { protocol, hostname, port } = window.location
   if (hostname.endsWith('.localhost') || hostname.endsWith('.127.0.0.1')) {
