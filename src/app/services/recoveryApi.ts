@@ -24,6 +24,11 @@ import type {
   ValidateTenantQuery,
   ValidateTenantContent,
 } from '@/types/recovery-user-api'
+import type {
+  RecoveryInboxDocumentDetailEnvelope,
+  RecoveryInboxDocumentsListEnvelope,
+  RecoveryDocumentRecordType,
+} from '@/types/recovery-inbox-api'
 import { env } from '@/utils/env'
 
 type StateWithAuth = { auth: AuthState }
@@ -38,6 +43,10 @@ function isAuthUrl(url: string | undefined): boolean {
     url.includes('/recovery/auth/request-password-reset') ||
     url.includes('/recovery/auth/reset-password')
   )
+}
+
+function isFetchBaseQueryErrorLike(error: unknown): error is FetchBaseQueryError {
+  return Boolean(error && typeof error === 'object' && 'status' in error)
 }
 
 const rawBaseQuery = fetchBaseQuery({
@@ -100,7 +109,9 @@ export const recoveryApi = createApi({
             )
           }
         } catch (error) {
-          // Sensitive path: caller gets the rejection; we still report for observability.
+          // Invalid credentials and other API rejections are handled by the caller UI.
+          if (isFetchBaseQueryErrorLike(error)) return
+          // Unexpected runtime failures are still reported for observability.
           reportRuntimeError('recovery-api:login-onQueryStarted', error)
         }
       },
@@ -192,6 +203,50 @@ export const recoveryApi = createApi({
         }
       },
     }),
+    getRecoveryInboxDocuments: builder.query<
+      RecoveryInboxDocumentsListEnvelope,
+      {
+        page?: number
+        limit?: number
+        recordType?: RecoveryDocumentRecordType
+      }
+    >({
+      query: ({ page = 1, limit = 10, recordType } = {}) => ({
+        url: '/recovery/documents/combined',
+        method: 'GET',
+        params: {
+          page,
+          limit,
+          ...(recordType ? { recordType } : {}),
+        },
+      }),
+    }),
+    getRecoveryInboxDocumentById: builder.query<RecoveryInboxDocumentDetailEnvelope, string>({
+      query: (id) => ({
+        url: `/recovery/documents/combined/${id}`,
+        method: 'GET',
+      }),
+    }),
+    moveUnprocessableToProcessable: builder.mutation<
+      RecoveryApiEnvelope<unknown>,
+      { id: string; unprocessableIndex: number }
+    >({
+      query: ({ id, unprocessableIndex }) => ({
+        url: `/recovery/documents/${id}/move-unprocessable-to-processable`,
+        method: 'PATCH',
+        body: { unprocessableIndex },
+      }),
+    }),
+    moveProcessableToUnprocessable: builder.mutation<
+      RecoveryApiEnvelope<unknown>,
+      { id: string; processableIndex: number }
+    >({
+      query: ({ id, processableIndex }) => ({
+        url: `/recovery/documents/${id}/move-processable-to-unprocessable`,
+        method: 'PATCH',
+        body: { processableIndex },
+      }),
+    }),
   }),
 })
 
@@ -206,4 +261,8 @@ export const {
   usePostRecoveryDeleteRequestMutation,
   usePostRecoveryChangePasswordMutation,
   useLazyValidateTenantSubdomainQuery,
+  useGetRecoveryInboxDocumentsQuery,
+  useGetRecoveryInboxDocumentByIdQuery,
+  useMoveUnprocessableToProcessableMutation,
+  useMoveProcessableToUnprocessableMutation,
 } = recoveryApi
