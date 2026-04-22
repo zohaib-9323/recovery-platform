@@ -52,7 +52,7 @@ export function InboxProcessedShipmentsTable({
                     <button
                       type="button"
                       className="max-w-full truncate text-left text-[#0B57D0] underline"
-                      onClick={() => onDownloadAttachment?.(row.c88)}
+                      onClick={() => onDownloadAttachment?.(row.c88!)}
                     >
                       {row.c88.name}
                     </button>
@@ -65,7 +65,7 @@ export function InboxProcessedShipmentsTable({
                     <button
                       type="button"
                       className="max-w-full truncate text-left text-[#0B57D0] underline"
-                      onClick={() => onDownloadAttachment?.(row.po)}
+                      onClick={() => onDownloadAttachment?.(row.po!)}
                     >
                       {row.po.name}
                     </button>
