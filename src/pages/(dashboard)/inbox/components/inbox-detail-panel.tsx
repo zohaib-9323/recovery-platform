@@ -273,6 +273,7 @@ export function InboxDetailPanel({
           <InboxProcessedShipmentsTable
             rows={email.shipments}
             onConvertToUnprocessed={handleConvertToUnprocessable}
+            onDownloadAttachment={handleDownloadAttachment}
             convertingIndex={convertingProcessableIndex}
           />
 

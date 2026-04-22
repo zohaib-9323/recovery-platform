@@ -130,7 +130,7 @@ export function InboxPage() {
         canLoadMore={canLoadMore}
         isLoadingMore={isLoadingMore}
         errorMessage={sidebarError}
-        className="max-h-[42vh] w-full lg:max-h-none lg:w-[min(100%,320px)] lg:shrink-0"
+        className="max-h-[50vh] w-full lg:max-h-none lg:w-[min(100%,320px)] lg:shrink-0"
       />
       <InboxDetailPanel
         email={selected}

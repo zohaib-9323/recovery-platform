@@ -84,13 +84,35 @@ function mapProcessableRows(
   createdAt?: string,
 ): InboxShipmentRow[] {
   if (!processable?.length) return []
+
+  const mapProcessableAttachment = (
+    value: unknown,
+    key: string,
+    shipmentId: string,
+    shipmentIndex: number,
+  ): InboxAttachment | null => {
+    if (!isAttachmentLike(value)) return null
+    return {
+      id: `processable-row-${shipmentIndex}-${key}`,
+      name:
+        value.filename ||
+        `${shipmentId || `shipment-${shipmentIndex + 1}`}-${key}.${value.contentType === 'application/pdf' ? 'pdf' : 'file'}`,
+      size: getAttachmentSizeLabel(value.size, value.contentType),
+      status: 'passed',
+      fileUrl: resolveDownloadFileUrl(value.fileUrl, value.s3Key, value.bucket),
+      s3Key: value.s3Key,
+      bucket: value.bucket,
+      recordType: 'processed',
+    }
+  }
+
   return processable.map((shipment, index) => ({
     id: shipment.shipmentId ?? `${index}`,
     sourceIndex: index,
     title: shipment.shipmentId ?? '-',
     date: formatDateTime(createdAt),
-    shipVia: '-',
-    po: shipment.matchedShipmentRefs?.join(', ') || '-',
+    c88: mapProcessableAttachment(shipment.c88, 'c88', shipment.shipmentId ?? '', index),
+    po: mapProcessableAttachment(shipment.po, 'po', shipment.shipmentId ?? '', index),
   }))
 }
 
@@ -103,7 +125,6 @@ function mapUnprocessedRows(
     sourceIndex: index,
     fileName: shipment.filename ?? `Unprocessable File #${index + 1}`,
     type: shipment.type ?? 'UNKNOWN',
-    shipmentRef: shipment.shipmentRefs?.[0] ?? '-',
     status: 'Failed',
   }))
 }

@@ -16,8 +16,8 @@ export type InboxShipmentRow = {
   sourceIndex: number
   title: string
   date: string
-  shipVia: string
-  po: string
+  c88: InboxAttachment | null
+  po: InboxAttachment | null
 }
 
 export type InboxUnprocessedShipmentRow = {
@@ -25,7 +25,6 @@ export type InboxUnprocessedShipmentRow = {
   sourceIndex: number
   fileName: string
   type: string
-  shipmentRef: string
   status: 'Failed'
 }
 

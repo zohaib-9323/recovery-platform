@@ -35,9 +35,9 @@ export function InboxAttachmentsTable({
   }
 
   return (
-    <div className={cn('overflow-x-auto', className)}>
+    <div className={cn('max-h-[360px] overflow-auto', className)}>
       <table className="w-full">
-        <thead>
+        <thead className="sticky top-0 z-10 bg-white">
           <tr className="border-b border-bottomBorder">
             <th className={thCell}>{t('inbox.attachments.col.attachment')}</th>
             <th className={thCell}>{t('inbox.attachments.col.size')}</th>
