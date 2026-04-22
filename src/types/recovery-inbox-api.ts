@@ -5,17 +5,27 @@ export type RecoveryDocumentRecordType = 'processed' | 'quarantined'
 export type RecoveryDocumentAttachment = {
   filename?: string
   contentType?: string
+  size?: number
+  s3Key?: string
+  fileUrl?: string
+  bucket?: string
 }
 
 export type RecoveryDocumentProcessable = {
   shipmentId?: string
   matchedShipmentRefs?: string[]
+  [key: string]: unknown
 }
 
 export type RecoveryDocumentUnprocessable = {
   filename?: string
   type?: string
   shipmentRefs?: string[]
+  contentType?: string
+  size?: number
+  s3Key?: string
+  fileUrl?: string
+  bucket?: string
 }
 
 export type RecoveryCombinedDocument = {

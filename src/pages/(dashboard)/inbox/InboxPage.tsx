@@ -118,7 +118,7 @@ export function InboxPage() {
     : null
 
   return (
-    <div className="flex min-h-[min(720px,calc(100vh-7rem))] flex-col overflow-hidden rounded-lg border border-bottomBorder bg-white text-[#4B4B4B] lg:flex-row">
+    <div className="flex h-[min(720px,calc(100vh-7rem))] min-h-0 flex-col overflow-hidden rounded-lg border border-bottomBorder bg-white text-[#4B4B4B] lg:flex-row">
       <InboxListSidebar
         emails={emails}
         selectedId={effectiveSelectedId}

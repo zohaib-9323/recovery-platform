@@ -23,7 +23,7 @@ export function AppSidebar() {
     <div
       className={`transition-all duration-500 ease-in-out ${
         expanded ? 'w-64' : 'hidden w-20 sm:flex'
-      } flex h-full flex-col border-r border-bottomBorder bg-bgColor`}
+      } flex h-screen shrink-0 flex-col overflow-hidden border-r border-bottomBorder bg-bgColor`}
     >
       <nav>
         <button

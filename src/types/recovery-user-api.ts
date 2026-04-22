@@ -38,6 +38,31 @@ export type RecoveryPreferencesBody = {
   timezone: string
 }
 
+export type RecoveryMetricTrend = {
+  percentage: string
+  increased: boolean
+  trend: 'up' | 'down' | 'none'
+  currentPeriodCount: number
+  previousPeriodCount: number
+}
+
+export type RecoveryDashboardStats = {
+  emailsReceived: number
+  emailsReceivedToday: number
+  emailsReceivedTrend: RecoveryMetricTrend
+  shipmentsCreated: number
+  shipmentsCreatedTrend: RecoveryMetricTrend
+  activeShipments: number
+  activeShipmentsTrend: RecoveryMetricTrend
+  filesProcessed: number
+  filesProcessedTrend: RecoveryMetricTrend
+  trendWindowDays: number
+}
+
+export type RecoveryDashboardContent = {
+  data: RecoveryDashboardStats
+}
+
 export type RecoveryDeleteRequestBody = {
   password: string
   reason: string

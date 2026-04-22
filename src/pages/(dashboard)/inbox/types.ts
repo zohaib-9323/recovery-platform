@@ -5,6 +5,10 @@ export type InboxAttachment = {
   name: string
   size: string
   status: InboxAttachmentStatus
+  fileUrl?: string
+  s3Key?: string
+  bucket?: string
+  recordType?: 'processed' | 'quarantined'
 }
 
 export type InboxShipmentRow = {

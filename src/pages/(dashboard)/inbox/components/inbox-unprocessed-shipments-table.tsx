@@ -26,7 +26,7 @@ export function InboxUnprocessedShipmentsTable({
   }
 
   return (
-    <div className={cn('overflow-x-auto rounded-lg border border-[#E0E0E0]', className)}>
+    <div className={cn('rounded-lg border border-[#E0E0E0]', className)}>
       <table className="w-full">
         <thead className="bg-[#F8F8F8]">
           <tr>
