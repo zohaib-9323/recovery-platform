@@ -16,6 +16,7 @@ import { buildProfilePatch, type ProfileFormValues } from './build-profile-patch
 
 const PLACEHOLDER_AVATAR = `${process.env.PUBLIC_URL}/images/no-profile.png`
 const MAX_IMAGE_BYTES = 1_500_000
+const PHONE_PATTERN = /^\+?[1-9]\d{6,14}$/
 
 function fileToDataUrl(file: File, t: (key: string) => string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -32,6 +33,18 @@ function toDateInputValue(iso: string | undefined): string {
   return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : ''
 }
 
+function toLocalDateInputValue(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function isPhoneValid(value: string): boolean {
+  const normalized = value.replace(/[()\s-]/g, '')
+  return PHONE_PATTERN.test(normalized)
+}
+
 type EditProfileFormProps = {
   profile: RecoveryUserProfile
   formInstance: number
@@ -46,6 +59,8 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
   const dispatch = useAppDispatch()
   const fileRef = useRef<HTMLInputElement>(null)
   const [patchProfile, { isLoading: saving }] = usePatchRecoveryProfileMutation()
+  const today = useMemo(() => toLocalDateInputValue(new Date()), [])
+  const [baselineProfile, setBaselineProfile] = useState(profile)
 
   const [form, setForm] = useState<ProfileFormValues>(() => ({
     firstName: profile.firstName ?? '',
@@ -70,12 +85,36 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
 
   const hasUnsavedChanges = useMemo(() => {
     if (pendingFile !== null) return true
-    return Object.keys(buildProfilePatch(profile, form, null)).length > 0
-  }, [profile, form, pendingFile])
+    return Object.keys(buildProfilePatch(baselineProfile, form, null)).length > 0
+  }, [baselineProfile, form, pendingFile])
+
+  const hasEmptyRequiredField = useMemo(
+    () =>
+      [form.firstName, form.lastName, form.dob, form.country, form.city, form.phone].some(
+        (value) => value.trim() === '',
+      ),
+    [form],
+  )
+
+  const dobInFuture = useMemo(() => form.dob !== '' && form.dob > today, [form.dob, today])
+  const phoneInvalid = useMemo(
+    () => form.phone.trim() !== '' && !isPhoneValid(form.phone),
+    [form.phone],
+  )
+
+  const formInvalid = hasEmptyRequiredField || dobInFuture || phoneInvalid
 
   const updateField = (key: keyof ProfileFormValues, value: string) => {
     setForm((f) => ({ ...f, [key]: value }))
     onBanner(null)
+  }
+
+  const updateDob = (value: string) => {
+    if (value !== '' && value > today) {
+      onBanner({ type: 'err', text: t('settings.edit.dateOfBirthInvalid') })
+      return
+    }
+    updateField('dob', value)
   }
 
   const onPickImage = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -113,7 +152,7 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
       }
     }
 
-    const patch = buildProfilePatch(profile, form, pendingFile ? profilePicPayload : null)
+    const patch = buildProfilePatch(baselineProfile, form, pendingFile ? profilePicPayload : null)
     if (Object.keys(patch).length === 0) {
       onBanner({ type: 'err', text: t('settings.edit.noChanges') })
       return
@@ -145,6 +184,15 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
         ''
 
       setPreviewUrl(headerPic ? headerPic : PLACEHOLDER_AVATAR)
+      setBaselineProfile(identity)
+      setForm({
+        firstName: identity.firstName ?? '',
+        lastName: identity.lastName ?? '',
+        dob: toDateInputValue(identity.dob),
+        country: identity.country ?? '',
+        city: identity.city ?? '',
+        phone: identity.phone ?? '',
+      })
 
       dispatch(
         updateUserFields({
@@ -229,8 +277,15 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
               type="date"
               className="h-11 w-full rounded-[10px] border border-rp-border bg-rp-input px-3 text-sm text-rp-fg focus:outline-none focus:ring-2 focus:ring-rp-accent"
               value={form.dob}
-              onChange={(e) => updateField('dob', e.target.value)}
+              max={today}
+              aria-invalid={dobInFuture}
+              onChange={(e) => updateDob(e.target.value)}
             />
+            {dobInFuture ? (
+              <p role="alert" className="text-sm text-red-600">
+                {t('settings.edit.dateOfBirthInvalid')}
+              </p>
+            ) : null}
           </div>
           <InputField
             fieldType="text"
@@ -259,14 +314,16 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
               placeholder="+447700900123"
               value={form.phone}
               onChange={(e) => updateField('phone', e.target.value)}
+              type="tel"
               maxLength={32}
+              error={phoneInvalid ? t('settings.edit.phoneInvalid') : undefined}
             />
           </div>
         </div>
       </div>
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={saving || !hasUnsavedChanges}>
+        <Button type="submit" disabled={saving || !hasUnsavedChanges || formInvalid}>
           {saving ? t('common.saving') : t('common.saveChanges')}
         </Button>
       </div>
