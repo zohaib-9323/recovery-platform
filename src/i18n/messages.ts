@@ -168,6 +168,7 @@ export const messages: Record<string, string> = {
   'inbox.processed.col.title': 'Shipment Title',
   'inbox.processed.col.date': 'Date',
   'inbox.processed.col.shipVia': 'Ship Via',
+  'inbox.processed.col.c88': 'C88',
   'inbox.processed.col.po': 'PO #',
   'inbox.processed.col.actions': 'Actions',
   'inbox.unprocessed.empty': 'No unprocessable shipments available for this message.',

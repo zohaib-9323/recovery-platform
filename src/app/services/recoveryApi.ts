@@ -14,6 +14,7 @@ import type {
 } from '@/types/auth-api'
 import type {
   RecoveryApiEnvelope,
+  RecoveryDashboardContent,
   RecoveryChangePasswordBody,
   RecoveryDeleteRequestBody,
   RecoveryPreferences,
@@ -149,6 +150,9 @@ export const recoveryApi = createApi({
       query: () => ({ url: '/recovery/users/preferences', method: 'GET' }),
       providesTags: [{ type: 'RecoveryPreferences', id: 'ME' }],
     }),
+    getRecoveryDashboard: builder.query<RecoveryApiEnvelope<RecoveryDashboardContent>, void>({
+      query: () => ({ url: '/recovery/users/dashboard', method: 'GET' }),
+    }),
     postRecoveryPreferences: builder.mutation<
       RecoveryApiEnvelope<RecoveryPreferences>,
       RecoveryPreferencesBody
@@ -247,6 +251,35 @@ export const recoveryApi = createApi({
         body: { processableIndex },
       }),
     }),
+    getRecoveryDownloadUrl: builder.mutation<
+      RecoveryApiEnvelope<{
+        downloadUrl?: string
+        bucket?: string
+        key?: string
+        fileName?: string
+        expiresIn?: number
+      }>,
+      {
+        id: string
+        s3Key: string
+        bucket: string
+        recordType: RecoveryDocumentRecordType
+        fileName: string
+        expiresIn?: number
+      }
+    >({
+      query: ({ id, s3Key, bucket, recordType, fileName, expiresIn = 300 }) => ({
+        url: `/recovery/documents/combined/${id}/download`,
+        method: 'GET',
+        params: {
+          s3Key,
+          bucket,
+          recordType,
+          fileName,
+          expiresIn,
+        },
+      }),
+    }),
   }),
 })
 
@@ -257,6 +290,7 @@ export const {
   useGetRecoveryProfileQuery,
   usePatchRecoveryProfileMutation,
   useGetRecoveryPreferencesQuery,
+  useGetRecoveryDashboardQuery,
   usePostRecoveryPreferencesMutation,
   usePostRecoveryDeleteRequestMutation,
   usePostRecoveryChangePasswordMutation,
@@ -265,4 +299,5 @@ export const {
   useGetRecoveryInboxDocumentByIdQuery,
   useMoveUnprocessableToProcessableMutation,
   useMoveProcessableToUnprocessableMutation,
+  useGetRecoveryDownloadUrlMutation,
 } = recoveryApi

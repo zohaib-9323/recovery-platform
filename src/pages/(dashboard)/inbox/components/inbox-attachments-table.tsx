@@ -19,18 +19,25 @@ function statusClass(status: InboxAttachment['status']): string {
 export type InboxAttachmentsTableProps = {
   attachments: InboxAttachment[]
   className?: string
+  onDownload?: (attachment: InboxAttachment) => Promise<void> | void
+  downloadingAttachmentId?: string | null
 }
 
-export function InboxAttachmentsTable({ attachments, className }: InboxAttachmentsTableProps) {
+export function InboxAttachmentsTable({
+  attachments,
+  className,
+  onDownload,
+  downloadingAttachmentId = null,
+}: InboxAttachmentsTableProps) {
   const { t } = useI18n()
   if (attachments.length === 0) {
     return <p className="text-base font-light text-blackFive">{t('inbox.attachments.empty')}</p>
   }
 
   return (
-    <div className={cn('overflow-x-auto', className)}>
+    <div className={cn('max-h-[360px] overflow-auto', className)}>
       <table className="w-full">
-        <thead>
+        <thead className="sticky top-0 z-10 bg-white">
           <tr className="border-b border-bottomBorder">
             <th className={thCell}>{t('inbox.attachments.col.attachment')}</th>
             <th className={thCell}>{t('inbox.attachments.col.size')}</th>
@@ -61,10 +68,16 @@ export function InboxAttachmentsTable({ attachments, className }: InboxAttachmen
               <td className="px-3 py-3">
                 <button
                   type="button"
+                  onClick={() => onDownload?.(row)}
+                  disabled={
+                    !row.s3Key || !row.bucket || downloadingAttachmentId === row.id || !onDownload
+                  }
                   className="flex items-center gap-2 rounded-md border border-bottomBorder px-2 py-1 text-base text-black"
                 >
                   <span className="icon-Download text-sm" aria-hidden />
-                  {t('inbox.attachments.download')}
+                  {downloadingAttachmentId === row.id
+                    ? `${t('inbox.attachments.download')}...`
+                    : t('inbox.attachments.download')}
                 </button>
               </td>
             </tr>

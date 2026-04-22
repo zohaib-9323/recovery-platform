@@ -1,10 +1,12 @@
 import { useState } from 'react'
 
 import {
+  useGetRecoveryDownloadUrlMutation,
   useMoveProcessableToUnprocessableMutation,
   useMoveUnprocessableToProcessableMutation,
 } from '@/app/services/recoveryApi'
 import { useI18n } from '@/i18n/useI18n'
+import { showCustomToast } from '@/lib/showCustomToast'
 import { cn } from '@/lib/utils'
 import type { InboxAttachment, InboxEmail } from '@/pages/(dashboard)/inbox/types'
 
@@ -28,12 +30,14 @@ export function InboxDetailPanel({
   className,
 }: InboxDetailPanelProps) {
   const { t } = useI18n()
+  const [getRecoveryDownloadUrl] = useGetRecoveryDownloadUrlMutation()
   const [moveUnprocessableToProcessable] = useMoveUnprocessableToProcessableMutation()
   const [moveProcessableToUnprocessable] = useMoveProcessableToUnprocessableMutation()
   const [convertingProcessableIndex, setConvertingProcessableIndex] = useState<number | null>(null)
   const [convertingUnprocessableIndex, setConvertingUnprocessableIndex] = useState<number | null>(
     null,
   )
+  const [downloadingAttachmentId, setDownloadingAttachmentId] = useState<string | null>(null)
   const statusValue = String(email?.status ?? '')
     .toLowerCase()
     .trim()
@@ -77,6 +81,50 @@ export function InboxDetailPanel({
       // Keep UI stable; parent refresh handles visible state changes.
     } finally {
       setConvertingProcessableIndex(null)
+    }
+  }
+
+  const handleDownloadAttachment = async (attachment: InboxAttachment) => {
+    if (!email) return
+    const fallbackRecordType = isQuarantined ? 'quarantined' : 'processed'
+    const recordType = attachment.recordType ?? fallbackRecordType
+    if (!attachment.s3Key || !attachment.bucket) {
+      showCustomToast({
+        type: 'error',
+        title: 'Error',
+        message: 'Attachment is missing download metadata.',
+      })
+      return
+    }
+
+    try {
+      setDownloadingAttachmentId(attachment.id)
+      const s3KeyFileName = attachment.s3Key.split('/').filter(Boolean).pop()
+      const fileName = s3KeyFileName || attachment.name
+      const response = await getRecoveryDownloadUrl({
+        id: email.id,
+        s3Key: attachment.s3Key,
+        bucket: attachment.bucket,
+        recordType,
+        fileName,
+      }).unwrap()
+      const downloadUrl = response?.content?.downloadUrl
+
+      if (!downloadUrl) {
+        throw new Error('Download URL is not available.')
+      }
+
+      window.location.href = downloadUrl
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to generate download link for attachment.'
+      showCustomToast({
+        type: 'error',
+        title: 'Error',
+        message,
+      })
+    } finally {
+      setTimeout(() => setDownloadingAttachmentId(null), 1000)
     }
   }
 
@@ -124,37 +172,7 @@ export function InboxDetailPanel({
     )
   }
 
-  const derivedProcessableAttachments: InboxAttachment[] = email.shipments.map(
-    (shipment, index) => ({
-      id: `processable-${shipment.id}-${index}`,
-      name: shipment.title,
-      size: 'N/A',
-      status: 'passed',
-    }),
-  )
-
-  const derivedUnprocessableAttachments: InboxAttachment[] = email.unprocessedShipments.map(
-    (shipment, index) => ({
-      id: `unprocessable-${shipment.id}-${index}`,
-      name: shipment.fileName,
-      size: shipment.type || 'N/A',
-      status: 'failed',
-    }),
-  )
-
-  const contextAttachments = [
-    ...email.attachments,
-    ...derivedProcessableAttachments,
-    ...derivedUnprocessableAttachments,
-  ].filter(
-    (attachment, index, all) =>
-      all.findIndex(
-        (candidate) =>
-          candidate.name === attachment.name &&
-          candidate.size === attachment.size &&
-          candidate.status === attachment.status,
-      ) === index,
-  )
+  const contextAttachments = email.attachments
   const messageContextCardClass = cn('rounded-lg border p-3 border-[#E4E4E4] bg-[#F8F8F8]')
 
   return (
@@ -237,7 +255,11 @@ export function InboxDetailPanel({
               <h3 className="mb-3 text-[18px] font-semibold leading-[100%] tracking-[0] text-black">
                 {t('inbox.detail.attachments')}
               </h3>
-              <InboxAttachmentsTable attachments={contextAttachments} />
+              <InboxAttachmentsTable
+                attachments={contextAttachments}
+                downloadingAttachmentId={downloadingAttachmentId}
+                onDownload={handleDownloadAttachment}
+              />
             </div>
           </div>
         </div>
@@ -251,6 +273,7 @@ export function InboxDetailPanel({
           <InboxProcessedShipmentsTable
             rows={email.shipments}
             onConvertToUnprocessed={handleConvertToUnprocessable}
+            onDownloadAttachment={handleDownloadAttachment}
             convertingIndex={convertingProcessableIndex}
           />
 
