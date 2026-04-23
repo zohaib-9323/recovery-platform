@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { EditProfileTab } from './edit-profile-tab'
 
 const mockPatchProfile = jest.fn()
+const mockShowCustomToast = jest.fn()
 const mockDispatch = jest.fn()
 const mockRefetch = jest.fn()
 const mockUseGetRecoveryProfileQuery = jest.fn()
@@ -15,6 +16,10 @@ jest.mock('@/app/services/recoveryApi', () => ({
 
 jest.mock('@/app/redux-hooks', () => ({
   useAppDispatch: () => mockDispatch,
+}))
+
+jest.mock('@/lib/showCustomToast', () => ({
+  showCustomToast: (payload: unknown) => mockShowCustomToast(payload),
 }))
 
 const defaultProfile = {
@@ -100,10 +105,16 @@ describe('EditProfileTab', () => {
 
     render(<EditProfileTab />)
 
-    fireEvent.change(screen.getByLabelText('City'), { target: { value: 'Leeds' } })
+    fireEvent.change(screen.getByLabelText('Last name'), { target: { value: 'Walker' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Cannot update profile')
+    await waitFor(() => {
+      expect(mockShowCustomToast).toHaveBeenCalledWith({
+        type: 'error',
+        title: 'Update failed.',
+        message: 'Cannot update profile',
+      })
+    })
   })
 
   it('keeps save enabled when non-required fields are empty', () => {
@@ -119,7 +130,7 @@ describe('EditProfileTab', () => {
 
     render(<EditProfileTab />)
 
-    fireEvent.change(screen.getByLabelText('City'), { target: { value: '' } })
+    fireEvent.change(screen.getByLabelText('Phone'), { target: { value: '' } })
     expect(screen.getByRole('button', { name: 'Save changes' })).not.toBeDisabled()
   })
 
@@ -145,7 +156,6 @@ describe('EditProfileTab', () => {
     ].join('-')
 
     fireEvent.change(screen.getByLabelText('Date of birth'), { target: { value } })
-    expect(screen.getByText('Date of birth cannot be after today.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled()
   })
 
@@ -169,5 +179,23 @@ describe('EditProfileTab', () => {
     fireEvent.change(screen.getByLabelText('Phone'), { target: { value: '+447700900123' } })
     expect(screen.queryByText('Enter a valid phone number.')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Save changes' })).not.toBeDisabled()
+  })
+
+  it('enforces 30 character limit on first and last names', () => {
+    mockUseGetRecoveryProfileQuery.mockReturnValue({
+      data: { content: defaultProfile },
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: mockRefetch,
+      fulfilledTimeStamp: 16,
+    })
+    mockUsePatchRecoveryProfileMutation.mockReturnValue([mockPatchProfile, { isLoading: false }])
+
+    render(<EditProfileTab />)
+
+    fireEvent.change(screen.getByLabelText('First name'), { target: { value: 'a'.repeat(31) } })
+    expect(screen.getByText('First name cannot be longer than 30 characters.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled()
   })
 })

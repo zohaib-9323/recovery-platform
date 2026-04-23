@@ -11,6 +11,7 @@ import { useAuth } from '@/app/hooks/useAuth'
 import { useI18n } from '@/i18n/useI18n'
 import { showCustomToast } from '@/lib/showCustomToast'
 import { isValidEmail } from '@/lib/validation'
+import { saveFirstLoginFlowState } from '@/pages/auth/first-login-flow'
 
 function getErrorMessage(err: unknown, fallback: string): string {
   if (err && typeof err === 'object' && 'data' in err) {
@@ -22,6 +23,15 @@ function getErrorMessage(err: unknown, fallback: string): string {
     if (typeof data === 'string' && data.length > 0) return data
   }
   return fallback
+}
+
+function isFirstLoginSetupError(err: unknown): boolean {
+  if (!err || typeof err !== 'object' || !('data' in err)) return false
+  const data = (err as { data?: unknown }).data
+  if (!data || typeof data !== 'object') return false
+  const statusCode = (data as { statusCode?: unknown }).statusCode
+  const message = (data as { message?: unknown }).message
+  return statusCode === 403 && typeof message === 'string' && /first login/i.test(message)
 }
 
 export function LoginPage() {
@@ -65,6 +75,12 @@ export function LoginPage() {
       await login({ email: trimmedEmail, password }).unwrap()
       navigate('/dashboard', { replace: true })
     } catch (err) {
+      if (isFirstLoginSetupError(err)) {
+        saveFirstLoginFlowState({ email: trimmedEmail, temporaryPassword: password })
+        navigate('/first-login/verify-otp', { replace: true })
+        return
+      }
+
       showCustomToast({
         type: 'error',
         title: t('auth.login.invalidCredentials'),

@@ -68,6 +68,23 @@ export type RecoveryDeleteRequestBody = {
   reason: string
 }
 
+export type RecoveryDeleteRequestStatus = {
+  hasPendingRequest?: boolean
+  request?: {
+    reason?: string
+    status?: string
+    createdAt?: string
+  } | null
+  data?: {
+    hasPendingRequest?: boolean
+    request?: {
+      reason?: string
+      status?: string
+      createdAt?: string
+    } | null
+  }
+}
+
 export type RecoveryChangePasswordBody = {
   currentPassword: string
   newPassword: string

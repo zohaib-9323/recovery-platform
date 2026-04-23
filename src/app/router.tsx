@@ -9,6 +9,8 @@ import { ProtectedRoute } from '@/components/layout/protected-route'
 import { RootRedirect } from '@/components/layout/root-redirect'
 import { TenantValidationGuard } from '@/components/layout/tenant-validation-guard'
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
+import { FirstLoginSetupPasswordPage } from '@/pages/auth/FirstLoginSetupPasswordPage'
+import { FirstLoginVerifyOtpPage } from '@/pages/auth/FirstLoginVerifyOtpPage'
 import { InvalidSubdomainPage } from '@/pages/auth/InvalidSubdomainPage'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
@@ -37,6 +39,11 @@ export function AppRouter() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/first-login/verify-otp" element={<FirstLoginVerifyOtpPage />} />
+                <Route
+                  path="/first-login/setup-password"
+                  element={<FirstLoginSetupPasswordPage />}
+                />
               </Route>
             </Route>
 

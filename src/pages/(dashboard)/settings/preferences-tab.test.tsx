@@ -3,12 +3,17 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { PreferencesTab } from './preferences-tab'
 
 const mockPostPreferences = jest.fn()
+const mockShowCustomToast = jest.fn()
 const mockUseGetRecoveryPreferencesQuery = jest.fn()
 const mockUsePostRecoveryPreferencesMutation = jest.fn()
 
 jest.mock('@/app/services/recoveryApi', () => ({
   useGetRecoveryPreferencesQuery: () => mockUseGetRecoveryPreferencesQuery(),
   usePostRecoveryPreferencesMutation: () => mockUsePostRecoveryPreferencesMutation(),
+}))
+
+jest.mock('@/lib/showCustomToast', () => ({
+  showCustomToast: (payload: unknown) => mockShowCustomToast(payload),
 }))
 
 describe('PreferencesTab', () => {
@@ -48,7 +53,12 @@ describe('PreferencesTab', () => {
         timezone: 'Europe/London',
       })
     })
-    expect(screen.getByText('Preferences saved.')).toBeInTheDocument()
+    expect(mockShowCustomToast).toHaveBeenCalledWith({
+      type: 'success',
+      title: 'Preferences saved.',
+      message: 'Preferences saved.',
+    })
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled()
   })
 
   it('shows api error message when mutation fails', async () => {
@@ -75,6 +85,12 @@ describe('PreferencesTab', () => {
     fireEvent.change(screen.getByLabelText('Timezone'), { target: { value: 'Europe/Berlin' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Request denied')
+    await waitFor(() => {
+      expect(mockShowCustomToast).toHaveBeenCalledWith({
+        type: 'error',
+        title: 'Could not save preferences.',
+        message: 'Request denied',
+      })
+    })
   })
 })
