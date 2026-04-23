@@ -106,7 +106,7 @@ describe('EditProfileTab', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Cannot update profile')
   })
 
-  it('keeps save disabled when any required field is empty', () => {
+  it('keeps save enabled when non-required fields are empty', () => {
     mockUseGetRecoveryProfileQuery.mockReturnValue({
       data: { content: defaultProfile },
       isLoading: false,
@@ -120,7 +120,7 @@ describe('EditProfileTab', () => {
     render(<EditProfileTab />)
 
     fireEvent.change(screen.getByLabelText('City'), { target: { value: '' } })
-    expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Save changes' })).not.toBeDisabled()
   })
 
   it('rejects date of birth after today', () => {

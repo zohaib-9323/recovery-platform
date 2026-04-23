@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { useI18n } from '@/i18n/useI18n'
@@ -10,6 +10,17 @@ export function InvalidSubdomainPage() {
 
   const subdomain = searchParams.get('subdomain')
   const redirectUrl = searchParams.get('redirectUrl') || env.mainSiteUrl
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const timer = window.setTimeout(() => {
+      window.location.replace(redirectUrl)
+    }, 600)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [redirectUrl])
 
   const title = useMemo(() => {
     if (!subdomain) {
