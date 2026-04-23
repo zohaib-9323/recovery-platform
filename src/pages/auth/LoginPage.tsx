@@ -1,5 +1,5 @@
 import { type FormEvent, useState } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, KeyRound, Mail } from 'lucide-react'
 
 import { useLoginMutation } from '@/app/services/recoveryApi'
@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { useAuth } from '@/app/hooks/useAuth'
 import { useI18n } from '@/i18n/useI18n'
 import { showCustomToast } from '@/lib/showCustomToast'
-import { isValidEmail, isValidPassword, PASSWORD_RULES_HINT } from '@/lib/validation'
+import { isValidEmail } from '@/lib/validation'
 
 function getErrorMessage(err: unknown, fallback: string): string {
   if (err && typeof err === 'object' && 'data' in err) {
@@ -27,7 +27,6 @@ function getErrorMessage(err: unknown, fallback: string): string {
 export function LoginPage() {
   const { t } = useI18n()
   const navigate = useNavigate()
-  const location = useLocation()
   const { isAuthenticated } = useAuth()
   const [login, { isLoading }] = useLoginMutation()
   const [email, setEmail] = useState('')
@@ -38,24 +37,13 @@ export function LoginPage() {
     return <Navigate to="/dashboard" replace />
   }
 
-  const from = (location.state as { from?: string } | null)?.from ?? '/dashboard'
-
   const trimmedEmail = email.trim()
-  const trimmedPassword = password.trim()
   const emailError =
     trimmedEmail.length > 0 && !isValidEmail(trimmedEmail)
       ? t('auth.login.enterValidEmail')
       : undefined
-  const passwordError =
-    trimmedPassword.length > 0 && !isValidPassword(trimmedPassword)
-      ? PASSWORD_RULES_HINT
-      : undefined
 
-  const canSubmit =
-    trimmedEmail.length > 0 &&
-    trimmedPassword.length > 0 &&
-    isValidEmail(trimmedEmail) &&
-    isValidPassword(trimmedPassword)
+  const canSubmit = trimmedEmail.length > 0 && password.length > 0 && isValidEmail(trimmedEmail)
 
   const tenantName =
     (typeof document !== 'undefined' ? document.documentElement.dataset.tenantName : undefined) ??
@@ -64,7 +52,7 @@ export function LoginPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
 
-    if (!isValidEmail(trimmedEmail) || !isValidPassword(trimmedPassword)) {
+    if (!isValidEmail(trimmedEmail) || password.length === 0) {
       showCustomToast({
         type: 'error',
         title: t('auth.login.invalidCredentials'),
@@ -74,8 +62,8 @@ export function LoginPage() {
     }
 
     try {
-      await login({ email: trimmedEmail, password: trimmedPassword }).unwrap()
-      navigate(from, { replace: true })
+      await login({ email: trimmedEmail, password }).unwrap()
+      navigate('/dashboard', { replace: true })
     } catch (err) {
       showCustomToast({
         type: 'error',
@@ -120,17 +108,14 @@ export function LoginPage() {
               id="password"
               name="password"
               label={t('auth.login.passwordLabel')}
-              description={PASSWORD_RULES_HINT}
               type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
               leftIcon={<KeyRound strokeWidth={2} />}
               placeholder={t('auth.login.passwordPlaceholder')}
               value={password}
               onChange={(e) => {
-                setPassword(e.target.value.trim())
+                setPassword(e.target.value)
               }}
-              error={passwordError}
-              aria-invalid={Boolean(passwordError)}
               rightSlot={
                 <button
                   type="button"

@@ -88,6 +88,26 @@ function lightTintHex(hex: string, alpha = 0.08): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
+function getMainRedirectUrlForCurrentHost(): string {
+  if (typeof window === 'undefined') {
+    return env.mainSiteUrl
+  }
+
+  const { protocol, hostname, port } = window.location
+  const normalizedHost = hostname.toLowerCase()
+  const isLocalHost =
+    normalizedHost === 'localhost' ||
+    normalizedHost === '127.0.0.1' ||
+    normalizedHost.endsWith('.localhost') ||
+    normalizedHost.endsWith('.127.0.0.1')
+
+  if (isLocalHost) {
+    return `${protocol}//localhost${port ? `:${port}` : ''}/login`
+  }
+
+  return env.mainSiteUrl
+}
+
 function applyTenantTheme(theme?: TenantThemeData) {
   if (!theme) return
 
@@ -207,6 +227,8 @@ export function TenantValidationGuard() {
         return
       }
 
+      const redirectFallback = getMainRedirectUrlForCurrentHost()
+
       const extractedSubdomain = extractSubdomainFromHostname(
         window.location.hostname,
         env.mainSiteUrl,
@@ -224,7 +246,7 @@ export function TenantValidationGuard() {
       if (INVALID_SUBDOMAINS.has(extractedSubdomain)) {
         if (isMounted) {
           setIsValid(false)
-          setRedirectUrl(env.mainSiteUrl)
+          setRedirectUrl(redirectFallback)
           setIsLoading(false)
         }
         return
@@ -239,7 +261,7 @@ export function TenantValidationGuard() {
         setIsValid(true)
       } else {
         setIsValid(false)
-        setRedirectUrl(validationResult.redirectUrl ?? env.mainSiteUrl)
+        setRedirectUrl(validationResult.redirectUrl ?? redirectFallback)
       }
 
       setIsLoading(false)

@@ -35,7 +35,7 @@ export function SettingsPage() {
     <div className="flex flex-col gap-6">
       <h1 className="text-base font-semibold text-rp-fg sm:text-lg">{t('settings.pageTitle')}</h1>
 
-      <div className="flex flex-wrap gap-2 rounded-lg bg-white p-3 shadow-[0px_4px_16px_0px_#4C67641A] sm:p-4">
+      <div className="flex flex-wrap items-center gap-2 rounded-lg bg-white p-3 shadow-[0px_4px_16px_0px_#4C67641A] sm:p-4">
         {SETTINGS_TABS.map(({ id, label, icon }) => {
           const selected = active === id
           return (
@@ -44,7 +44,7 @@ export function SettingsPage() {
               type="button"
               onClick={() => selectTab(id)}
               className={cn(
-                'flex items-center gap-2 rounded px-3 py-2 transition-colors sm:px-5 sm:py-3',
+                'flex min-h-11 items-center justify-center gap-2 rounded px-3 py-2 text-left transition-colors sm:px-5 sm:py-3',
                 selected ? 'bg-yellow text-white' : 'text-rp-fg hover:bg-[var(--hover-color)]',
               )}
             >

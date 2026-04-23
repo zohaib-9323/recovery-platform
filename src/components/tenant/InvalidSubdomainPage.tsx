@@ -1,4 +1,4 @@
-import type { FC } from 'react'
+import { type FC, useEffect } from 'react'
 import { useI18n } from '@/i18n/useI18n'
 import { env } from '@/utils/env'
 
@@ -12,6 +12,16 @@ export const InvalidSubdomainPage: FC<InvalidSubdomainPageProps> = ({
   redirectUrl = env.mainSiteUrl,
 }) => {
   const { t } = useI18n()
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      window.location.replace(redirectUrl)
+    }, 600)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [redirectUrl])
 
   const handleRedirect = () => {
     window.location.href = redirectUrl

@@ -89,11 +89,8 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
   }, [baselineProfile, form, pendingFile])
 
   const hasEmptyRequiredField = useMemo(
-    () =>
-      [form.firstName, form.lastName, form.dob, form.country, form.city, form.phone].some(
-        (value) => value.trim() === '',
-      ),
-    [form],
+    () => [form.firstName, form.lastName, profile.email ?? ''].some((value) => value.trim() === ''),
+    [form.firstName, form.lastName, profile.email],
   )
 
   const dobInFuture = useMemo(() => form.dob !== '' && form.dob > today, [form.dob, today])
@@ -209,8 +206,8 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      <div className="flex flex-col gap-6 md:flex-row md:gap-10">
-        <div className="flex flex-col items-center gap-3">
+      <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
+        <div className="flex flex-col items-start gap-3">
           <div className="relative">
             <img
               src={previewUrl}
@@ -240,7 +237,7 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
           </div>
         </div>
 
-        <div className="grid min-w-0 flex-1 grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid min-w-0 flex-1 grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-2">
           <InputField
             fieldType="text"
             id="rp-first"
@@ -269,7 +266,10 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
             disabled
           />
           <div className="flex flex-col gap-2">
-            <label htmlFor="rp-dob" className="font-semibold text-rp-fg">
+            <label
+              htmlFor="rp-dob"
+              className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:text-rp-disabled font-semibold text-rp-fg"
+            >
               {t('settings.edit.dateOfBirth')}
             </label>
             <input
@@ -334,12 +334,14 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
 export function EditProfileTab() {
   const { t } = useI18n()
   const { data, isLoading, isFetching, error, refetch, fulfilledTimeStamp } =
-    useGetRecoveryProfileQuery()
+    useGetRecoveryProfileQuery(undefined, {
+      refetchOnMountOrArgChange: true,
+    })
   const instanceKey = fulfilledTimeStamp ?? 0
   const [banner, setBanner] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
 
   const profile = data?.content
-  const loading = (isLoading || isFetching) && !profile
+  const loading = isLoading || isFetching
 
   if (error) {
     return (
