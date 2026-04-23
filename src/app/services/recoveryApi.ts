@@ -7,6 +7,10 @@ import { refreshSession } from '@/services/authSession'
 import { runBaseQueryWithReauth } from '@/app/services/reauth'
 import type {
   ApiMessageEnvelope,
+  FirstLoginRequestOtpBody,
+  FirstLoginSetupPasswordBody,
+  FirstLoginVerifyOtpBody,
+  FirstLoginVerifyOtpContent,
   LoginRequestBody,
   RecoveryAuthEnvelope,
   RequestPasswordResetBody,
@@ -17,6 +21,7 @@ import type {
   RecoveryDashboardContent,
   RecoveryChangePasswordBody,
   RecoveryDeleteRequestBody,
+  RecoveryDeleteRequestStatus,
   RecoveryPreferences,
   RecoveryPreferencesBody,
   RecoveryProfilePatchBody,
@@ -42,7 +47,10 @@ function isAuthUrl(url: string | undefined): boolean {
     url.includes('/recovery/auth/login') ||
     url.includes('/recovery/auth/refresh') ||
     url.includes('/recovery/auth/request-password-reset') ||
-    url.includes('/recovery/auth/reset-password')
+    url.includes('/recovery/auth/reset-password') ||
+    url.includes('/recovery/auth/first-login/verify-otp') ||
+    url.includes('/recovery/auth/first-login/request-otp') ||
+    url.includes('/recovery/auth/first-login/setup-password')
   )
 }
 
@@ -131,6 +139,33 @@ export const recoveryApi = createApi({
         body,
       }),
     }),
+    verifyFirstLoginOtp: builder.mutation<
+      ApiMessageEnvelope<FirstLoginVerifyOtpContent>,
+      FirstLoginVerifyOtpBody
+    >({
+      query: (body) => ({
+        url: '/recovery/auth/first-login/verify-otp',
+        method: 'POST',
+        body,
+      }),
+    }),
+    requestFirstLoginOtp: builder.mutation<ApiMessageEnvelope<null>, FirstLoginRequestOtpBody>({
+      query: (body) => ({
+        url: '/recovery/auth/first-login/request-otp',
+        method: 'POST',
+        body,
+      }),
+    }),
+    setupFirstLoginPassword: builder.mutation<
+      ApiMessageEnvelope<null>,
+      FirstLoginSetupPasswordBody
+    >({
+      query: (body) => ({
+        url: '/recovery/auth/first-login/setup-password',
+        method: 'POST',
+        body,
+      }),
+    }),
     getRecoveryProfile: builder.query<RecoveryApiEnvelope<RecoveryUserProfile>, void>({
       query: () => ({ url: '/recovery/users/profile', method: 'GET' }),
       providesTags: [{ type: 'RecoveryProfile', id: 'ME' }],
@@ -172,6 +207,15 @@ export const recoveryApi = createApi({
         url: '/recovery/users/delete-request',
         method: 'POST',
         body,
+      }),
+    }),
+    getRecoveryDeleteRequestStatus: builder.query<
+      RecoveryApiEnvelope<RecoveryDeleteRequestStatus>,
+      void
+    >({
+      query: () => ({
+        url: '/recovery/users/delete-request/check-pending',
+        method: 'GET',
       }),
     }),
     postRecoveryChangePassword: builder.mutation<
@@ -287,12 +331,16 @@ export const {
   useLoginMutation,
   useRequestPasswordResetMutation,
   useResetPasswordMutation,
+  useVerifyFirstLoginOtpMutation,
+  useRequestFirstLoginOtpMutation,
+  useSetupFirstLoginPasswordMutation,
   useGetRecoveryProfileQuery,
   usePatchRecoveryProfileMutation,
   useGetRecoveryPreferencesQuery,
   useGetRecoveryDashboardQuery,
   usePostRecoveryPreferencesMutation,
   usePostRecoveryDeleteRequestMutation,
+  useGetRecoveryDeleteRequestStatusQuery,
   usePostRecoveryChangePasswordMutation,
   useLazyValidateTenantSubdomainQuery,
   useGetRecoveryInboxDocumentsQuery,
