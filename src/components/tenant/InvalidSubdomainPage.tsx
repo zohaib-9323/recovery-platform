@@ -1,5 +1,6 @@
 import type { FC } from 'react'
 import { useI18n } from '@/i18n/useI18n'
+import { env } from '@/utils/env'
 
 type InvalidSubdomainPageProps = {
   subdomain?: string
@@ -8,7 +9,7 @@ type InvalidSubdomainPageProps = {
 
 export const InvalidSubdomainPage: FC<InvalidSubdomainPageProps> = ({
   subdomain,
-  redirectUrl = 'https://develop.d2nchgv6eu8hvr.amplifyapp.com/',
+  redirectUrl = env.mainSiteUrl,
 }) => {
   const { t } = useI18n()
 

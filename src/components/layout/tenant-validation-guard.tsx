@@ -207,7 +207,10 @@ export function TenantValidationGuard() {
         return
       }
 
-      const extractedSubdomain = extractSubdomainFromHostname(window.location.hostname)
+      const extractedSubdomain = extractSubdomainFromHostname(
+        window.location.hostname,
+        env.mainSiteUrl,
+      )
       setSubdomain(extractedSubdomain)
 
       if (!extractedSubdomain || MAIN_SUBDOMAINS.has(extractedSubdomain)) {
