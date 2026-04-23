@@ -28,6 +28,17 @@ function deriveMainDomainUrl(subdomain: string): string {
 
   const labels = hostname.split('.')
   if (labels[0] === subdomain && labels.length > 1) {
+    try {
+      const configuredMainHost = new URL(env.mainSiteUrl).hostname.toLowerCase()
+      if (
+        hostname.toLowerCase() === configuredMainHost ||
+        hostname.toLowerCase().endsWith(`.${configuredMainHost}`)
+      ) {
+        return env.mainSiteUrl
+      }
+    } catch {
+      // Fallback to hostname-derived URL when main site URL is not a valid absolute URL.
+    }
     return `${protocol}//${labels.slice(1).join('.')}${port ? `:${port}` : ''}`
   }
 
@@ -40,7 +51,9 @@ export function TenantThemeBootstrap() {
   const [validateTenantSubdomain] = useLazyValidateTenantSubdomainQuery()
 
   const detectedSubdomain =
-    typeof window === 'undefined' ? null : extractSubdomainFromHostname(window.location.hostname)
+    typeof window === 'undefined'
+      ? null
+      : extractSubdomainFromHostname(window.location.hostname, env.mainSiteUrl)
   const shouldBlockUntilTenantReady =
     Boolean(detectedSubdomain) &&
     (tenantTheme.isLoading || tenantTheme.subdomain !== detectedSubdomain)
@@ -56,7 +69,7 @@ export function TenantThemeBootstrap() {
     const hostname = window.location.hostname
     if (!hostname) return
 
-    const subdomain = extractSubdomainFromHostname(hostname)
+    const subdomain = extractSubdomainFromHostname(hostname, env.mainSiteUrl)
     if (!subdomain) {
       applyDefaultThemeToDocument()
       dispatch(clearTenantTheme())

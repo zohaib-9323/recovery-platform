@@ -1,12 +1,5 @@
 import type { TenantTheme } from '@/app/features/tenant/tenantThemeSlice'
 
-/**
- * Default Amplify Hosting URL shape is `{branch}.{appId}.amplifyapp.com` (four DNS labels).
- * A tenant prefix adds one label on the left: `{tenant}.{branch}.{appId}.amplifyapp.com`.
- */
-const AMPLIFY_APP_HOST_SUFFIX = '.amplifyapp.com'
-const AMPLIFY_DEFAULT_HOST_LABEL_COUNT = 4
-
 const DEFAULT_LOGO_SRC = `${process.env.PUBLIC_URL}/images/app-logo.svg`
 const DEFAULT_THEME = {
   primaryColor: '#e3a602',
@@ -15,7 +8,19 @@ const DEFAULT_THEME = {
   textOnPrimaryColor: '#ffffff',
 } as const
 
-export function extractSubdomainFromHostname(hostname: string): string | null {
+function resolveHostnameFromUrl(value?: string): string | null {
+  if (!value) return null
+  try {
+    return new URL(value).hostname.trim().toLowerCase()
+  } catch {
+    return null
+  }
+}
+
+export function extractSubdomainFromHostname(
+  hostname: string,
+  mainSiteUrl?: string,
+): string | null {
   const normalizedHost = hostname.trim().toLowerCase()
   if (!normalizedHost) return null
 
@@ -29,21 +34,24 @@ export function extractSubdomainFromHostname(hostname: string): string | null {
     return parts[0] && parts[0] !== 'www' ? parts[0] : null
   }
 
-  if (normalizedHost.endsWith(AMPLIFY_APP_HOST_SUFFIX)) {
-    const amplifyParts = normalizedHost.split('.')
-    if (amplifyParts.length <= AMPLIFY_DEFAULT_HOST_LABEL_COUNT) {
+  const mainSiteHostname = resolveHostnameFromUrl(mainSiteUrl)
+  if (mainSiteHostname) {
+    if (normalizedHost === mainSiteHostname) {
       return null
     }
-    const tenant = amplifyParts[0]
-    return tenant && tenant !== 'www' ? tenant : null
-  }
-
-  if (parts.length < 3) {
+    if (normalizedHost.endsWith(`.${mainSiteHostname}`)) {
+      const tenantCandidate = normalizedHost.slice(0, -(mainSiteHostname.length + 1)).split('.')[0]
+      return tenantCandidate && tenantCandidate !== 'www' ? tenantCandidate : null
+    }
     return null
   }
 
-  const subdomain = parts[0]
-  return subdomain && subdomain !== 'www' ? subdomain : null
+  if (parts.length >= 3) {
+    const subdomain = parts[0]
+    return subdomain && subdomain !== 'www' ? subdomain : null
+  }
+
+  return null
 }
 
 function darkenHexColor(hex: string, amount = 20): string {
