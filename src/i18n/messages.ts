@@ -199,7 +199,7 @@ export const messages: Record<string, string> = {
   'inbox.detail.processingTimeline': 'Processing Timeline',
   'inbox.detail.auditTimeline': 'Audit Timeline',
   'inbox.detail.attachments': 'Attachments',
-  'inbox.detail.processedShipments': 'Processed Shipments',
+  'inbox.detail.processedShipments': 'Processable Shipments',
   'inbox.detail.unprocessedShipments': 'Unprocessable Shipments',
   'inbox.detail.loading': 'Loading message details...',
   'inbox.detail.loadError': 'Could not load message details.',
