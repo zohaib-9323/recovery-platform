@@ -182,24 +182,24 @@ export function InboxDetailPanel({
         className,
       )}
     >
-      <header className="flex shrink-0 items-start justify-between gap-3 rounded-lg border border-bottomBorder px-3 py-3 sm:px-4">
-        <div className="space-y-2">
+      <header className="flex shrink-0 flex-col gap-3 rounded-lg border border-bottomBorder px-3 py-3 sm:flex-row sm:items-start sm:justify-between sm:px-4">
+        <div className="min-w-0 space-y-2">
           <h1
-            className="max-w-[420px] truncate text-[18px] font-semibold leading-[100%] tracking-[0] text-black"
+            className="max-w-full truncate text-[18px] font-semibold leading-[100%] tracking-[0] text-black sm:max-w-[420px]"
             title={email.messageId}
           >
             {email.messageId}
           </h1>
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm font-light text-blackFive">
-            <span>
+            <span className="break-all">
               <span className="font-medium text-black">{t('inbox.detail.from')}</span>{' '}
               {email.fromAddress}
             </span>
-            <span>
+            <span className="break-words">
               <span className="font-medium text-black">{t('inbox.detail.received')}</span>{' '}
               {email.receivedDetail}
             </span>
-            <span>
+            <span className="break-all">
               <span className="font-medium text-black">{t('inbox.detail.domain')}</span>{' '}
               {email.domain}
             </span>
@@ -207,7 +207,7 @@ export function InboxDetailPanel({
         </div>
         <span
           className={cn(
-            'inline-flex items-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium',
+            'inline-flex w-fit items-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium',
             statusClass,
           )}
         >

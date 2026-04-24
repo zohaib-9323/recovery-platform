@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { KeyRound } from 'lucide-react'
+import { Eye, EyeOff, KeyRound } from 'lucide-react'
 
 import {
   useGetRecoveryDeleteRequestStatusQuery,
@@ -34,6 +34,7 @@ export function DeleteAccountTab() {
   const [reasonIndex, setReasonIndex] = useState(0)
   const [customReason, setCustomReason] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [requestSent, setRequestSent] = useState(hasPendingDeleteRequest(pendingData?.content))
   const [banner, setBanner] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
@@ -171,8 +172,19 @@ export function DeleteAccountTab() {
         id="rp-del-pw"
         name="password"
         label={t('settings.delete.currentPassword')}
+        type={showPassword ? 'text' : 'password'}
         autoComplete="current-password"
         leftIcon={<KeyRound strokeWidth={2} />}
+        rightSlot={
+          <button
+            type="button"
+            className="text-primary hover:text-primary/90"
+            onClick={() => setShowPassword((prev) => !prev)}
+            aria-label={showPassword ? t('common.hidePassword') : t('common.showPassword')}
+          >
+            {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          </button>
+        }
         value={password}
         onChange={(e) => {
           setPassword(e.target.value)
