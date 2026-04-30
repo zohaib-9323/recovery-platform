@@ -36,3 +36,22 @@ export type ResetPasswordBody = {
   token: string
   newPassword: string
 }
+
+export type FirstLoginVerifyOtpBody = {
+  email: string
+  otp: string
+}
+
+export type FirstLoginVerifyOtpContent = {
+  verified?: boolean
+}
+
+export type FirstLoginRequestOtpBody = {
+  email: string
+}
+
+export type FirstLoginSetupPasswordBody = {
+  email: string
+  newPassword: string
+  confirmPassword: string
+}

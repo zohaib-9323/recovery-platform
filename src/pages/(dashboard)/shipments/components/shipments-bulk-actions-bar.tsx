@@ -1,5 +1,4 @@
-import { Download } from 'lucide-react'
-
+import { CsvExportButton } from '@/components/buttons'
 import { CheckboxField } from '@/components/fields'
 import { useI18n } from '@/i18n/useI18n'
 import { cn } from '@/lib/utils'
@@ -9,6 +8,7 @@ export type ShipmentsBulkActionsBarProps = {
   selectAllIndeterminate: boolean
   onSelectAllChange: (checked: boolean) => void
   onExportCsv: () => void
+  canExport?: boolean
   className?: string
 }
 
@@ -17,15 +17,13 @@ export function ShipmentsBulkActionsBar({
   selectAllIndeterminate,
   onSelectAllChange,
   onExportCsv,
+  canExport = true,
   className,
 }: ShipmentsBulkActionsBarProps) {
   const { t } = useI18n()
   return (
     <div
-      className={cn(
-        'flex flex-col gap-3  bg-white py-3 sm:flex-row sm:items-center sm:justify-between',
-        className,
-      )}
+      className={cn('flex w-full flex-row items-center justify-between gap-3 bg-white', className)}
     >
       <CheckboxField
         id="shipments-select-all"
@@ -34,14 +32,12 @@ export function ShipmentsBulkActionsBar({
         indeterminate={selectAllIndeterminate}
         onChange={(e) => onSelectAllChange(e.target.checked)}
       />
-      <button
-        type="button"
+      <CsvExportButton
+        buttonText={t('shipments.bulk.exportCsv')}
         onClick={onExportCsv}
-        className="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] bg-emerald-700 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800"
-      >
-        <Download className="h-4 w-4" strokeWidth={2} aria-hidden />
-        {t('shipments.bulk.exportCsv')}
-      </button>
+        disabled={!canExport}
+        className="export-btn"
+      />
     </div>
   )
 }
