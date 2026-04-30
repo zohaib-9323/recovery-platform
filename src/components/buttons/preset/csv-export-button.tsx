@@ -10,6 +10,10 @@ export type CsvExportButtonProps = {
   disabled?: boolean
 }
 
+/**
+ * Trade Harmonizer styled CSV export button.
+ * Keeps Recovery callbacks intact while matching visual language.
+ */
 export function CsvExportButton({
   buttonText = 'Export CSV',
   onClick,

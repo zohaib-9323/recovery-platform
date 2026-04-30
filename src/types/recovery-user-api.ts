@@ -38,17 +38,6 @@ export type RecoveryPreferencesBody = {
   timezone: string
 }
 
-export type RecoveryDeleteRequestBody = {
-  password: string
-  reason: string
-}
-
-export type RecoveryChangePasswordBody = {
-  currentPassword: string
-  newPassword: string
-  confirmPassword: string
-}
-
 export type RecoveryMetricTrend = {
   percentage: string
   increased: boolean
@@ -74,6 +63,11 @@ export type RecoveryDashboardContent = {
   data: RecoveryDashboardStats
 }
 
+export type RecoveryDeleteRequestBody = {
+  password: string
+  reason: string
+}
+
 export type RecoveryDeleteRequestStatus = {
   hasPendingRequest?: boolean
   request?: {
@@ -91,6 +85,11 @@ export type RecoveryDeleteRequestStatus = {
   }
 }
 
+export type RecoveryChangePasswordBody = {
+  currentPassword: string
+  newPassword: string
+  confirmPassword: string
+}
 export type RecoveryTenantTheme = {
   _id: string
   subdomain: string

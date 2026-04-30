@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { City, Country } from 'country-state-city'
+import Select, { components, type DropdownIndicatorProps, type SingleValue } from 'react-select'
+import CreatableSelect from 'react-select/creatable'
+import countryList from 'react-select-country-list'
 
 import { updateUserFields } from '@/app/features/auth/authSlice'
 import {
@@ -10,12 +14,25 @@ import { InputField } from '@/components/fields'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n/useI18n'
 import { getRtkErrorMessage } from '@/lib/api-errors'
+import { showCustomToast } from '@/lib/showCustomToast'
 import type { RecoveryApiEnvelope, RecoveryUserProfile } from '@/types/recovery-user-api'
 
 import { buildProfilePatch, type ProfileFormValues } from './build-profile-patch'
 
 const PLACEHOLDER_AVATAR = `${process.env.PUBLIC_URL}/images/no-profile.png`
 const MAX_IMAGE_BYTES = 1_500_000
+const PHONE_PATTERN = /^\+?[1-9]\d{6,14}$/
+const NAME_MAX_LENGTH = 30
+
+type CountryOption = {
+  label: string
+  value: string
+}
+
+type CityOption = {
+  label: string
+  value: string
+}
 
 function fileToDataUrl(file: File, t: (key: string) => string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -32,6 +49,40 @@ function toDateInputValue(iso: string | undefined): string {
   return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : ''
 }
 
+function toLocalDateInputValue(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function isPhoneValid(value: string): boolean {
+  const normalized = value.replace(/[()\s-]/g, '')
+  return PHONE_PATTERN.test(normalized)
+}
+
+function resolveCountryOptionByLabel(
+  options: CountryOption[],
+  label: string,
+): CountryOption | null {
+  if (!label) return null
+  const directMatch = options.find((opt) => opt.label === label)
+  if (directMatch) return directMatch
+  if (label === 'UK') {
+    return options.find((opt) => opt.value === 'GB' || opt.label === 'United Kingdom') ?? null
+  }
+  return null
+}
+
+const DropdownIndicator = (props: DropdownIndicatorProps<CountryOption | CityOption, false>) => {
+  const isOpen = props.selectProps.menuIsOpen
+  return (
+    <components.DropdownIndicator {...props}>
+      <span className={`icon-arrow-${isOpen ? 'up' : 'down'} text-xs text-rp-fg`} />
+    </components.DropdownIndicator>
+  )
+}
+
 type EditProfileFormProps = {
   profile: RecoveryUserProfile
   formInstance: number
@@ -46,6 +97,9 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
   const dispatch = useAppDispatch()
   const fileRef = useRef<HTMLInputElement>(null)
   const [patchProfile, { isLoading: saving }] = usePatchRecoveryProfileMutation()
+  const today = useMemo(() => toLocalDateInputValue(new Date()), [])
+  const [baselineProfile, setBaselineProfile] = useState(profile)
+  const countryOptions = useMemo(() => countryList().getData(), [])
 
   const [form, setForm] = useState<ProfileFormValues>(() => ({
     firstName: profile.firstName ?? '',
@@ -70,12 +124,65 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
 
   const hasUnsavedChanges = useMemo(() => {
     if (pendingFile !== null) return true
-    return Object.keys(buildProfilePatch(profile, form, null)).length > 0
-  }, [profile, form, pendingFile])
+    return Object.keys(buildProfilePatch(baselineProfile, form, null)).length > 0
+  }, [baselineProfile, form, pendingFile])
+
+  const hasEmptyRequiredField = useMemo(
+    () => [form.firstName, form.lastName, profile.email ?? ''].some((value) => value.trim() === ''),
+    [form.firstName, form.lastName, profile.email],
+  )
+
+  const dobInFuture = useMemo(() => form.dob !== '' && form.dob > today, [form.dob, today])
+  const phoneInvalid = useMemo(
+    () => form.phone.trim() !== '' && !isPhoneValid(form.phone),
+    [form.phone],
+  )
+  const firstNameTooLong = useMemo(
+    () => form.firstName.trim().length > NAME_MAX_LENGTH,
+    [form.firstName],
+  )
+  const lastNameTooLong = useMemo(
+    () => form.lastName.trim().length > NAME_MAX_LENGTH,
+    [form.lastName],
+  )
+
+  const selectedCountry = useMemo(
+    () => resolveCountryOptionByLabel(countryOptions, form.country),
+    [countryOptions, form.country],
+  )
+  const cityOptions = useMemo(() => {
+    if (!selectedCountry) return []
+    const countryByIso = Country.getCountryByCode(selectedCountry.value)
+    if (!countryByIso) return []
+    return (
+      City.getCitiesOfCountry(countryByIso.isoCode)?.map((city) => ({
+        label: city.name,
+        value: city.name,
+      })) ?? []
+    )
+  }, [selectedCountry])
+
+  const selectedCity = useMemo(() => {
+    if (!form.city) return null
+    return (
+      cityOptions.find((opt) => opt.value === form.city) ?? { label: form.city, value: form.city }
+    )
+  }, [cityOptions, form.city])
+
+  const formInvalid =
+    hasEmptyRequiredField || dobInFuture || phoneInvalid || firstNameTooLong || lastNameTooLong
 
   const updateField = (key: keyof ProfileFormValues, value: string) => {
     setForm((f) => ({ ...f, [key]: value }))
     onBanner(null)
+  }
+
+  const updateDob = (value: string) => {
+    if (value !== '' && value > today) {
+      onBanner({ type: 'err', text: t('settings.edit.dateOfBirthInvalid') })
+      return
+    }
+    updateField('dob', value)
   }
 
   const onPickImage = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -113,7 +220,7 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
       }
     }
 
-    const patch = buildProfilePatch(profile, form, pendingFile ? profilePicPayload : null)
+    const patch = buildProfilePatch(baselineProfile, form, pendingFile ? profilePicPayload : null)
     if (Object.keys(patch).length === 0) {
       onBanner({ type: 'err', text: t('settings.edit.noChanges') })
       return
@@ -122,7 +229,13 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
     try {
       const res = await patchProfile(patch).unwrap()
       if (res.status === false) {
-        onBanner({ type: 'err', text: res.message ?? t('settings.edit.updateFailed') })
+        const failureMessage = res.message ?? t('settings.edit.updateFailed')
+        onBanner({ type: 'err', text: failureMessage })
+        showCustomToast({
+          type: 'error',
+          title: t('settings.edit.updateFailed'),
+          message: failureMessage,
+        })
         return
       }
       const next = res.content ?? profile
@@ -145,6 +258,15 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
         ''
 
       setPreviewUrl(headerPic ? headerPic : PLACEHOLDER_AVATAR)
+      setBaselineProfile(identity)
+      setForm({
+        firstName: identity.firstName ?? '',
+        lastName: identity.lastName ?? '',
+        dob: toDateInputValue(identity.dob),
+        country: identity.country ?? '',
+        city: identity.city ?? '',
+        phone: identity.phone ?? '',
+      })
 
       dispatch(
         updateUserFields({
@@ -153,16 +275,28 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
         }),
       )
       await refetch()
-      onBanner({ type: 'ok', text: res.message ?? t('settings.edit.updated') })
+      const successMessage = res.message ?? t('settings.edit.updated')
+      onBanner({ type: 'ok', text: successMessage })
+      showCustomToast({
+        type: 'success',
+        title: t('settings.edit.updated'),
+        message: successMessage,
+      })
     } catch (err) {
-      onBanner({ type: 'err', text: getRtkErrorMessage(err) })
+      const errorMessage = getRtkErrorMessage(err)
+      onBanner({ type: 'err', text: errorMessage })
+      showCustomToast({
+        type: 'error',
+        title: t('settings.edit.updateFailed'),
+        message: errorMessage,
+      })
     }
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      <div className="flex flex-col gap-6 md:flex-row md:gap-10">
-        <div className="flex flex-col items-center gap-3">
+      <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
+        <div className="flex flex-col items-start gap-3">
           <div className="relative">
             <img
               src={previewUrl}
@@ -192,7 +326,7 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
           </div>
         </div>
 
-        <div className="grid min-w-0 flex-1 grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid min-w-0 flex-1 grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-2">
           <InputField
             fieldType="text"
             id="rp-first"
@@ -200,7 +334,8 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
             label={t('settings.edit.firstName')}
             value={form.firstName}
             onChange={(e) => updateField('firstName', e.target.value)}
-            maxLength={80}
+            maxLength={NAME_MAX_LENGTH}
+            error={firstNameTooLong ? t('settings.edit.firstNameMaxLength') : undefined}
           />
           <InputField
             fieldType="text"
@@ -209,7 +344,8 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
             label={t('settings.edit.lastName')}
             value={form.lastName}
             onChange={(e) => updateField('lastName', e.target.value)}
-            maxLength={80}
+            maxLength={NAME_MAX_LENGTH}
+            error={lastNameTooLong ? t('settings.edit.lastNameMaxLength') : undefined}
           />
           <InputField
             fieldType="text"
@@ -221,7 +357,10 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
             disabled
           />
           <div className="flex flex-col gap-2">
-            <label htmlFor="rp-dob" className="font-semibold text-rp-fg">
+            <label
+              htmlFor="rp-dob"
+              className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:text-rp-disabled font-semibold text-rp-fg"
+            >
               {t('settings.edit.dateOfBirth')}
             </label>
             <input
@@ -229,27 +368,90 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
               type="date"
               className="h-11 w-full rounded-[10px] border border-rp-border bg-rp-input px-3 text-sm text-rp-fg focus:outline-none focus:ring-2 focus:ring-rp-accent"
               value={form.dob}
-              onChange={(e) => updateField('dob', e.target.value)}
+              max={today}
+              aria-invalid={dobInFuture}
+              onChange={(e) => updateDob(e.target.value)}
+            />
+            {dobInFuture ? (
+              <p role="alert" className="text-sm text-red-600">
+                {t('settings.edit.dateOfBirthInvalid')}
+              </p>
+            ) : null}
+          </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="rp-country" className="font-semibold text-rp-fg">
+              {t('settings.edit.country')}
+            </label>
+            <Select
+              inputId="rp-country"
+              options={countryOptions}
+              value={selectedCountry}
+              onChange={(next: SingleValue<CountryOption>) => {
+                const countryName = next?.label ?? ''
+                if (countryName !== form.country) {
+                  updateField('city', '')
+                }
+                updateField('country', countryName)
+              }}
+              placeholder={t('settings.edit.countryPlaceholder')}
+              isSearchable
+              menuPosition="fixed"
+              classNamePrefix="rp-country-select"
+              styles={{
+                control: (base, state) => ({
+                  ...base,
+                  minHeight: 44,
+                  borderRadius: 10,
+                  borderColor: state.isFocused ? 'var(--rp-accent)' : 'var(--rp-border)',
+                  backgroundColor: 'var(--rp-input)',
+                  boxShadow: 'none',
+                  '&:hover': { borderColor: 'var(--rp-border)' },
+                }),
+                menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+              }}
+              menuPortalTarget={typeof window !== 'undefined' ? document.body : undefined}
+              components={{
+                IndicatorSeparator: () => null,
+                DropdownIndicator,
+              }}
             />
           </div>
-          <InputField
-            fieldType="text"
-            id="rp-country"
-            name="country"
-            label={t('settings.edit.country')}
-            value={form.country}
-            onChange={(e) => updateField('country', e.target.value)}
-            maxLength={120}
-          />
-          <InputField
-            fieldType="text"
-            id="rp-city"
-            name="city"
-            label={t('settings.edit.city')}
-            value={form.city}
-            onChange={(e) => updateField('city', e.target.value)}
-            maxLength={120}
-          />
+          <div className="flex flex-col gap-2">
+            <label htmlFor="rp-city" className="font-semibold text-rp-fg">
+              {t('settings.edit.city')}
+            </label>
+            <CreatableSelect
+              inputId="rp-city"
+              isDisabled={!selectedCountry}
+              options={cityOptions}
+              value={selectedCity}
+              onChange={(next: SingleValue<CityOption>) => updateField('city', next?.value ?? '')}
+              placeholder={t('settings.edit.cityPlaceholder')}
+              isSearchable
+              menuPosition="fixed"
+              classNamePrefix="rp-city-select"
+              formatCreateLabel={(inputValue) =>
+                `${t('settings.edit.cityPlaceholder')}: "${inputValue}"`
+              }
+              styles={{
+                control: (base, state) => ({
+                  ...base,
+                  minHeight: 44,
+                  borderRadius: 10,
+                  borderColor: state.isFocused ? 'var(--rp-accent)' : 'var(--rp-border)',
+                  backgroundColor: 'var(--rp-input)',
+                  boxShadow: 'none',
+                  '&:hover': { borderColor: 'var(--rp-border)' },
+                }),
+                menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+              }}
+              menuPortalTarget={typeof window !== 'undefined' ? document.body : undefined}
+              components={{
+                IndicatorSeparator: () => null,
+                DropdownIndicator,
+              }}
+            />
+          </div>
           <div className="md:col-span-2">
             <InputField
               fieldType="text"
@@ -259,14 +461,16 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
               placeholder="+447700900123"
               value={form.phone}
               onChange={(e) => updateField('phone', e.target.value)}
+              type="tel"
               maxLength={32}
+              error={phoneInvalid ? t('settings.edit.phoneInvalid') : undefined}
             />
           </div>
         </div>
       </div>
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={saving || !hasUnsavedChanges}>
+        <Button type="submit" disabled={saving || !hasUnsavedChanges || formInvalid}>
           {saving ? t('common.saving') : t('common.saveChanges')}
         </Button>
       </div>
@@ -277,12 +481,13 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
 export function EditProfileTab() {
   const { t } = useI18n()
   const { data, isLoading, isFetching, error, refetch, fulfilledTimeStamp } =
-    useGetRecoveryProfileQuery()
+    useGetRecoveryProfileQuery(undefined, {
+      refetchOnMountOrArgChange: true,
+    })
   const instanceKey = fulfilledTimeStamp ?? 0
-  const [banner, setBanner] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
 
   const profile = data?.content
-  const loading = (isLoading || isFetching) && !profile
+  const loading = isLoading || isFetching
 
   if (error) {
     return (
@@ -298,22 +503,12 @@ export function EditProfileTab() {
 
   return (
     <>
-      {banner ? (
-        <p
-          role={banner.type === 'err' ? 'alert' : 'status'}
-          className={
-            banner.type === 'err' ? 'mb-4 text-sm text-red-600' : 'mb-4 text-sm text-rp-success'
-          }
-        >
-          {banner.text}
-        </p>
-      ) : null}
       <EditProfileForm
         key={instanceKey}
         profile={profile}
         formInstance={instanceKey}
         refetch={refetch}
-        onBanner={setBanner}
+        onBanner={() => {}}
       />
     </>
   )

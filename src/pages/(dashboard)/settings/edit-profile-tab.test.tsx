@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { EditProfileTab } from './edit-profile-tab'
 
 const mockPatchProfile = jest.fn()
+const mockShowCustomToast = jest.fn()
 const mockDispatch = jest.fn()
 const mockRefetch = jest.fn()
 const mockUseGetRecoveryProfileQuery = jest.fn()
@@ -17,6 +18,22 @@ jest.mock('@/app/redux-hooks', () => ({
   useAppDispatch: () => mockDispatch,
 }))
 
+jest.mock('@/lib/showCustomToast', () => ({
+  showCustomToast: (payload: unknown) => mockShowCustomToast(payload),
+}))
+
+const defaultProfile = {
+  id: 10,
+  email: 'alice@example.com',
+  firstName: 'Alice',
+  lastName: 'Stone',
+  dob: '2000-01-20T00:00:00.000Z',
+  country: 'UK',
+  city: 'London',
+  phone: '+447700900000',
+  profilePic: null,
+}
+
 describe('EditProfileTab', () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -26,17 +43,7 @@ describe('EditProfileTab', () => {
   it('submits patch only with changed values', async () => {
     mockUseGetRecoveryProfileQuery.mockReturnValue({
       data: {
-        content: {
-          id: 10,
-          email: 'alice@example.com',
-          firstName: 'Alice',
-          lastName: 'Stone',
-          dob: '2000-01-20T00:00:00.000Z',
-          country: 'UK',
-          city: 'London',
-          phone: '+447700900000',
-          profilePic: null,
-        },
+        content: defaultProfile,
       },
       isLoading: false,
       isFetching: false,
@@ -74,22 +81,16 @@ describe('EditProfileTab', () => {
     await waitFor(() => {
       expect(mockPatchProfile).toHaveBeenCalledWith({ lastName: 'Walker' })
     })
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled()
+    })
   })
 
   it('renders api error on mutation failure', async () => {
     mockUseGetRecoveryProfileQuery.mockReturnValue({
       data: {
-        content: {
-          id: 10,
-          email: 'alice@example.com',
-          firstName: 'Alice',
-          lastName: 'Stone',
-          dob: '2000-01-20T00:00:00.000Z',
-          country: 'UK',
-          city: 'London',
-          phone: '+447700900000',
-          profilePic: null,
-        },
+        content: defaultProfile,
       },
       isLoading: false,
       isFetching: false,
@@ -104,9 +105,97 @@ describe('EditProfileTab', () => {
 
     render(<EditProfileTab />)
 
-    fireEvent.change(screen.getByLabelText('City'), { target: { value: 'Leeds' } })
+    fireEvent.change(screen.getByLabelText('Last name'), { target: { value: 'Walker' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Cannot update profile')
+    await waitFor(() => {
+      expect(mockShowCustomToast).toHaveBeenCalledWith({
+        type: 'error',
+        title: 'Update failed.',
+        message: 'Cannot update profile',
+      })
+    })
+  })
+
+  it('keeps save enabled when non-required fields are empty', () => {
+    mockUseGetRecoveryProfileQuery.mockReturnValue({
+      data: { content: defaultProfile },
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: mockRefetch,
+      fulfilledTimeStamp: 13,
+    })
+    mockUsePatchRecoveryProfileMutation.mockReturnValue([mockPatchProfile, { isLoading: false }])
+
+    render(<EditProfileTab />)
+
+    fireEvent.change(screen.getByLabelText('Phone'), { target: { value: '' } })
+    expect(screen.getByRole('button', { name: 'Save changes' })).not.toBeDisabled()
+  })
+
+  it('rejects date of birth after today', () => {
+    mockUseGetRecoveryProfileQuery.mockReturnValue({
+      data: { content: defaultProfile },
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: mockRefetch,
+      fulfilledTimeStamp: 14,
+    })
+    mockUsePatchRecoveryProfileMutation.mockReturnValue([mockPatchProfile, { isLoading: false }])
+
+    render(<EditProfileTab />)
+
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    const value = [
+      tomorrow.getFullYear(),
+      String(tomorrow.getMonth() + 1).padStart(2, '0'),
+      String(tomorrow.getDate()).padStart(2, '0'),
+    ].join('-')
+
+    fireEvent.change(screen.getByLabelText('Date of birth'), { target: { value } })
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled()
+  })
+
+  it('validates phone number before allowing save', () => {
+    mockUseGetRecoveryProfileQuery.mockReturnValue({
+      data: { content: defaultProfile },
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: mockRefetch,
+      fulfilledTimeStamp: 15,
+    })
+    mockUsePatchRecoveryProfileMutation.mockReturnValue([mockPatchProfile, { isLoading: false }])
+
+    render(<EditProfileTab />)
+
+    fireEvent.change(screen.getByLabelText('Phone'), { target: { value: 'invalid-phone' } })
+    expect(screen.getByText('Enter a valid phone number.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled()
+
+    fireEvent.change(screen.getByLabelText('Phone'), { target: { value: '+447700900123' } })
+    expect(screen.queryByText('Enter a valid phone number.')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Save changes' })).not.toBeDisabled()
+  })
+
+  it('enforces 30 character limit on first and last names', () => {
+    mockUseGetRecoveryProfileQuery.mockReturnValue({
+      data: { content: defaultProfile },
+      isLoading: false,
+      isFetching: false,
+      error: null,
+      refetch: mockRefetch,
+      fulfilledTimeStamp: 16,
+    })
+    mockUsePatchRecoveryProfileMutation.mockReturnValue([mockPatchProfile, { isLoading: false }])
+
+    render(<EditProfileTab />)
+
+    fireEvent.change(screen.getByLabelText('First name'), { target: { value: 'a'.repeat(31) } })
+    expect(screen.getByText('First name cannot be longer than 30 characters.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled()
   })
 })

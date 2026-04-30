@@ -1,26 +1,46 @@
 import { useState } from 'react'
-import { KeyRound } from 'lucide-react'
+import { Eye, EyeOff, KeyRound } from 'lucide-react'
 
-import { usePostRecoveryDeleteRequestMutation } from '@/app/services/recoveryApi'
+import {
+  useGetRecoveryDeleteRequestStatusQuery,
+  usePostRecoveryDeleteRequestMutation,
+} from '@/app/services/recoveryApi'
 import { useAuth } from '@/app/hooks/useAuth'
 import { InputField } from '@/components/fields'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n/useI18n'
 import { getRtkErrorMessage } from '@/lib/api-errors'
+import type { RecoveryDeleteRequestStatus } from '@/types/recovery-user-api'
 
 import { LEAVING_REASONS } from './settings-constants'
+
+function hasPendingDeleteRequest(content: RecoveryDeleteRequestStatus | undefined): boolean {
+  if (!content) return false
+  if (content.hasPendingRequest === true) return true
+  if (content.data?.hasPendingRequest === true) return true
+  return false
+}
 
 export function DeleteAccountTab() {
   const { t } = useI18n()
   const { user } = useAuth()
   const [postDelete, { isLoading }] = usePostRecoveryDeleteRequestMutation()
+  const {
+    data: pendingData,
+    isLoading: pendingLoading,
+    isFetching: pendingFetching,
+  } = useGetRecoveryDeleteRequestStatusQuery()
 
   const [reasonIndex, setReasonIndex] = useState(0)
   const [customReason, setCustomReason] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
-  const [requestSent, setRequestSent] = useState(false)
+  const [requestSent, setRequestSent] = useState(hasPendingDeleteRequest(pendingData?.content))
   const [banner, setBanner] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+
+  const requestAlreadyPending = requestSent || hasPendingDeleteRequest(pendingData?.content)
+  const pendingCheckLoading = pendingLoading || pendingFetching
 
   const resolvedReason =
     reasonIndex === LEAVING_REASONS.length - 1 ? customReason.trim() : LEAVING_REASONS[reasonIndex]
@@ -30,6 +50,7 @@ export function DeleteAccountTab() {
     (reasonIndex !== LEAVING_REASONS.length - 1 || customReason.trim().length > 0)
 
   const handleRequestClick = () => {
+    if (requestAlreadyPending) return
     setBanner(null)
     if (!canOpenConfirm) {
       setBanner({
@@ -45,6 +66,7 @@ export function DeleteAccountTab() {
   }
 
   const submitDelete = async () => {
+    if (requestAlreadyPending) return
     setBanner(null)
     try {
       const res = await postDelete({
@@ -64,7 +86,11 @@ export function DeleteAccountTab() {
     }
   }
 
-  if (requestSent) {
+  if (pendingCheckLoading && !requestAlreadyPending) {
+    return <p className="text-sm text-rp-muted">{t('settings.delete.loading')}</p>
+  }
+
+  if (requestAlreadyPending) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-10 text-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-rp-success text-white">
@@ -146,8 +172,19 @@ export function DeleteAccountTab() {
         id="rp-del-pw"
         name="password"
         label={t('settings.delete.currentPassword')}
+        type={showPassword ? 'text' : 'password'}
         autoComplete="current-password"
         leftIcon={<KeyRound strokeWidth={2} />}
+        rightSlot={
+          <button
+            type="button"
+            className="text-primary hover:text-primary/90"
+            onClick={() => setShowPassword((prev) => !prev)}
+            aria-label={showPassword ? t('common.hidePassword') : t('common.showPassword')}
+          >
+            {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          </button>
+        }
         value={password}
         onChange={(e) => {
           setPassword(e.target.value)
@@ -156,7 +193,12 @@ export function DeleteAccountTab() {
       />
 
       <div className="flex justify-end">
-        <Button type="button" variant="destructive" onClick={handleRequestClick}>
+        <Button
+          type="button"
+          variant="destructive"
+          onClick={handleRequestClick}
+          disabled={requestAlreadyPending}
+        >
           {t('settings.delete.requestButton')}
         </Button>
       </div>

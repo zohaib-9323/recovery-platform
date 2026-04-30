@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import { useAppSelector } from '@/app/redux-hooks'
+import { AppLogo } from '@/components/brand/app-logo'
 import { recoverySidebarItems } from '@/data/recovery-sidebar-items'
 import { t } from '@/i18n/useI18n'
 
@@ -22,7 +23,7 @@ export function AppSidebar() {
     <div
       className={`transition-all duration-500 ease-in-out ${
         expanded ? 'w-64' : 'hidden w-20 sm:flex'
-      } flex h-full flex-col border-r border-bottomBorder bg-bgColor`}
+      } flex h-screen shrink-0 flex-col overflow-hidden border-r border-bottomBorder bg-bgColor`}
     >
       <nav>
         <button
@@ -31,13 +32,7 @@ export function AppSidebar() {
           className="flex h-20 w-full cursor-pointer flex-row items-center gap-3 border-b border-bottomBorder bg-bgColor px-4 text-left"
         >
           <div className="flex w-fit flex-shrink-0 items-center">
-            <img
-              src={`${process.env.PUBLIC_URL}/images/app-logo.svg`}
-              alt={t('layout.brand')}
-              width={30}
-              height={30}
-              className="h-[30px] w-[30px] object-contain"
-            />
+            <AppLogo className="h-[30px] w-[30px]" size="sm" />
           </div>
           {expanded && (
             <p className="truncate text-sm font-bold text-yellow lg:text-[1rem]">{BRAND}</p>

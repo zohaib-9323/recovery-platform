@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n/useI18n'
 import { getRtkErrorMessage } from '@/lib/api-errors'
+import { showCustomToast } from '@/lib/showCustomToast'
 import { listTimezones } from '@/lib/timezones'
 import type { RecoveryPreferences } from '@/types/recovery-user-api'
 
@@ -24,48 +25,63 @@ function PreferencesForm({ baseline, instanceKey }: PreferencesFormProps) {
   const { t } = useI18n()
   const [postPreferences, { isLoading: saving }] = usePostRecoveryPreferencesMutation()
 
-  const [currency, setCurrency] = useState(baseline.currency ?? '')
-  const [timezone, setTimezone] = useState(baseline.timezone ?? '')
-  const [banner, setBanner] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+  const baselineCurrency = baseline.currency ?? ''
+  const baselineTimezone = baseline.timezone ?? ''
+  const [saved, setSaved] = useState({ currency: baselineCurrency, timezone: baselineTimezone })
+  const [currency, setCurrency] = useState(baselineCurrency)
+  const [timezone, setTimezone] = useState(baselineTimezone)
 
   const dirty = useMemo(
-    () => currency !== (baseline.currency ?? '') || timezone !== (baseline.timezone ?? ''),
-    [baseline.currency, baseline.timezone, currency, timezone],
+    () => currency !== saved.currency || timezone !== saved.timezone,
+    [currency, saved.currency, saved.timezone, timezone],
   )
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setBanner(null)
     if (!currency.trim() || !timezone.trim()) {
-      setBanner({ type: 'err', text: t('settings.preferences.requireBoth') })
+      showCustomToast({
+        type: 'error',
+        title: t('settings.preferences.saveFailed'),
+        message: t('settings.preferences.requireBoth'),
+      })
       return
     }
     try {
+      const normalizedCurrency = currency.trim()
+      const normalizedTimezone = timezone.trim()
       const res = await postPreferences({
-        currency: currency.trim(),
-        timezone: timezone.trim(),
+        currency: normalizedCurrency,
+        timezone: normalizedTimezone,
       }).unwrap()
       if (res.status === false) {
-        setBanner({ type: 'err', text: res.message ?? t('settings.preferences.saveFailed') })
+        const failureMessage = res.message ?? t('settings.preferences.saveFailed')
+        showCustomToast({
+          type: 'error',
+          title: t('settings.preferences.saveFailed'),
+          message: failureMessage,
+        })
         return
       }
-      setBanner({ type: 'ok', text: res.message ?? t('settings.preferences.saved') })
+      setSaved({ currency: normalizedCurrency, timezone: normalizedTimezone })
+      setCurrency(normalizedCurrency)
+      setTimezone(normalizedTimezone)
+      showCustomToast({
+        type: 'success',
+        title: t('settings.preferences.saved'),
+        message: res.message ?? t('settings.preferences.saved'),
+      })
     } catch (err) {
-      setBanner({ type: 'err', text: getRtkErrorMessage(err) })
+      showCustomToast({
+        type: 'error',
+        title: t('settings.preferences.saveFailed'),
+        message: getRtkErrorMessage(err),
+      })
     }
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex max-w-3xl flex-col gap-6">
       <h2 className="text-lg font-semibold text-rp-fg">{t('settings.preferences.title')}</h2>
-      {banner ? (
-        <p
-          role={banner.type === 'err' ? 'alert' : 'status'}
-          className={banner.type === 'err' ? 'text-sm text-red-600' : 'text-sm text-rp-success'}
-        >
-          {banner.text}
-        </p>
-      ) : null}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="flex flex-col gap-2">
@@ -73,10 +89,7 @@ function PreferencesForm({ baseline, instanceKey }: PreferencesFormProps) {
           <select
             id={`rp-currency-${instanceKey}`}
             value={currency}
-            onChange={(e) => {
-              setCurrency(e.target.value)
-              setBanner(null)
-            }}
+            onChange={(e) => setCurrency(e.target.value)}
             className="h-11 w-full rounded-[10px] border border-rp-border bg-rp-input px-3 text-sm text-rp-fg focus:outline-none focus:ring-2 focus:ring-rp-accent"
           >
             <option value="">{t('settings.preferences.currencyPlaceholder')}</option>
@@ -92,10 +105,7 @@ function PreferencesForm({ baseline, instanceKey }: PreferencesFormProps) {
           <select
             id={`rp-tz-${instanceKey}`}
             value={timezone}
-            onChange={(e) => {
-              setTimezone(e.target.value)
-              setBanner(null)
-            }}
+            onChange={(e) => setTimezone(e.target.value)}
             className="h-11 w-full max-w-full rounded-[10px] border border-rp-border bg-rp-input px-3 text-sm text-rp-fg focus:outline-none focus:ring-2 focus:ring-rp-accent"
           >
             <option value="">{t('settings.preferences.timezonePlaceholder')}</option>

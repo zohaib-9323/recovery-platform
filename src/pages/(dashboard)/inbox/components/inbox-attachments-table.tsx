@@ -1,13 +1,8 @@
-import { Download } from 'lucide-react'
-
-import { TableHeader, TableListing, TableShell } from '@/components/table'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import type { InboxAttachment } from '@/data/mock/inbox'
 import { useI18n } from '@/i18n/useI18n'
 import { cn } from '@/lib/utils'
+import type { InboxAttachment } from '@/pages/(dashboard)/inbox/types'
 
-const thCell = 'bg-[#F1F1F1] px-4 py-3 text-left text-xs font-semibold text-[#666666] sm:px-6'
+const thCell = 'px-3 py-3 text-left text-lg font-normal text-blackFive'
 
 function statusLabel(status: InboxAttachment['status'], t: (key: string) => string): string {
   if (status === 'passed') return t('inbox.attachments.status.passed')
@@ -16,55 +11,79 @@ function statusLabel(status: InboxAttachment['status'], t: (key: string) => stri
 }
 
 function statusClass(status: InboxAttachment['status']): string {
-  if (status === 'passed') return 'text-rp-success'
-  if (status === 'failed') return 'text-redOne'
-  return 'text-rp-muted'
+  if (status === 'passed') return 'bg-[#2E7D321A] text-[#2E7D32]'
+  if (status === 'failed') return 'bg-[#C628281A] text-[#C62828]'
+  return 'bg-lightYellowThree text-yellow'
 }
 
 export type InboxAttachmentsTableProps = {
   attachments: InboxAttachment[]
   className?: string
+  onDownload?: (attachment: InboxAttachment) => Promise<void> | void
+  downloadingAttachmentId?: string | null
 }
 
-export function InboxAttachmentsTable({ attachments, className }: InboxAttachmentsTableProps) {
+export function InboxAttachmentsTable({
+  attachments,
+  className,
+  onDownload,
+  downloadingAttachmentId = null,
+}: InboxAttachmentsTableProps) {
   const { t } = useI18n()
   if (attachments.length === 0) {
-    return <p className="text-sm text-rp-muted">{t('inbox.attachments.empty')}</p>
+    return <p className="text-base font-light text-blackFive">{t('inbox.attachments.empty')}</p>
   }
 
   return (
-    <Card padding="none" className={cn('overflow-hidden border-rp-border shadow-sm', className)}>
-      <CardContent className="p-0">
-        <TableShell>
-          <TableHeader>
-            <tr>
-              <th className={thCell}>{t('inbox.attachments.col.attachment')}</th>
-              <th className={thCell}>{t('inbox.attachments.col.size')}</th>
-              <th className={thCell}>{t('inbox.attachments.col.status')}</th>
-              <th className={cn(thCell, 'text-right')}>{t('inbox.attachments.col.action')}</th>
-            </tr>
-          </TableHeader>
-          <TableListing>
-            {attachments.map((row) => (
-              <tr key={row.id} className="hover:bg-rp-surface/40">
-                <td className="px-4 py-3 text-sm font-medium text-rp-fg sm:px-6">{row.name}</td>
-                <td className="px-4 py-3 text-sm text-rp-muted sm:px-6">{row.size}</td>
-                <td
-                  className={cn('px-4 py-3 text-sm font-medium sm:px-6', statusClass(row.status))}
-                >
+    <div className={cn('max-h-[360px] overflow-auto', className)}>
+      <table className="w-full">
+        <thead className="sticky top-0 z-10 bg-white">
+          <tr className="border-b border-bottomBorder">
+            <th className={thCell}>{t('inbox.attachments.col.attachment')}</th>
+            <th className={thCell}>{t('inbox.attachments.col.size')}</th>
+            <th className={thCell}>{t('inbox.attachments.col.status')}</th>
+            <th className={thCell}>{t('inbox.attachments.col.action')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {attachments.map((row) => (
+            <tr key={row.id} className="border-b border-bottomBorder">
+              <td
+                className="max-w-[320px] truncate px-3 py-3 text-sm font-light leading-[100%] tracking-[0] text-black"
+                title={row.name}
+              >
+                {row.name}
+              </td>
+              <td
+                className="max-w-[130px] truncate px-3 py-3 text-sm font-light leading-[100%] tracking-[0] text-black"
+                title={row.size}
+              >
+                {row.size}
+              </td>
+              <td className="px-3 py-3">
+                <span className={cn('rounded-md px-2 py-1 text-base', statusClass(row.status))}>
                   {statusLabel(row.status, t)}
-                </td>
-                <td className="px-4 py-3 text-right sm:px-6">
-                  <Button type="button" variant="outline" size="sm" className="gap-1.5">
-                    <Download className="h-4 w-4" strokeWidth={2} aria-hidden />
-                    {t('inbox.attachments.download')}
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </TableListing>
-        </TableShell>
-      </CardContent>
-    </Card>
+                </span>
+              </td>
+              <td className="px-3 py-3">
+                <button
+                  type="button"
+                  onClick={() => onDownload?.(row)}
+                  disabled={
+                    !row.s3Key || !row.bucket || downloadingAttachmentId === row.id || !onDownload
+                  }
+                  className="flex items-center gap-2 rounded-md border border-bottomBorder px-2 py-1 text-base text-black"
+                >
+                  <span className="icon-Download text-sm" aria-hidden />
+                  {downloadingAttachmentId === row.id
+                    ? `${t('inbox.attachments.download')}...`
+                    : t('inbox.attachments.download')}
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

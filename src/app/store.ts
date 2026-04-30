@@ -1,20 +1,31 @@
-import { configureStore } from '@reduxjs/toolkit'
+import { configureStore, createListenerMiddleware } from '@reduxjs/toolkit'
 
-import authReducer from '@/app/features/auth/authSlice'
+import authReducer, { logout } from '@/app/features/auth/authSlice'
+import tenantThemeReducer from '@/app/features/tenant/tenantThemeSlice'
 import { buildAuthPreload } from '@/app/authPreload'
 import { recoveryApi } from '@/app/services/recoveryApi'
 import sideBarReducer from '@/app/features/ui/sideBarSlice'
 import { persistAuthState } from '@/services/authStorage'
 
 const authPreload = buildAuthPreload()
+const authListenerMiddleware = createListenerMiddleware()
+
+authListenerMiddleware.startListening({
+  actionCreator: logout,
+  effect: async (_, listenerApi) => {
+    listenerApi.dispatch(recoveryApi.util.resetApiState())
+  },
+})
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
+    tenantTheme: tenantThemeReducer,
     sideBar: sideBarReducer,
     [recoveryApi.reducerPath]: recoveryApi.reducer,
   },
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(recoveryApi.middleware),
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(recoveryApi.middleware, authListenerMiddleware.middleware),
   devTools: process.env.NODE_ENV !== 'production',
   preloadedState: authPreload ? { auth: authPreload } : undefined,
 })

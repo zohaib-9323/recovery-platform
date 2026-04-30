@@ -43,7 +43,7 @@ export type FirstLoginVerifyOtpBody = {
 }
 
 export type FirstLoginVerifyOtpContent = {
-  verified?: boolean
+  setupToken: string
 }
 
 export type FirstLoginRequestOtpBody = {
@@ -51,7 +51,8 @@ export type FirstLoginRequestOtpBody = {
 }
 
 export type FirstLoginSetupPasswordBody = {
-  email: string
+  setupToken: string
+  temporaryPassword: string
   newPassword: string
   confirmPassword: string
 }

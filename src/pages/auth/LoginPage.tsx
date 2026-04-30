@@ -1,5 +1,5 @@
 import { type FormEvent, useState } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, KeyRound, Mail } from 'lucide-react'
 
 import { useLoginMutation } from '@/app/services/recoveryApi'
@@ -9,7 +9,9 @@ import { InputField } from '@/components/fields'
 import { Card, CardContent } from '@/components/ui/card'
 import { useAuth } from '@/app/hooks/useAuth'
 import { useI18n } from '@/i18n/useI18n'
-import { isValidEmail, isValidPassword, PASSWORD_RULES_HINT } from '@/lib/validation'
+import { showCustomToast } from '@/lib/showCustomToast'
+import { isValidEmail } from '@/lib/validation'
+import { saveFirstLoginFlowState } from '@/pages/auth/first-login-flow'
 
 function getErrorMessage(err: unknown, fallback: string): string {
   if (err && typeof err === 'object' && 'data' in err) {
@@ -23,54 +25,67 @@ function getErrorMessage(err: unknown, fallback: string): string {
   return fallback
 }
 
+function isFirstLoginSetupError(err: unknown): boolean {
+  if (!err || typeof err !== 'object' || !('data' in err)) return false
+  const data = (err as { data?: unknown }).data
+  if (!data || typeof data !== 'object') return false
+  const statusCode = (data as { statusCode?: unknown }).statusCode
+  const message = (data as { message?: unknown }).message
+  return statusCode === 403 && typeof message === 'string' && /first login/i.test(message)
+}
+
 export function LoginPage() {
   const { t } = useI18n()
   const navigate = useNavigate()
-  const location = useLocation()
   const { isAuthenticated } = useAuth()
   const [login, { isLoading }] = useLoginMutation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />
   }
 
-  const from = (location.state as { from?: string } | null)?.from ?? '/dashboard'
-
   const trimmedEmail = email.trim()
-  const trimmedPassword = password.trim()
   const emailError =
     trimmedEmail.length > 0 && !isValidEmail(trimmedEmail)
       ? t('auth.login.enterValidEmail')
       : undefined
-  const passwordError =
-    trimmedPassword.length > 0 && !isValidPassword(trimmedPassword)
-      ? PASSWORD_RULES_HINT
-      : undefined
 
-  const canSubmit =
-    trimmedEmail.length > 0 &&
-    trimmedPassword.length > 0 &&
-    isValidEmail(trimmedEmail) &&
-    isValidPassword(trimmedPassword)
+  const canSubmit = trimmedEmail.length > 0 && password.length > 0 && isValidEmail(trimmedEmail)
+
+  const tenantName =
+    (typeof document !== 'undefined' ? document.documentElement.dataset.tenantName : undefined) ??
+    t('auth.login.title')
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    setError(null)
 
-    if (!isValidEmail(trimmedEmail) || !isValidPassword(trimmedPassword)) {
-      setError(t('auth.login.fixFields'))
+    if (!isValidEmail(trimmedEmail) || password.length === 0) {
+      showCustomToast({
+        type: 'error',
+        title: t('auth.login.invalidCredentials'),
+        message: t('auth.login.fixFields'),
+      })
       return
     }
 
     try {
-      await login({ email: trimmedEmail, password: trimmedPassword }).unwrap()
-      navigate(from, { replace: true })
+      await login({ email: trimmedEmail, password }).unwrap()
+      navigate('/dashboard', { replace: true })
     } catch (err) {
-      setError(getErrorMessage(err, t('auth.login.invalidCredentials')))
+      if (isFirstLoginSetupError(err)) {
+        saveFirstLoginFlowState({ email: trimmedEmail, temporaryPassword: password })
+        navigate('/first-login/verify-otp', { replace: true })
+        return
+      }
+
+      showCustomToast({
+        type: 'error',
+        title: t('auth.login.invalidCredentials'),
+        message: getErrorMessage(err, t('auth.login.invalidCredentials')),
+      })
     }
   }
 
@@ -82,7 +97,7 @@ export function LoginPage() {
       <CardContent className="flex flex-col gap-[10px] p-0">
         <div className="flex flex-col items-center gap-[10px] text-center">
           <AppLogo size="lg" />
-          <h1 className="text-2xl font-bold text-rp-heading">{t('auth.login.title')}</h1>
+          <h1 className="text-2xl font-bold text-rp-heading">{tenantName}</h1>
           <p className="text-sm text-rp-description">{t('auth.login.subtitle')}</p>
         </div>
 
@@ -98,7 +113,6 @@ export function LoginPage() {
             value={email}
             onChange={(e) => {
               setEmail(e.target.value.replace(/\s/g, ''))
-              setError(null)
             }}
             error={emailError}
             aria-invalid={Boolean(emailError)}
@@ -110,18 +124,14 @@ export function LoginPage() {
               id="password"
               name="password"
               label={t('auth.login.passwordLabel')}
-              description={PASSWORD_RULES_HINT}
               type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
               leftIcon={<KeyRound strokeWidth={2} />}
               placeholder={t('auth.login.passwordPlaceholder')}
               value={password}
               onChange={(e) => {
-                setPassword(e.target.value.trim())
-                setError(null)
+                setPassword(e.target.value)
               }}
-              error={passwordError}
-              aria-invalid={Boolean(passwordError)}
               rightSlot={
                 <button
                   type="button"
@@ -143,12 +153,6 @@ export function LoginPage() {
               </button>
             </div>
           </div>
-
-          {error ? (
-            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-              {error}
-            </p>
-          ) : null}
 
           <LoginButton type="submit" disabled={!canSubmit || isLoading}>
             {isLoading ? t('auth.login.signingIn') : t('auth.login.submit')}
