@@ -3,7 +3,8 @@ import { useI18n } from '@/i18n/useI18n'
 import type { RecoveryShipmentItem } from '@/types/recovery-shipments-api'
 
 type LandedCostComparisonModalProps = {
-  item?: RecoveryShipmentItem
+  poItem?: RecoveryShipmentItem
+  c88Item?: RecoveryShipmentItem
   estimatedTotal: number
   actualTotal: number
   currencySymbol: string
@@ -14,7 +15,8 @@ type LandedCostComparisonModalProps = {
 }
 
 export function LandedCostComparisonModal({
-  item,
+  poItem,
+  c88Item,
   estimatedTotal,
   actualTotal,
   currencySymbol,
@@ -45,10 +47,20 @@ export function LandedCostComparisonModal({
         </div>
 
         <div className="mb-4 text-sm font-semibold text-black">
-          <p>{t('shipments.detail.itemPrefix', { itemNumber: item?.itemNumber || '1' })}</p>
-          <p>{t('shipments.detail.hsCodePrefix', { hsCode: item?.hsCode || '-' })}</p>
+          <p>
+            {t('shipments.detail.itemPrefix', {
+              itemNumber: poItem?.itemNumber || c88Item?.itemNumber || '1',
+            })}
+          </p>
+          <p>
+            {t('shipments.detail.hsCodePrefix', {
+              hsCode: poItem?.hsCode || c88Item?.hsCode || '-',
+            })}
+          </p>
           <p className="truncate">
-            {t('shipments.detail.descriptionPrefix', { description: item?.description || '-' })}
+            {t('shipments.detail.descriptionPrefix', {
+              description: poItem?.description || c88Item?.description || '-',
+            })}
           </p>
         </div>
 
@@ -64,9 +76,9 @@ export function LandedCostComparisonModal({
               <p className="p-3">{t('shipments.detail.col.totalLandedCost')}</p>
             </div>
             <div className="grid grid-cols-4 bg-[#F6F2EC] text-sm font-semibold text-black">
-              <p className="p-3">{item?.qty ?? '-'}</p>
-              <p className="p-3">{formatMoney(item?.unitPrice, currencySymbol)}</p>
-              <p className="p-3">{formatMoney(item?.duty, currencySymbol)}</p>
+              <p className="p-3">{poItem?.qty ?? '-'}</p>
+              <p className="p-3">{formatMoney(poItem?.unitPrice, currencySymbol)}</p>
+              <p className="p-3">{formatMoney(poItem?.duty, currencySymbol)}</p>
               <p className="p-3">{formatMoney(estimatedTotal, currencySymbol)}</p>
             </div>
           </div>
@@ -88,9 +100,9 @@ export function LandedCostComparisonModal({
               <p className="p-3">{t('shipments.detail.col.totalLandedCost')}</p>
             </div>
             <div className="grid grid-cols-4 bg-[#F6F2EC] text-sm font-semibold text-black">
-              <p className="p-3">{item?.qty ?? '-'}</p>
-              <p className="p-3">{formatMoney(item?.unitPrice, currencySymbol)}</p>
-              <p className="p-3">{formatMoney(item?.duty, currencySymbol)}</p>
+              <p className="p-3">{c88Item?.qty ?? '-'}</p>
+              <p className="p-3">{formatMoney(c88Item?.unitPrice, currencySymbol)}</p>
+              <p className="p-3">{formatMoney(c88Item?.duty, currencySymbol)}</p>
               <p className="p-3">{formatMoney(actualTotal, currencySymbol)}</p>
             </div>
           </div>

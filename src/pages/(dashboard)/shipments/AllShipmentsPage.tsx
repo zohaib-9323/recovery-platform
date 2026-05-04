@@ -18,7 +18,6 @@ import {
 import { ShipmentsBulkActionsBar } from './components/shipments-bulk-actions-bar'
 import type { ShipmentListCsvRow } from './components/shipments-csv-types'
 import { ShipmentsPageToolbar } from './components/shipments-page-toolbar'
-import { UploadC88DocumentModal } from './components/upload-c88-document-modal'
 import { MS } from '@/lib/manage-shipments-copy'
 
 function toNumericRefundStatus(s: RecoveryShipmentRecord): number | undefined {
@@ -87,7 +86,6 @@ export function AllShipmentsPage() {
   const pageSize = 10
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
   const [csvData, setCsvData] = useState<ShipmentListCsvRow[]>([])
-  const [c88ModalShipmentId, setC88ModalShipmentId] = useState<string | null>(null)
 
   const { data: prefs } = useGetRecoveryPreferencesQuery()
   const timeZone = prefs?.content?.timezone ?? null
@@ -140,7 +138,7 @@ export function AllShipmentsPage() {
         Status:
           r.refund_status === 2
             ? getRefundStatusText(r.refund_status, true)
-            : [1, 2, 3, 5, 6, 7].includes(Number(r.status))
+            : [1, 2, 3, 5, 6, 7, 9].includes(Number(r.status))
               ? getShipmentStatusText(Number(r.status))
               : getShipmentStatusText(3),
       }))
@@ -181,7 +179,6 @@ export function AllShipmentsPage() {
                     data={rows}
                     selectedUserIds={selectedUserIds}
                     onCheckChange={handleSelect}
-                    uploadC88Document={(id) => setC88ModalShipmentId(id)}
                     onSanctionWarning={() => {}}
                     timeZone={timeZone}
                   />
@@ -208,18 +205,6 @@ export function AllShipmentsPage() {
           </>
         )}
       </div>
-      {c88ModalShipmentId ? (
-        <UploadC88DocumentModal
-          shipmentId={c88ModalShipmentId}
-          uploadedDocument={(() => {
-            const r = rows.find((row) => row._id === c88ModalShipmentId)
-            if (!r) return undefined
-            const url = r.c88DocumentUrl?.trim()
-            return url && url !== '' ? url : r.c88Filename
-          })()}
-          onClose={() => setC88ModalShipmentId(null)}
-        />
-      ) : null}
     </>
   )
 }

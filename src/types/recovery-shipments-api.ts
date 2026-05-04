@@ -90,7 +90,11 @@ export type RecoveryShipmentItem = {
   unitPrice?: number
   hsCode?: string
   duty?: number
+  dutyAmount?: number
+  dutyRate?: number
+  totalPrice?: number
   landedCost?: number
+  currency?: string | null
   flagged?: boolean
   isFlagged?: boolean
 }

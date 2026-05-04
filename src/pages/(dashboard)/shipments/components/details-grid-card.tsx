@@ -37,13 +37,18 @@ export function DetailsGridCard({
   ]
 
   return (
-    <div className="rounded-lg border border-bottomBorder bg-white p-5 shadow-[4px_2px_8px_0px_#00000024]">
-      <p className="mb-4 text-[32px] font-semibold text-black sm:text-xl">{title}</p>
-      <div className="grid grid-cols-1 gap-x-12 gap-y-3 md:grid-cols-2">
+    <div className="w-full overflow-hidden rounded-lg border border-bottomBorder bg-white p-4 shadow-[4px_2px_8px_0px_#00000024] sm:p-5">
+      <p className="mb-4 text-lg font-semibold text-black sm:text-xl">{title}</p>
+      <div className="grid grid-cols-1 gap-x-8 gap-y-3 md:grid-cols-2">
         {entries.map(([label, value]) => (
-          <div key={label} className="flex items-start gap-2 text-sm">
-            <span className="min-w-[112px] font-semibold text-[#7F7F7F]">{label}</span>
-            <span className="font-semibold text-black">{value}</span>
+          <div key={label} className="flex min-w-0 items-start gap-2 text-xs sm:text-sm">
+            <span className="w-24 shrink-0 font-semibold text-[#7F7F7F] sm:w-28">{label}</span>
+            <span
+              className="min-w-0 flex-1 truncate font-semibold text-black"
+              title={String(value)}
+            >
+              {value}
+            </span>
           </div>
         ))}
       </div>
