@@ -14,8 +14,19 @@ export type RecoveryShipmentRecord = {
   refund_status?: RecoveryRefundStatusCode
   /** Some list/detail payloads use camelCase */
   refundStatus?: RecoveryRefundStatusCode
+  /** HS code challenge indicator (customer generic table) */
+  is_challenged?: boolean
+  refund?: {
+    refunded_amount?: number
+  }
   is_flagged?: boolean
+  /** Public URL when API exposes it (some list payloads omit this). */
   c88DocumentUrl?: string
+  /** Recovery list/detail: C88 stored in S3 — presence means a C88 document exists. */
+  c88S3Key?: string | null
+  c88Filename?: string | null
+  c88Bucket?: string | null
+  c88Items?: RecoveryShipmentItem[]
   screeningStatus?: string
   sanctionsScreeningStatus?: string
   sanctionDecision?: string

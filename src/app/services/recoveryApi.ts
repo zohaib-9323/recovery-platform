@@ -102,7 +102,7 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 export const recoveryApi = createApi({
   reducerPath: 'recoveryApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['RecoveryProfile', 'RecoveryPreferences'],
+  tagTypes: ['RecoveryProfile', 'RecoveryPreferences', 'RecoveryShipments', 'RecoveryShipment'],
   endpoints: (builder) => ({
     login: builder.mutation<RecoveryAuthEnvelope, LoginRequestBody>({
       query: (body) => ({
@@ -301,12 +301,34 @@ export const recoveryApi = createApi({
           ...(params?.refundStatus ? { refundStatus: params.refundStatus } : {}),
         },
       }),
+      providesTags: [{ type: 'RecoveryShipments', id: 'LIST' }],
     }),
     getRecoveryShipmentById: builder.query<RecoveryShipmentDetailEnvelope, string>({
       query: (id) => ({
         url: `/recovery/shipments/${id}`,
         method: 'GET',
       }),
+      providesTags: (_result, _error, id) => [{ type: 'RecoveryShipment', id }],
+    }),
+    /** Same contract as trade-harmonizer `POST /shipments/upload-c88-document` (FormData: file, shipmentId). */
+    uploadRecoveryShipmentC88Document: builder.mutation<
+      RecoveryApiEnvelope<unknown>,
+      { shipmentId: string; file: File }
+    >({
+      query: ({ shipmentId, file }) => {
+        const body = new FormData()
+        body.append('file', file)
+        body.append('shipmentId', shipmentId)
+        return {
+          url: '/shipments/upload-c88-document',
+          method: 'POST',
+          body,
+        }
+      },
+      invalidatesTags: (_result, _error, arg) => [
+        { type: 'RecoveryShipments', id: 'LIST' },
+        { type: 'RecoveryShipment', id: arg.shipmentId },
+      ],
     }),
     moveUnprocessableToProcessable: builder.mutation<
       RecoveryApiEnvelope<unknown>,
@@ -383,4 +405,5 @@ export const {
   useMoveUnprocessableToProcessableMutation,
   useMoveProcessableToUnprocessableMutation,
   useGetRecoveryDownloadUrlMutation,
+  useUploadRecoveryShipmentC88DocumentMutation,
 } = recoveryApi

@@ -1,276 +1,247 @@
-import { CheckboxField } from '@/components/fields'
-import type { ShipmentRow } from '@/data/mock/dashboard'
-import { useI18n } from '@/i18n/useI18n'
-import { cn } from '@/lib/utils'
-import { getShipmentStatusBadgeClassName } from '@/lib/shipment-status-badge'
+import { useNavigate } from 'react-router-dom'
 
-const tdCell = 'p-3 text-xs font-medium text-black sm:text-sm'
-function shipmentStatusText(statusCode?: number): string {
-  switch (statusCode) {
-    case 1:
-      return 'HS Code Processing'
-    case 2:
-      return 'C88 Upload Pending'
-    case 3:
-      return 'Shipment Processing'
-    case 4:
-      return 'Shipment Pending'
-    case 5:
-      return 'Shipment Successful'
-    case 6:
-      return 'Shipment Rejected'
-    case 7:
-      return 'HS Code Challenged'
-    case 8:
-      return 'Item Mapping Failed'
-    case 9:
-      return 'Cost Discrepancy'
-    default:
-      return 'Shipment Processing'
-  }
-}
+import { CustomCheckboxShipment } from '@/components/fields/preset/custom-checkbox-shipment'
+import { Tooltip } from '@/components/ui/tooltip'
+import { getCurrencySymbol, formatShipmentListDate } from '@/lib/format-shipment-list-date'
+import { MS } from '@/lib/manage-shipments-copy'
+import {
+  getRefundStatusStyle,
+  getRefundStatusText,
+  getRefundStatusTooltipDesc,
+  getShipmentStatusStyle,
+  getShipmentStatusText,
+  getShipmentStatusTooltipDesc,
+} from '@/lib/manage-shipments-table-helper'
 
-function getVisiblePages(currentPage: number, pageCount: number): number[] {
-  if (pageCount <= 5) return Array.from({ length: pageCount }, (_, i) => i + 1)
-  if (currentPage <= 3) return [1, 2, 3, 4, 5]
-  if (currentPage >= pageCount - 2) {
-    return [pageCount - 4, pageCount - 3, pageCount - 2, pageCount - 1, pageCount]
-  }
-  return [currentPage - 2, currentPage - 1, currentPage, currentPage + 1, currentPage + 2]
+export type ManageShipmentsTableRow = {
+  _id: string
+  shipmentTitle: string
+  dateRaw?: string | null
+  shipVia: string
+  purchaseOrderNumber: string
+  status: number
+  refund_status?: number
+  c88DocumentUrl: string
+  /** True when list API indicates a C88 exists (URL, S3 key, filename, or items). */
+  hasC88Document: boolean
+  c88Filename?: string
+  screeningStatus?: string
+  sanctionsScreeningStatus?: string
+  sanctionDecision?: string
+  is_flagged?: boolean
+  is_challenged?: boolean
+  refunded_amount?: number
 }
 
 export type AllShipmentsDataTableProps = {
-  pageRows: ShipmentRow[]
-  page: number
-  pageCount: number
-  onPageChange: (page: number) => void
-  selectedIds: ReadonlySet<string>
-  onToggleRow: (id: string) => void
-  onViewRow?: (id: string) => void
-  onUploadC88?: (id: string) => void
-  onSanctionWarning?: (id: string) => void
+  data: ManageShipmentsTableRow[]
+  selectedUserIds: string[]
+  onCheckChange: (id: string) => void
+  uploadC88Document?: (id: string) => void
+  onSanctionWarning?: (shipment: ManageShipmentsTableRow) => void
+  timeZone?: string | null
   className?: string
 }
 
 export function AllShipmentsDataTable({
-  pageRows,
-  page,
-  pageCount,
-  onPageChange,
-  selectedIds,
-  onToggleRow,
-  onViewRow,
-  onUploadC88,
+  data,
+  selectedUserIds,
+  onCheckChange,
+  uploadC88Document,
   onSanctionWarning,
-  className,
+  timeZone,
 }: AllShipmentsDataTableProps) {
-  const { t } = useI18n()
-  const safePageCount = Math.max(1, pageCount)
-  const safePage = Math.min(Math.max(1, page), safePageCount)
-  const visiblePages = getVisiblePages(safePage, safePageCount)
+  const navigate = useNavigate()
 
   return (
-    <div
-      className={cn(
-        'mx-auto w-full overflow-hidden rounded-lg border border-bottomBorder',
-        className,
-      )}
-    >
-      <div className="no-scrollbar w-full overflow-x-auto xl:overflow-x-hidden">
-        <table className="w-full rounded-lg bg-white">
+    <div className="mx-auto w-full overflow-hidden rounded-lg border border-bottomBorder">
+      <div className="no-scrollbar w-full overflow-x-auto">
+        <table className="w-[350%] rounded-lg bg-white sm:w-[250%] md:w-[200%] lg:w-[150%] ipadLarge:w-full">
           <thead className="bg-greyFour text-black">
             <tr className="text-left text-sm font-medium">
-              <th className="p-3"></th>
+              <th className="p-3" />
               <th className="p-3 text-left text-xs font-normal capitalize sm:text-sm">
-                {t('shipments.all.col.title')}
+                {MS.shipmentTitle}
               </th>
-              <th className="p-3 text-left text-xs font-normal capitalize sm:text-sm">
-                {t('shipments.table.col.date')}
-              </th>
-              <th className="p-3 text-left text-xs font-normal sm:text-sm">
-                {t('shipments.table.col.shipVia')}
-              </th>
-              <th className="p-3 text-left text-xs font-normal sm:text-sm">
-                {t('shipments.table.col.po')}
-              </th>
-              <th className="p-3 text-left text-xs font-normal sm:text-sm">
-                {t('shipments.all.col.status')}
-              </th>
-              <th className="p-3 text-left text-xs font-normal sm:text-sm">
-                {t('shipments.table.col.actions')}
-              </th>
+              <th className="p-3 text-left text-xs font-normal capitalize sm:text-sm">{MS.date}</th>
+              <th className="p-3 text-left text-xs font-normal sm:text-sm">{MS.shipVia}</th>
+              <th className="p-3 text-left text-xs font-normal sm:text-sm">{MS.PO}</th>
+              <th className="p-3 text-left text-xs font-normal sm:text-sm">{MS.status}</th>
+              <th className="p-3 text-left text-xs font-normal sm:text-sm">{MS.actions}</th>
             </tr>
           </thead>
           <tbody>
-            {pageRows.map((row) => (
-              <tr
-                key={row.id}
-                className={cn(
-                  'border-b border-bottomBorder transition hover:bg-[var(--hover-color)]',
-                  row.isFlagged ? 'bg-lightRedOne' : undefined,
-                )}
-              >
-                <td className="p-3">
-                  <CheckboxField
-                    aria-label={t('shipments.all.selectRow', { title: row.title })}
-                    checked={selectedIds.has(row.id)}
-                    onChange={() => onToggleRow(row.id)}
-                  />
-                </td>
-                <td className="p-3 text-xs font-medium capitalize text-black sm:text-sm">
-                  <div className="flex items-center gap-2">
+            {data.length > 0 ? (
+              data.map((shipment, index) => (
+                <tr
+                  key={shipment._id || String(index)}
+                  className={`border-b border-bottomBorder transition hover:bg-[var(--hover-color)] ${
+                    shipment?.is_flagged ? 'bg-lightRedOne' : ''
+                  }`}
+                >
+                  <td className="p-3">
+                    <CustomCheckboxShipment
+                      onChange={() => onCheckChange(shipment._id)}
+                      isChecked={selectedUserIds.includes(shipment._id)}
+                    />
+                  </td>
+                  <td className="max-w-24 truncate break-all p-3 text-xs font-medium capitalize text-black sm:max-w-36 sm:text-sm md:max-w-80 2xl:max-w-full">
+                    <span title={shipment.shipmentTitle}>{shipment.shipmentTitle}</span>
+                    {(shipment.screeningStatus === 'match_found' ||
+                      shipment.sanctionsScreeningStatus === 'match_found') &&
+                      shipment.sanctionDecision === 'ignored' && (
+                        <Tooltip
+                          content={MS.sanctionIgnoredContent}
+                          heading={MS.sanctionIgnoredHeading}
+                          position="bottom"
+                        >
+                          <button
+                            type="button"
+                            className=""
+                            onClick={() => onSanctionWarning?.(shipment)}
+                          >
+                            <span className="icon-exclamation text-sm text-gray-600" />
+                          </button>
+                        </Tooltip>
+                      )}
+                  </td>
+                  <td className="break-all p-3 text-xs font-medium text-black sm:text-sm">
+                    {formatShipmentListDate(shipment.dateRaw, timeZone)}
+                  </td>
+                  <td className="p-3 text-xs font-medium text-black sm:text-sm">
+                    {shipment.shipVia}
+                  </td>
+                  <td className="p-3 text-xs font-medium text-black sm:text-sm">
+                    <div className="flex flex-row items-center gap-2">
+                      <p>
+                        <span title={shipment.purchaseOrderNumber}>
+                          {shipment.purchaseOrderNumber}
+                        </span>
+                      </p>
+                      {shipment.is_flagged ? (
+                        <Tooltip
+                          content={MS.flaggedContent}
+                          heading={MS.flaggedHeading}
+                          position="bottom"
+                        >
+                          <span id="flagged-shipment-indicator" className="icon-flag text-redOne" />
+                        </Tooltip>
+                      ) : null}
+                      {shipment.is_challenged ? (
+                        <Tooltip
+                          content={MS.challengedContent}
+                          heading={MS.challengedHeading}
+                          position="bottom"
+                        >
+                          <span
+                            id="flagged-shipment-indicator"
+                            className="icon-alert-triangle-2 text-yellow"
+                          />
+                        </Tooltip>
+                      ) : null}
+                    </div>
+                  </td>
+                  <td className="p-3 text-xs font-medium text-black sm:text-sm">
                     <span
-                      className="block max-w-[190px] truncate lg:max-w-[260px]"
-                      title={row.title}
+                      id="shipment-status"
+                      className={`flex w-fit items-center gap-2 rounded-md px-3 py-1 text-xs font-medium capitalize sm:text-sm ${
+                        shipment.refund_status === 2
+                          ? getRefundStatusStyle(shipment.refund_status)
+                          : [1, 2, 3, 5, 6, 7].includes(shipment.status)
+                            ? getShipmentStatusStyle(shipment.status)
+                            : getShipmentStatusStyle(3)
+                      }`}
                     >
-                      {row.title}
+                      <span className="h-1.5 min-w-1.5 rounded-full bg-current" />
+                      {shipment.refund_status === 2
+                        ? getRefundStatusText(shipment.refund_status, true)
+                        : [1, 2, 3, 5, 6, 7].includes(shipment.status)
+                          ? getShipmentStatusText(shipment.status)
+                          : getShipmentStatusText(3)}
+                      <Tooltip
+                        heading={MS.statusInfo}
+                        position="left"
+                        width="w-80"
+                        customContent={
+                          <div className="text-xs font-normal text-black">
+                            {shipment.refund_status === 2
+                              ? getRefundStatusTooltipDesc(shipment.refund_status)
+                              : shipment.refund_status === 4
+                                ? `Refund processed and completed. Refunded amount is ${getCurrencySymbol(
+                                    'GBP',
+                                  )}${shipment.refunded_amount ?? ''}`
+                                : [1, 2, 3, 5, 6, 7].includes(shipment.status)
+                                  ? getShipmentStatusTooltipDesc(shipment.status)
+                                  : getShipmentStatusTooltipDesc(3)}
+                          </div>
+                        }
+                      >
+                        <div className="flex h-4 min-w-4 items-center justify-center rounded-full bg-current p-1 shadow-[inset_0_0_3px_1px_rgba(0,0,0,0.15)]">
+                          <span className="icon-confirmation text-xxxtiny text-white" />
+                        </div>
+                      </Tooltip>
                     </span>
-                    {row.isFlagged ? (
-                      <span id="flagged-shipment-indicator" className="icon-flag text-redOne" />
-                    ) : null}
-                  </div>
-                </td>
-                <td className={tdCell}>
-                  <span className="block truncate" title={row.date}>
-                    {row.date}
-                  </span>
-                </td>
-                <td className={cn(tdCell, 'capitalize')}>
-                  <span className="block truncate" title={row.shipVia || '-'}>
-                    {row.shipVia || '-'}
-                  </span>
-                </td>
-                <td className={tdCell}>
-                  <span className="block max-w-[120px] truncate lg:max-w-[160px]" title={row.po}>
-                    {row.po}
-                  </span>
-                </td>
-                <td className={cn(tdCell, 'capitalize')}>
-                  <div
-                    className={cn(
-                      'flex w-fit max-w-[190px] items-center gap-2 rounded-md px-3 py-1 text-sm font-medium capitalize',
-                      getShipmentStatusBadgeClassName(row.statusCode),
-                    )}
-                  >
-                    <span className="icon-dot mt-0.5 text-[5px] text-current" />
-                    <p className="max-w-[140px] truncate text-nowrap sm:max-w-[180px]">
-                      {shipmentStatusText(row.statusCode)}
-                    </p>
-                    <span className="flex h-3 min-w-3 items-center justify-center rounded-full bg-current p-1 shadow-[inset_0_0_3px_1px_rgba(0,0,0,0.15)] sm:h-4 sm:min-w-4">
-                      <span className="icon-confirmation text-xxxtiny text-white" />
-                    </span>
-                  </div>
-                </td>
-                <td className="p-3 text-sm font-medium text-black">
-                  <div className="flex min-w-[96px] items-center gap-2">
-                    {(row.screeningStatus === 'match_found' ||
-                      row.sanctionsScreeningStatus === 'match_found') &&
-                      (!row.sanctionDecision || row.sanctionDecision === 'none') && (
+                  </td>
+                  <td className="flex gap-2 p-3 text-sm font-medium text-black">
+                    {(shipment.screeningStatus === 'match_found' ||
+                      shipment.sanctionsScreeningStatus === 'match_found') &&
+                      (!shipment.sanctionDecision || shipment.sanctionDecision === 'none') && (
                         <button
                           type="button"
-                          title={t('shipments.table.sanctionWarning')}
-                          onClick={() => onSanctionWarning?.(row.id)}
+                          id="view-shipment-details"
+                          onClick={() => onSanctionWarning?.(shipment)}
                           className="h-7 min-w-7 rounded-full border border-redOne bg-lightRed transition hover:bg-redOne hover:text-white"
                         >
                           <span className="icon-alert-triangle text-xsmall text-redOne hover:text-white" />
                         </button>
                       )}
+
                     <button
                       type="button"
                       id="view-shipment-details"
-                      className="h-7 min-w-7 rounded-full border border-bottomBorder bg-white transition disabled:opacity-50"
-                      onClick={() => onViewRow?.(row.id)}
+                      onClick={() => {
+                        navigate(`/shipments/${shipment._id}`)
+                      }}
                       disabled={
-                        (row.screeningStatus === 'match_found' ||
-                          row.sanctionsScreeningStatus === 'match_found') &&
-                        (!row.sanctionDecision || row.sanctionDecision === 'none')
+                        (shipment.screeningStatus === 'match_found' ||
+                          shipment.sanctionsScreeningStatus === 'match_found') &&
+                        (!shipment.sanctionDecision || shipment.sanctionDecision === 'none')
                       }
+                      className="h-7 min-w-7 rounded-full border border-bottomBorder bg-white transition disabled:opacity-50"
                     >
                       <span className="icon-open-eye text-xsmall text-black" />
                     </button>
+
                     <button
                       type="button"
-                      title={row.c88DocumentUrl ? 'Edit C88 document' : 'Upload C88 document'}
-                      onClick={() => onUploadC88?.(row.id)}
+                      onClick={() => uploadC88Document?.(shipment._id)}
                       disabled={
-                        Boolean(row.c88DocumentUrl) ||
-                        [1, 6, 7].includes(row.statusCode ?? 0) ||
-                        ((row.screeningStatus === 'match_found' ||
-                          row.sanctionsScreeningStatus === 'match_found') &&
-                          (!row.sanctionDecision || row.sanctionDecision === 'none'))
+                        shipment.hasC88Document ||
+                        [1, 6, 7].includes(shipment.status) ||
+                        ((shipment.screeningStatus === 'match_found' ||
+                          shipment.sanctionsScreeningStatus === 'match_found') &&
+                          (!shipment.sanctionDecision || shipment.sanctionDecision === 'none'))
                       }
+                      id={shipment.hasC88Document ? 'edit-c88-document' : 'upload-c88-document'}
                       className={`h-7 min-w-7 rounded-full border border-bottomBorder transition disabled:bg-disableColor ${
-                        row.c88DocumentUrl ? 'bg-green' : 'bg-yellow'
+                        shipment.hasC88Document ? 'bg-green' : 'bg-yellow'
                       }`}
                     >
                       <span className="icon-upload-cloud text-xsmall text-white" />
                     </button>
-                  </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr className="h-[40svh]">
+                <td colSpan={7} className="p-4 text-center text-black">
+                  {MS.noshipmentsAvailable}
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
-      {safePageCount > 1 ? (
-        <div className="mt-2 flex justify-center px-2 py-2 sm:px-4 sm:py-3">
-          <div className="flex items-center gap-2 bg-white">
-            <button
-              type="button"
-              onClick={() => onPageChange(1)}
-              className="hidden cursor-pointer items-center gap-1 rounded border border-paginationBorder px-3 py-2 text-sm text-backTwo disabled:cursor-default disabled:opacity-50 md:flex"
-              disabled={safePage === 1}
-            >
-              <span className="icon-heroiconscom rotate-180 text-large text-greyThirteen" />
-              {t('table.pagination.firstPage')}
-            </button>
-            <button
-              type="button"
-              onClick={() => onPageChange(safePage - 1)}
-              className="flex rounded border border-paginationBorder px-1.5 py-1 text-xs text-backTwo disabled:cursor-default disabled:opacity-50 sm:px-2.5 sm:text-sm"
-              disabled={safePage === 1}
-            >
-              <div className="flex items-center gap-0.5 text-xs sm:text-sm">
-                <span className="icon-heroicon rotate-180 text-greyThirteen sm:text-xl" />
-                {t('table.pagination.previousPage')}
-              </div>
-            </button>
-            {visiblePages.map((pageNo) => (
-              <button
-                key={pageNo}
-                type="button"
-                onClick={() => onPageChange(pageNo)}
-                className={cn(
-                  'px-2 py-1 text-xs font-normal text-black sm:px-2.5 sm:text-sm rounded border border-paginationBorder',
-                  safePage === pageNo && 'bg-yellow text-sm font-bold text-white',
-                )}
-              >
-                {pageNo}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => onPageChange(safePage + 1)}
-              className="flex rounded border border-paginationBorder px-1.5 py-1 text-xs text-backTwo disabled:cursor-default disabled:opacity-50 sm:px-2.5 sm:text-sm"
-              disabled={safePage === safePageCount}
-            >
-              <div className="flex items-center gap-0.5 text-xs sm:text-sm">
-                {t('table.pagination.nextPage')}
-                <span className="icon-heroicon text-greyThirteen sm:text-xl" />
-              </div>
-            </button>
-            <button
-              type="button"
-              onClick={() => onPageChange(safePageCount)}
-              className="hidden cursor-pointer items-center gap-1 rounded border border-paginationBorder px-3 py-2 text-sm text-backTwo disabled:cursor-default disabled:opacity-50 md:flex"
-              disabled={safePage === safePageCount}
-            >
-              {t('table.pagination.lastPage')}
-              <span className="icon-heroiconscom text-large text-greyThirteen" />
-            </button>
-          </div>
-        </div>
-      ) : null}
     </div>
   )
 }

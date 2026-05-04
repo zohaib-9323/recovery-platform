@@ -1,42 +1,39 @@
 import { CsvExportButton } from '@/components/buttons'
-import { CheckboxField } from '@/components/fields'
-import { useI18n } from '@/i18n/useI18n'
+import { CustomCheckboxShipment } from '@/components/fields/preset/custom-checkbox-shipment'
+import { MS } from '@/lib/manage-shipments-copy'
 import { cn } from '@/lib/utils'
 
+import type { ShipmentListCsvRow } from './shipments-csv-types'
+
 export type ShipmentsBulkActionsBarProps = {
-  selectAllChecked: boolean
-  selectAllIndeterminate: boolean
-  onSelectAllChange: (checked: boolean) => void
-  onExportCsv: () => void
-  canExport?: boolean
+  isAllSelected: boolean
+  onSelectAll: () => void
+  csvData: ShipmentListCsvRow[]
+  onGenerateCsv: () => void
+  isExportDisabled: boolean
   className?: string
 }
 
 export function ShipmentsBulkActionsBar({
-  selectAllChecked,
-  selectAllIndeterminate,
-  onSelectAllChange,
-  onExportCsv,
-  canExport = true,
+  isAllSelected,
+  onSelectAll,
+  csvData,
+  onGenerateCsv,
+  isExportDisabled,
   className,
 }: ShipmentsBulkActionsBarProps) {
-  const { t } = useI18n()
   return (
-    <div
-      className={cn('flex w-full flex-row items-center justify-between gap-3 bg-white', className)}
-    >
-      <CheckboxField
-        id="shipments-select-all"
-        label={t('shipments.bulk.selectAll')}
-        checked={selectAllChecked}
-        indeterminate={selectAllIndeterminate}
-        onChange={(e) => onSelectAllChange(e.target.checked)}
-      />
+    <div className={cn('flex flex-row items-center justify-between', className)}>
+      <div className="flex items-center space-x-2 px-3">
+        <CustomCheckboxShipment isChecked={isAllSelected} onChange={onSelectAll} />
+        <span className="text-sm font-light text-black md:text-base">{MS.selectAll}</span>
+      </div>
       <CsvExportButton
-        buttonText={t('shipments.bulk.exportCsv')}
-        onClick={onExportCsv}
-        disabled={!canExport}
+        isDisabled={isExportDisabled}
+        data={csvData}
+        moduleName="Manage-Shipments(Recovery)"
         className="export-btn"
+        onClick={onGenerateCsv}
       />
     </div>
   )
