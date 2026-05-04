@@ -37,7 +37,6 @@ export type AllShipmentsDataTableProps = {
   data: ManageShipmentsTableRow[]
   selectedUserIds: string[]
   onCheckChange: (id: string) => void
-  uploadC88Document?: (id: string) => void
   onSanctionWarning?: (shipment: ManageShipmentsTableRow) => void
   timeZone?: string | null
   className?: string
@@ -47,7 +46,6 @@ export function AllShipmentsDataTable({
   data,
   selectedUserIds,
   onCheckChange,
-  uploadC88Document,
   onSanctionWarning,
   timeZone,
 }: AllShipmentsDataTableProps) {
@@ -147,7 +145,7 @@ export function AllShipmentsDataTable({
                       className={`flex w-fit items-center gap-2 rounded-md px-3 py-1 text-xs font-medium capitalize sm:text-sm ${
                         shipment.refund_status === 2
                           ? getRefundStatusStyle(shipment.refund_status)
-                          : [1, 2, 3, 5, 6, 7].includes(shipment.status)
+                          : [1, 2, 3, 5, 6, 7, 9].includes(shipment.status)
                             ? getShipmentStatusStyle(shipment.status)
                             : getShipmentStatusStyle(3)
                       }`}
@@ -155,7 +153,7 @@ export function AllShipmentsDataTable({
                       <span className="h-1.5 min-w-1.5 rounded-full bg-current" />
                       {shipment.refund_status === 2
                         ? getRefundStatusText(shipment.refund_status, true)
-                        : [1, 2, 3, 5, 6, 7].includes(shipment.status)
+                        : [1, 2, 3, 5, 6, 7, 9].includes(shipment.status)
                           ? getShipmentStatusText(shipment.status)
                           : getShipmentStatusText(3)}
                       <Tooltip
@@ -170,7 +168,7 @@ export function AllShipmentsDataTable({
                                 ? `Refund processed and completed. Refunded amount is ${getCurrencySymbol(
                                     'GBP',
                                   )}${shipment.refunded_amount ?? ''}`
-                                : [1, 2, 3, 5, 6, 7].includes(shipment.status)
+                                : [1, 2, 3, 5, 6, 7, 9].includes(shipment.status)
                                   ? getShipmentStatusTooltipDesc(shipment.status)
                                   : getShipmentStatusTooltipDesc(3)}
                           </div>
@@ -210,24 +208,6 @@ export function AllShipmentsDataTable({
                       className="h-7 min-w-7 rounded-full border border-bottomBorder bg-white transition disabled:opacity-50"
                     >
                       <span className="icon-open-eye text-xsmall text-black" />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => uploadC88Document?.(shipment._id)}
-                      disabled={
-                        shipment.hasC88Document ||
-                        [1, 6, 7].includes(shipment.status) ||
-                        ((shipment.screeningStatus === 'match_found' ||
-                          shipment.sanctionsScreeningStatus === 'match_found') &&
-                          (!shipment.sanctionDecision || shipment.sanctionDecision === 'none'))
-                      }
-                      id={shipment.hasC88Document ? 'edit-c88-document' : 'upload-c88-document'}
-                      className={`h-7 min-w-7 rounded-full border border-bottomBorder transition disabled:bg-disableColor ${
-                        shipment.hasC88Document ? 'bg-green' : 'bg-yellow'
-                      }`}
-                    >
-                      <span className="icon-upload-cloud text-xsmall text-white" />
                     </button>
                   </td>
                 </tr>
