@@ -9,116 +9,7 @@ import { ShipmentsPageToolbar } from '@/pages/(dashboard)/shipments/components/s
 import type { ShipmentRow } from '@/data/mock/dashboard'
 import { buildShipmentsCsv, downloadTextFile } from '@/lib/csv'
 import type { RecoveryShipmentRecord } from '@/types/recovery-shipments-api'
-
-function mapStatus(status?: string | number): ShipmentRow['status'] {
-  const normalized = String(status ?? '')
-  switch (normalized) {
-    case '1':
-    case 'submitted':
-      return 'submitted'
-    case '2':
-    case 'in_review':
-    case 'inreview':
-      return 'in_review'
-    case '3':
-    case 'approved':
-    case 'successful':
-    case 'success':
-    case 'completed':
-      return 'approved'
-    case '4':
-    case 'rejected':
-    case 'failed':
-    case 'error':
-      return 'rejected'
-    default:
-      return undefined
-  }
-}
-
-function mapStatusCode(status?: string | number): number {
-  const normalized = String(status ?? '').toLowerCase()
-  switch (normalized) {
-    case '1':
-    case 'submitted':
-    case 'in_review':
-    case 'inreview':
-      return 1 // HS Code Processing
-    case '2':
-    case 'c88_upload_pending':
-      return 2
-    case '3':
-    case 'processing':
-      return 3
-    case '4':
-    case 'pending':
-      return 4
-    case '5':
-    case 'approved':
-    case 'successful':
-    case 'success':
-    case 'completed':
-      return 5
-    case '6':
-    case 'rejected':
-    case 'failed':
-    case 'error':
-      return 6
-    case '7':
-    case 'challenged':
-      return 7
-    case '8':
-    case 'item_mapping_failed':
-      return 8
-    case '9':
-    case 'discrepancy':
-      return 9
-    default:
-      return 3
-  }
-}
-
-function mapRefundStatus(status?: string | number): ShipmentRow['refundStatus'] {
-  const normalized = String(status ?? '')
-  switch (normalized) {
-    case '0':
-    case 'not_requested':
-      return 'not_requested'
-    case '1':
-    case 'requested':
-      return 'requested'
-    case '2':
-    case 'processing':
-      return 'processing'
-    case '3':
-    case 'refunded':
-      return 'refunded'
-    default:
-      return undefined
-  }
-}
-
-function mapRefundStatusCode(status?: string | number): number | undefined {
-  if (status === null || status === undefined || status === '') return undefined
-  const normalized = String(status).toLowerCase()
-  switch (normalized) {
-    case '1':
-    case 'requested':
-      return 1
-    case '2':
-    case 'processing':
-      return 2
-    case '3':
-    case 'not_requested':
-    case 'not_eligible':
-      return 3
-    case '4':
-    case 'refunded':
-      return 4
-    default:
-      return undefined
-  }
-}
+import { mapRecoveryStatusToLegacy } from '@/lib/recovery-shipment-status-map'
 
 function formatDate(value?: string): string {
   if (!value) return '-'
@@ -146,10 +37,7 @@ function toShipmentRow(shipment: RecoveryShipmentRecord): ShipmentRow {
     date: formatDate(shipment.date),
     po: shipment.purchaseOrderNumber || '-',
     shipVia: shipment.shipVia || '-',
-    status: mapStatus(shipment.status),
-    refundStatus: mapRefundStatus(shipment.refund_status),
-    statusCode: mapStatusCode(shipment.status),
-    refundStatusCode: mapRefundStatusCode(shipment.refund_status),
+    statusCode: mapRecoveryStatusToLegacy(shipment.status),
     c88DocumentUrl: shipment.c88DocumentUrl || '',
     screeningStatus: shipment.screeningStatus,
     sanctionsScreeningStatus: shipment.sanctionsScreeningStatus,

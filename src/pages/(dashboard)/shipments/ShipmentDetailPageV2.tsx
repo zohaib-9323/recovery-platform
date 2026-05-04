@@ -9,6 +9,8 @@ import { downloadTextFile } from '@/lib/csv'
 import { DetailsGridCard } from '@/pages/(dashboard)/shipments/components/details-grid-card'
 import { LandedCostComparisonModal } from '@/pages/(dashboard)/shipments/components/landed-cost-comparison-modal'
 import type { RecoveryShipmentDetail, RecoveryShipmentItem } from '@/types/recovery-shipments-api'
+import { mapRecoveryStatusToLegacy } from '@/lib/recovery-shipment-status-map'
+import { getShipmentStatusBadgeClassName } from '@/lib/shipment-status-badge'
 
 type ItemFilter = 'all' | 'flagged' | 'unflagged'
 
@@ -23,48 +25,6 @@ function toNumber(value: unknown, fallback = 0): number {
   if (typeof value === 'number') return value
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : fallback
-}
-
-function mapStatusCode(status?: string | number): number {
-  const normalized = String(status ?? '').toLowerCase()
-  switch (normalized) {
-    case '1':
-    case 'submitted':
-    case 'in_review':
-    case 'inreview':
-      return 1
-    case '2':
-    case 'c88_upload_pending':
-      return 2
-    case '3':
-    case 'processing':
-      return 3
-    case '4':
-    case 'pending':
-      return 4
-    case '5':
-    case 'approved':
-    case 'successful':
-    case 'success':
-    case 'completed':
-      return 5
-    case '6':
-    case 'rejected':
-    case 'failed':
-    case 'error':
-      return 6
-    case '7':
-    case 'challenged':
-      return 7
-    case '8':
-    case 'item_mapping_failed':
-      return 8
-    case '9':
-    case 'discrepancy':
-      return 9
-    default:
-      return 3
-  }
 }
 
 function getDisplayItems(detail?: RecoveryShipmentDetail): RecoveryShipmentItem[] {
@@ -105,29 +65,6 @@ function shipmentStatusText(statusCode?: number): string {
   }
 }
 
-function shipmentStatusClasses(statusCode?: number): string {
-  switch (statusCode) {
-    case 1:
-      return 'bg-[#EAF7FF] text-[#22A8F5]'
-    case 2:
-      return 'bg-[#FDECEC] text-[#E14D4D]'
-    case 4:
-      return 'bg-[#FFF8E8] text-[#D39B00]'
-    case 5:
-      return 'bg-[#EAF8EE] text-[#2EAD5B]'
-    case 6:
-      return 'bg-[#FDECEC] text-[#E14D4D]'
-    case 7:
-      return 'bg-[#FDEEFF] text-[#C14ED9]'
-    case 8:
-      return 'bg-[#FDECEC] text-[#E14D4D]'
-    case 9:
-      return 'bg-[#F1ECFF] text-[#7A59D6]'
-    default:
-      return 'bg-[#F2F2F2] text-[#1A1A1A]'
-  }
-}
-
 function isItemFlagged(item: RecoveryShipmentItem): boolean {
   return Boolean(item.flagged || item.isFlagged)
 }
@@ -158,7 +95,7 @@ function buildShipmentDetailCsv(
     'Duty',
     'Landed Cost',
   ]
-  const statusCode = mapStatusCode(detail?.status)
+  const statusCode = mapRecoveryStatusToLegacy(detail?.status)
   const rows = (items.length ? items : [{}]).map((item) => [
     detail?.shipmentTitle || detail?.shipmentReference || detail?.sourceShipmentId || '-',
     formatDate(detail?.date),
@@ -199,9 +136,7 @@ export function ShipmentDetailPageV2() {
     return allItems
   }, [allItems, itemFilter])
 
-  const normalizedStatus = [1, 2, 3, 5, 6, 7].includes(mapStatusCode(detail?.status))
-    ? mapStatusCode(detail?.status)
-    : 3
+  const displayStatusCode = mapRecoveryStatusToLegacy(detail?.status)
 
   const estimatedTotal = filteredItems.reduce((sum, item) => sum + toNumber(item.landedCost), 0)
   const actualTotal = filteredItems.reduce(
@@ -270,10 +205,10 @@ export function ShipmentDetailPageV2() {
             </p>
           </div>
           <div
-            className={`flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium sm:text-sm ${shipmentStatusClasses(normalizedStatus)}`}
+            className={`flex w-fit items-center gap-2 rounded-md px-3 py-1 text-sm font-medium capitalize ${getShipmentStatusBadgeClassName(displayStatusCode)}`}
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-current" />
-            <span>{shipmentStatusText(normalizedStatus)}</span>
+            <span className="icon-dot mt-0.5 text-[5px] text-current" />
+            <span className="text-nowrap">{shipmentStatusText(displayStatusCode)}</span>
           </div>
         </div>
 

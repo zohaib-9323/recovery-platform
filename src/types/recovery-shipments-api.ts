@@ -12,6 +12,8 @@ export type RecoveryShipmentRecord = {
   shipVia?: string
   status?: RecoveryShipmentStatusCode
   refund_status?: RecoveryRefundStatusCode
+  /** Some list/detail payloads use camelCase */
+  refundStatus?: RecoveryRefundStatusCode
   is_flagged?: boolean
   c88DocumentUrl?: string
   screeningStatus?: string

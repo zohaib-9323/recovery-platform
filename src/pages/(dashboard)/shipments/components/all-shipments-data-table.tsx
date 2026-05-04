@@ -2,6 +2,7 @@ import { CheckboxField } from '@/components/fields'
 import type { ShipmentRow } from '@/data/mock/dashboard'
 import { useI18n } from '@/i18n/useI18n'
 import { cn } from '@/lib/utils'
+import { getShipmentStatusBadgeClassName } from '@/lib/shipment-status-badge'
 
 const tdCell = 'p-3 text-xs font-medium text-black sm:text-sm'
 function shipmentStatusText(statusCode?: number): string {
@@ -26,61 +27,6 @@ function shipmentStatusText(statusCode?: number): string {
       return 'Cost Discrepancy'
     default:
       return 'Shipment Processing'
-  }
-}
-
-function shipmentStatusClasses(statusCode?: number): string {
-  switch (statusCode) {
-    case 1:
-      return 'bg-[#EAF7FF] text-[#22A8F5]'
-    case 2:
-      return 'bg-[#FDECEC] text-[#E14D4D]'
-    case 3:
-      return 'bg-[#F2F2F2] text-[#1A1A1A]'
-    case 4:
-      return 'bg-[#FFF8E8] text-[#D39B00]'
-    case 5:
-      return 'bg-[#EAF8EE] text-[#2EAD5B]'
-    case 6:
-      return 'bg-[#FDECEC] text-[#E14D4D]'
-    case 7:
-      return 'bg-[#FDEEFF] text-[#C14ED9]'
-    case 8:
-      return 'bg-[#FDECEC] text-[#E14D4D]'
-    case 9:
-      return 'bg-[#F1ECFF] text-[#7A59D6]'
-    default:
-      return 'bg-[#F2F2F2] text-[#1A1A1A]'
-  }
-}
-
-function refundStatusText(refundStatusCode?: number): string {
-  switch (refundStatusCode) {
-    case 1:
-      return 'Under Review'
-    case 2:
-      return 'Refund Pending'
-    case 3:
-      return 'Not Eligible'
-    case 4:
-      return 'Refunded'
-    default:
-      return ''
-  }
-}
-
-function refundStatusClasses(refundStatusCode?: number): string {
-  switch (refundStatusCode) {
-    case 1:
-      return 'bg-[#F8F1E8] text-[#9E6A2E]'
-    case 2:
-      return 'bg-[#FFF8E8] text-[#D39B00]'
-    case 3:
-      return 'bg-[#EAF7FF] text-[#1E88D8]'
-    case 4:
-      return 'bg-[#EAF8EE] text-[#2EAD5B]'
-    default:
-      return ''
   }
 }
 
@@ -122,8 +68,6 @@ export function AllShipmentsDataTable({
   const safePageCount = Math.max(1, pageCount)
   const safePage = Math.min(Math.max(1, page), safePageCount)
   const visiblePages = getVisiblePages(safePage, safePageCount)
-  const normalizedStatus = (statusCode?: number): number =>
-    [1, 2, 3, 5, 6, 7].includes(statusCode ?? 0) ? (statusCode as number) : 3
 
   return (
     <div
@@ -201,23 +145,19 @@ export function AllShipmentsDataTable({
                     {row.po}
                   </span>
                 </td>
-                <td className={tdCell}>
+                <td className={cn(tdCell, 'capitalize')}>
                   <div
                     className={cn(
-                      'flex w-fit max-w-[190px] items-center gap-2 rounded-md px-3 py-1 text-xs font-medium capitalize sm:text-sm',
-                      row.refundStatusCode === 2
-                        ? refundStatusClasses(2)
-                        : shipmentStatusClasses(normalizedStatus(row.statusCode)),
+                      'flex w-fit max-w-[190px] items-center gap-2 rounded-md px-3 py-1 text-sm font-medium capitalize',
+                      getShipmentStatusBadgeClassName(row.statusCode),
                     )}
                   >
-                    <span className="h-1.5 min-w-1.5 rounded-full bg-current" />
-                    <p className="truncate whitespace-nowrap">
-                      {row.refundStatusCode === 2
-                        ? refundStatusText(2)
-                        : shipmentStatusText(normalizedStatus(row.statusCode))}
+                    <span className="icon-dot mt-0.5 text-[5px] text-current" />
+                    <p className="max-w-[140px] truncate text-nowrap sm:max-w-[180px]">
+                      {shipmentStatusText(row.statusCode)}
                     </p>
-                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-current p-1 shadow-[inset_0_0_3px_1px_rgba(0,0,0,0.15)]">
-                      <span className="icon-confirmation text-[7px] text-white" />
+                    <span className="flex h-3 min-w-3 items-center justify-center rounded-full bg-current p-1 shadow-[inset_0_0_3px_1px_rgba(0,0,0,0.15)] sm:h-4 sm:min-w-4">
+                      <span className="icon-confirmation text-xxxtiny text-white" />
                     </span>
                   </div>
                 </td>
