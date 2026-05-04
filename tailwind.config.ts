@@ -6,6 +6,8 @@ const config: Config = {
     extend: {
       screens: {
         smallScreen: '500px',
+        /** Matches trade-harmonizer customer tables (`ipadLarge:w-full`). */
+        ipadLarge: '1100px',
       },
       colors: {
         'rp-heading': '#000000',
@@ -27,8 +29,11 @@ const config: Config = {
         yellow: 'var(--primary-color, #E3A602)',
         bgColor: '#F9F9F9',
         bottomBorder: '#F2F2F2',
+        searchBorder: '#D9D9D9',
+        lightGreyThree: '#B3B3B3',
         blackFive: '#333333',
         black: '#000000',
+        whiteOne: '#FFFFFF',
         lightYellowThree: '#FCF6E6',
         humburgerIcon: '#CCCCCC',
         redOne: '#C62828',

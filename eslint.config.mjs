@@ -48,6 +48,16 @@ export default defineConfig([
     },
   },
   {
+    files: ['src/components/ui/tooltip.tsx'],
+    rules: {
+      // Portal tooltip: positioning effect intentionally mirrors trade-harmonizer (deps are stable via refs + layout pass).
+      'react-hooks/exhaustive-deps': 'off',
+      // Trigger wraps arbitrary children (icons, text); keyboard access is via hover/focus patterns matching the TH tooltip.
+      'jsx-a11y/click-events-have-key-events': 'off',
+      'jsx-a11y/no-static-element-interactions': 'off',
+    },
+  },
+  {
     files: ['**/*.test.tsx', '**/*.spec.tsx'],
     rules: {
       'max-lines': 'off',
