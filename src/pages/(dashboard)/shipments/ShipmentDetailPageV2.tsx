@@ -1,0 +1,450 @@
+import { useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+
+import { useGetRecoveryShipmentByIdQuery } from '@/app/services/recoveryApi'
+import { CsvExportButton, PrimaryButton } from '@/components/buttons'
+import { DropdownField } from '@/components/fields'
+import { useI18n } from '@/i18n/useI18n'
+import { downloadTextFile } from '@/lib/csv'
+import { DetailsGridCard } from '@/pages/(dashboard)/shipments/components/details-grid-card'
+import { LandedCostComparisonModal } from '@/pages/(dashboard)/shipments/components/landed-cost-comparison-modal'
+import type { RecoveryShipmentDetail, RecoveryShipmentItem } from '@/types/recovery-shipments-api'
+import { mapRecoveryStatusToLegacy } from '@/lib/recovery-shipment-status-map'
+import { getShipmentStatusBadgeClassName } from '@/lib/shipment-status-badge'
+
+type ItemFilter = 'all' | 'flagged' | 'unflagged'
+
+function formatDate(value?: string): string {
+  if (!value) return '-'
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return value
+  return d.toLocaleDateString()
+}
+
+function toNumber(value: unknown, fallback = 0): number {
+  if (typeof value === 'number') return value
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : fallback
+}
+
+function getDisplayItems(detail?: RecoveryShipmentDetail): RecoveryShipmentItem[] {
+  if (!detail) return []
+  const rawItems = detail.items?.length
+    ? detail.items
+    : detail.poItems?.length
+      ? detail.poItems
+      : detail.c88Items || []
+  return rawItems.map((item, index) => ({
+    ...item,
+    itemNumber: item.itemNumber || String(index + 1),
+  }))
+}
+
+function shipmentStatusText(statusCode?: number): string {
+  switch (statusCode) {
+    case 1:
+      return 'HS Code Processing'
+    case 2:
+      return 'C88 Upload Pending'
+    case 3:
+      return 'Shipment Processing'
+    case 4:
+      return 'Shipment Pending'
+    case 5:
+      return 'Shipment Successful'
+    case 6:
+      return 'Shipment Rejected'
+    case 7:
+      return 'HS Code Challenged'
+    case 8:
+      return 'Item Mapping Failed'
+    case 9:
+      return 'Cost Discrepancy'
+    default:
+      return 'Shipment Processing'
+  }
+}
+
+function isItemFlagged(item: RecoveryShipmentItem): boolean {
+  return Boolean(item.flagged || item.isFlagged)
+}
+
+function formatMoney(value: unknown, currencySymbol = '£'): string {
+  const n = toNumber(value, 0)
+  return `${currencySymbol}${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+function buildShipmentDetailCsv(
+  detail?: RecoveryShipmentDetail,
+  items: RecoveryShipmentItem[] = [],
+): string {
+  const headers = [
+    'ShipmentTitle',
+    'Date',
+    'ShipVia',
+    'PO Number',
+    'Status',
+    'Requisitioner',
+    'ShippingTerms',
+    'Item Number',
+    'Description',
+    'Quantity',
+    'Currency',
+    'Unit Price',
+    'HS Code',
+    'Duty',
+    'Landed Cost',
+  ]
+  const statusCode = mapRecoveryStatusToLegacy(detail?.status)
+  const rows = (items.length ? items : [{}]).map((item) => [
+    detail?.shipmentTitle || detail?.shipmentReference || detail?.sourceShipmentId || '-',
+    formatDate(detail?.date),
+    detail?.shipVia || '-',
+    detail?.purchaseOrderNumber || '-',
+    shipmentStatusText(statusCode),
+    detail?.requisitioner || '-',
+    detail?.shippingTerms || '-',
+    item.itemNumber || '-',
+    item.description || '-',
+    String(item.qty ?? '-'),
+    detail?.unit || 'USD',
+    String(item.unitPrice ?? 0),
+    item.hsCode || '-',
+    String(item.duty ?? 0),
+    String(item.landedCost ?? 0),
+  ])
+  const escapeCell = (v: string) => (/[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v)
+  return [headers, ...rows]
+    .map((line) => line.map((c) => escapeCell(String(c))).join(','))
+    .join('\r\n')
+}
+
+export function ShipmentDetailPageV2() {
+  const { t } = useI18n()
+  const navigate = useNavigate()
+  const { id = '' } = useParams()
+  const [itemFilter, setItemFilter] = useState<ItemFilter>('all')
+  const [copied, setCopied] = useState(false)
+  const [showLandedCost, setShowLandedCost] = useState(false)
+
+  const { data, isLoading, isFetching } = useGetRecoveryShipmentByIdQuery(id, { skip: !id })
+  const detail = data?.content
+  const allItems = useMemo(() => getDisplayItems(detail), [detail])
+  const filteredItems = useMemo(() => {
+    if (itemFilter === 'flagged') return allItems.filter(isItemFlagged)
+    if (itemFilter === 'unflagged') return allItems.filter((item) => !isItemFlagged(item))
+    return allItems
+  }, [allItems, itemFilter])
+
+  const displayStatusCode = mapRecoveryStatusToLegacy(detail?.status)
+
+  const estimatedTotal = filteredItems.reduce((sum, item) => sum + toNumber(item.landedCost), 0)
+  const actualTotal = filteredItems.reduce(
+    (sum, item) => sum + toNumber(item.qty) * toNumber(item.unitPrice),
+    0,
+  )
+  const currencySymbol = '£'
+  const comparisonItem = filteredItems[0]
+  const detailLabels = {
+    companyName: t('shipments.detail.companyName'),
+    address1: t('shipments.detail.address1'),
+    address2: t('shipments.detail.address2'),
+    country: t('shipments.detail.country'),
+    city: t('shipments.detail.city'),
+    phoneNumber: t('shipments.detail.phoneNumber'),
+    fax: t('shipments.detail.fax'),
+    website: t('shipments.detail.website'),
+    industryType: t('shipments.detail.industryType'),
+    postalCode: t('shipments.detail.postalCode'),
+  }
+
+  if (!id) {
+    return (
+      <div className="rounded-lg bg-white p-6 text-sm text-black">
+        {t('shipments.detail.notFound')}
+      </div>
+    )
+  }
+
+  if (isLoading || isFetching) {
+    return (
+      <div
+        id="report-content"
+        className="flex min-h-[40vh] items-center justify-center bg-white p-3 sm:p-6"
+      >
+        <div className="text-sm text-lightBlackOne">{t('common.loading')}</div>
+      </div>
+    )
+  }
+
+  if (!detail) {
+    return (
+      <div className="rounded-lg bg-white p-6 text-sm text-black">
+        {t('shipments.detail.notFound')}
+      </div>
+    )
+  }
+
+  return (
+    <div id="report-content" className="flex flex-col gap-5 bg-white p-3 sm:p-6">
+      <>
+        <div className="flex flex-col items-start justify-between gap-3 md:flex-row md:items-center">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate('/shipments')}
+              className="flex h-6 w-6 items-center justify-center rounded border border-bottomBorder"
+            >
+              <span className="icon-arrow-left text-large text-black" />
+            </button>
+            <p className="max-w-[70vw] truncate text-base font-medium text-black sm:text-lg">
+              {detail.shipmentTitle ||
+                detail.shipmentReference ||
+                detail.sourceShipmentId ||
+                'Untitled Shipment'}
+            </p>
+          </div>
+          <div
+            className={`flex w-fit items-center gap-2 rounded-md px-3 py-1 text-sm font-medium capitalize ${getShipmentStatusBadgeClassName(displayStatusCode)}`}
+          >
+            <span className="icon-dot mt-0.5 text-[5px] text-current" />
+            <span className="text-nowrap">{shipmentStatusText(displayStatusCode)}</span>
+          </div>
+        </div>
+
+        <div className="flex w-full flex-wrap items-center justify-end gap-2">
+          <button
+            type="button"
+            className="flex flex-row items-center gap-2 rounded-md border border-bottomBorder bg-white p-2"
+          >
+            <span className="icon-File-text text-xs text-black md:text-sm" />
+            <p className="text-xs font-light text-black md:text-sm">
+              {t('shipments.rowAction.viewLogs')}
+            </p>
+          </button>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="flex flex-row items-center gap-2 rounded-md border border-bottomBorder bg-white p-2"
+          >
+            <span className="icon-pdf text-xs text-black md:text-sm" />
+            <p className="text-xs font-light text-black md:text-sm">
+              {t('shipments.detail.action.downloadPdf')}
+            </p>
+          </button>
+          <CsvExportButton
+            buttonText={t('shipments.detail.action.exportCsv')}
+            onClick={() => {
+              const csv = buildShipmentDetailCsv(detail, filteredItems)
+              downloadTextFile(csv, `shipment-${id}.csv`)
+            }}
+          />
+          <button
+            type="button"
+            className="flex flex-row items-center gap-2 rounded-md border border-bottomBorder bg-white p-2"
+          >
+            <span className="icon-File-text text-xs text-black md:text-sm" />
+            <p className="text-xs font-light text-black md:text-sm">
+              {t('shipments.detail.fileUploads')}
+            </p>
+          </button>
+          <button
+            type="button"
+            disabled
+            className="flex flex-row items-center gap-2 rounded-md border border-bottomBorder bg-disableColor p-2"
+          >
+            <span className="icon-upload-cloud text-xs text-white md:text-sm" />
+            <p className="text-xs font-light text-white md:text-sm">
+              {t('shipments.detail.editC88Document')}
+            </p>
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between rounded-lg bg-greyFour px-4 py-2">
+          <div>
+            <p className="text-xs text-lightBlackOne sm:text-sm">
+              {t('shipments.detail.purchaseOrderNumber')}
+            </p>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <p className="text-sm font-normal text-yellow sm:text-lg">
+                {detail.purchaseOrderNumber || '-'}
+              </p>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!detail.purchaseOrderNumber) return
+                  await navigator.clipboard.writeText(detail.purchaseOrderNumber)
+                  setCopied(true)
+                  setTimeout(() => setCopied(false), 1200)
+                }}
+              >
+                <span
+                  className={`${copied ? 'icon-tick text-green' : 'icon-copy-text text-lightBlackOne'} text-xs sm:text-sm`}
+                />
+              </button>
+            </div>
+          </div>
+          <div>
+            <p className="text-xs text-lightBlackOne sm:text-sm">{t('shipments.table.col.date')}</p>
+            <p className="text-sm font-normal text-black sm:text-lg">{formatDate(detail.date)}</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+          <div className="rounded-md bg-greyFour p-2 text-xs sm:text-sm">
+            <span className="font-medium">{t('shipments.detail.requisitioner')}: </span>
+            <span>{detail.requisitioner || '-'}</span>
+          </div>
+          <div className="rounded-md bg-greyFour p-2 text-xs sm:text-sm">
+            <span className="font-medium">{t('shipments.detail.shipVia')}: </span>
+            <span>{detail.shipVia || '-'}</span>
+          </div>
+          <div className="rounded-md bg-greyFour p-2 text-xs sm:text-sm">
+            <span className="font-medium">{t('shipments.detail.shippingTerms')}: </span>
+            <span>{detail.shippingTerms || '-'}</span>
+          </div>
+        </div>
+
+        <DetailsGridCard
+          title={t('shipments.detail.companyInformation')}
+          party={detail.company}
+          labels={detailLabels}
+        />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <DetailsGridCard
+            title={t('shipments.detail.vendorDetails')}
+            party={detail.vendor}
+            labels={detailLabels}
+          />
+          <DetailsGridCard
+            title={t('shipments.detail.shipToDetails')}
+            party={detail.shipTo}
+            labels={detailLabels}
+          />
+        </div>
+
+        <div className="mt-2 flex items-center justify-between">
+          <p className="text-lg font-semibold text-black">{t('shipments.detail.shipmentItems')}</p>
+          <div className="w-32">
+            <DropdownField
+              id="shipment-item-filter"
+              options={[
+                { value: 'all', label: t('shipments.detail.filter.all') },
+                { value: 'flagged', label: t('shipments.detail.filter.flagged') },
+                { value: 'unflagged', label: t('shipments.detail.filter.unflagged') },
+              ]}
+              value={itemFilter}
+              onChange={(e) => setItemFilter(e.target.value as ItemFilter)}
+            />
+          </div>
+        </div>
+
+        <div className="overflow-x-auto rounded-lg border border-bottomBorder">
+          <table className="min-w-[1080px] w-full table-auto bg-white">
+            <thead className="bg-greyFour text-black">
+              <tr className="text-left text-xs sm:text-sm">
+                <th className="w-[70px] p-3 whitespace-nowrap">
+                  {t('shipments.detail.col.itemNumber')}
+                </th>
+                <th className="min-w-[240px] p-3 whitespace-nowrap">
+                  {t('shipments.detail.col.description')}
+                </th>
+                <th className="w-[120px] p-3 whitespace-nowrap">
+                  {t('shipments.detail.col.hsCode')}
+                </th>
+                <th className="w-[110px] p-3 whitespace-nowrap">
+                  {t('shipments.detail.col.unitPrice')}
+                </th>
+                <th className="w-[80px] p-3 whitespace-nowrap">{t('shipments.detail.col.qty')}</th>
+                <th className="w-[110px] p-3 whitespace-nowrap">
+                  {t('shipments.detail.col.total')}
+                </th>
+                <th className="w-[95px] p-3 whitespace-nowrap">{t('shipments.detail.col.duty')}</th>
+                <th className="w-[130px] p-3 whitespace-nowrap">
+                  {t('shipments.detail.col.landedCost')}
+                </th>
+                <th className="w-[140px] p-3 whitespace-nowrap">
+                  {t('shipments.detail.col.action')}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredItems.map((item, idx) => (
+                <tr
+                  key={item.id || item._id || `${idx}`}
+                  className="border-t border-bottomBorder text-xs sm:text-sm"
+                >
+                  <td className="p-3 align-middle">{item.itemNumber || '-'}</td>
+                  <td className="p-3 align-middle">
+                    <p
+                      className="overflow-hidden break-words leading-6"
+                      style={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                      }}
+                    >
+                      {item.description || '-'}
+                    </p>
+                  </td>
+                  <td className="p-3 align-middle break-words">{item.hsCode || '-'}</td>
+                  <td className="p-3 align-middle whitespace-nowrap">
+                    {formatMoney(item.unitPrice, currencySymbol)}
+                  </td>
+                  <td className="p-3 align-middle whitespace-nowrap">{item.qty ?? '-'}</td>
+                  <td className="p-3 align-middle whitespace-nowrap">
+                    {formatMoney(toNumber(item.unitPrice) * toNumber(item.qty), currencySymbol)}
+                  </td>
+                  <td className="p-3 align-middle whitespace-nowrap">
+                    {formatMoney(item.duty, currencySymbol)}
+                  </td>
+                  <td className="p-3 align-middle whitespace-nowrap">
+                    {formatMoney(item.landedCost, currencySymbol)}
+                  </td>
+                  <td className="p-3 align-middle">
+                    <button
+                      type="button"
+                      disabled
+                      className="rounded-md border border-bottomBorder bg-disableColor px-3 py-1.5 text-xs font-medium text-white"
+                    >
+                      {t('shipments.detail.challengeHsCode')}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {!filteredItems.length ? (
+                <tr>
+                  <td className="p-3 text-sm text-lightBlackOne" colSpan={9}>
+                    {t('shipments.detail.noShipmentItems')}
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="flex justify-end">
+          <PrimaryButton
+            onClick={() => setShowLandedCost((prev) => !prev)}
+            className="bg-yellow px-4 py-2 text-xs font-light text-white hover:bg-yellow md:text-sm"
+          >
+            {t('shipments.detail.viewLandedCostComparison')}
+          </PrimaryButton>
+        </div>
+
+        {showLandedCost ? (
+          <LandedCostComparisonModal
+            item={comparisonItem}
+            estimatedTotal={estimatedTotal}
+            actualTotal={actualTotal}
+            currencySymbol={currencySymbol}
+            reportFileName={`shipment-landed-cost-report-${id}.csv`}
+            reportContent={buildShipmentDetailCsv(detail, filteredItems)}
+            onClose={() => setShowLandedCost(false)}
+            formatMoney={formatMoney}
+          />
+        ) : null}
+      </>
+    </div>
+  )
+}

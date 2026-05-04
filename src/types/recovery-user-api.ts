@@ -90,7 +90,6 @@ export type RecoveryChangePasswordBody = {
   newPassword: string
   confirmPassword: string
 }
-
 export type RecoveryTenantTheme = {
   _id: string
   subdomain: string

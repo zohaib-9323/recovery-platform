@@ -17,6 +17,7 @@ import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
 import { DashboardHomePage } from '@/pages/(dashboard)/home/DashboardHomePage'
 import { InboxPage } from '@/pages/(dashboard)/inbox/InboxPage'
 import { AllShipmentsPage } from '@/pages/(dashboard)/shipments/AllShipmentsPage'
+import { ShipmentDetailPageV2 as ShipmentDetailPage } from '@/pages/(dashboard)/shipments/ShipmentDetailPageV2'
 import { SettingsPage } from '@/pages/(dashboard)/settings/SettingsPage'
 
 function SessionRefreshBoundary({ children }: { children: ReactNode }) {
@@ -53,6 +54,7 @@ export function AppRouter() {
               <Route element={<DashboardLayout />}>
                 <Route path="/dashboard" element={<DashboardHomePage />} />
                 <Route path="/shipments" element={<AllShipmentsPage />} />
+                <Route path="/shipments/:id" element={<ShipmentDetailPage />} />
                 <Route path="/inbox" element={<InboxPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Route>

@@ -23,10 +23,7 @@ export function ShipmentsBulkActionsBar({
   const { t } = useI18n()
   return (
     <div
-      className={cn(
-        'flex flex-col gap-3  bg-white py-3 sm:flex-row sm:items-center sm:justify-between',
-        className,
-      )}
+      className={cn('flex w-full flex-row items-center justify-between gap-3 bg-white', className)}
     >
       <CheckboxField
         id="shipments-select-all"
@@ -39,6 +36,7 @@ export function ShipmentsBulkActionsBar({
         buttonText={t('shipments.bulk.exportCsv')}
         onClick={onExportCsv}
         disabled={!canExport}
+        className="export-btn"
       />
     </div>
   )

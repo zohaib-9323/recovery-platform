@@ -35,6 +35,11 @@ import type {
   RecoveryInboxDocumentsListEnvelope,
   RecoveryDocumentRecordType,
 } from '@/types/recovery-inbox-api'
+import type {
+  RecoveryShipmentDetailEnvelope,
+  RecoveryShipmentsListEnvelope,
+  RecoveryShipmentsListQuery,
+} from '@/types/recovery-shipments-api'
 import { env } from '@/utils/env'
 
 type StateWithAuth = { auth: AuthState }
@@ -275,6 +280,34 @@ export const recoveryApi = createApi({
         method: 'GET',
       }),
     }),
+    getRecoveryShipmentsList: builder.query<
+      RecoveryShipmentsListEnvelope,
+      RecoveryShipmentsListQuery | void
+    >({
+      query: (params) => ({
+        url: '/recovery/shipments',
+        method: 'GET',
+        params: {
+          page: params?.page ?? 1,
+          limit: params?.limit ?? 10,
+          pageSize: params?.pageSize ?? 10,
+          ...(params?.messageId ? { messageId: params.messageId } : {}),
+          ...(params?.shipmentKey ? { shipmentKey: params.shipmentKey } : {}),
+          ...(params?.status ? { status: params.status } : {}),
+          ...(params?.search ? { search: params.search } : {}),
+          ...(params?.dateFrom ? { dateFrom: params.dateFrom } : {}),
+          ...(params?.dateTo ? { dateTo: params.dateTo } : {}),
+          ...(params?.flaggedItem !== undefined ? { flaggedItem: params.flaggedItem } : {}),
+          ...(params?.refundStatus ? { refundStatus: params.refundStatus } : {}),
+        },
+      }),
+    }),
+    getRecoveryShipmentById: builder.query<RecoveryShipmentDetailEnvelope, string>({
+      query: (id) => ({
+        url: `/recovery/shipments/${id}`,
+        method: 'GET',
+      }),
+    }),
     moveUnprocessableToProcessable: builder.mutation<
       RecoveryApiEnvelope<unknown>,
       { id: string; unprocessableIndex: number }
@@ -345,6 +378,8 @@ export const {
   useLazyValidateTenantSubdomainQuery,
   useGetRecoveryInboxDocumentsQuery,
   useGetRecoveryInboxDocumentByIdQuery,
+  useGetRecoveryShipmentsListQuery,
+  useGetRecoveryShipmentByIdQuery,
   useMoveUnprocessableToProcessableMutation,
   useMoveProcessableToUnprocessableMutation,
   useGetRecoveryDownloadUrlMutation,
