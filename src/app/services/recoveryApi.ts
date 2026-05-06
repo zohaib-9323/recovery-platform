@@ -37,6 +37,7 @@ import type {
 } from '@/types/recovery-inbox-api'
 import type {
   RecoveryShipmentDetailEnvelope,
+  RecoveryShipmentLandedCostEnvelope,
   RecoveryShipmentsListEnvelope,
   RecoveryShipmentsListQuery,
 } from '@/types/recovery-shipments-api'
@@ -310,6 +311,12 @@ export const recoveryApi = createApi({
       }),
       providesTags: (_result, _error, id) => [{ type: 'RecoveryShipment', id }],
     }),
+    getRecoveryShipmentLandedCost: builder.query<RecoveryShipmentLandedCostEnvelope, string>({
+      query: (id) => ({
+        url: `/recovery/shipments/landedcost/${id}`,
+        method: 'POST',
+      }),
+    }),
     /** Same contract as trade-harmonizer `POST /shipments/upload-c88-document` (FormData: file, shipmentId). */
     uploadRecoveryShipmentC88Document: builder.mutation<
       RecoveryApiEnvelope<unknown>,
@@ -402,6 +409,7 @@ export const {
   useGetRecoveryInboxDocumentByIdQuery,
   useGetRecoveryShipmentsListQuery,
   useGetRecoveryShipmentByIdQuery,
+  useLazyGetRecoveryShipmentLandedCostQuery,
   useMoveUnprocessableToProcessableMutation,
   useMoveProcessableToUnprocessableMutation,
   useGetRecoveryDownloadUrlMutation,

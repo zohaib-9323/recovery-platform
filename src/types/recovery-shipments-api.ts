@@ -117,3 +117,16 @@ export type RecoveryShipmentDetail = RecoveryShipmentRecord & {
 }
 
 export type RecoveryShipmentDetailEnvelope = RecoveryApiEnvelope<RecoveryShipmentDetail>
+
+export type RecoveryShipmentLandedCostContent = {
+  landed_cost?: Array<[RecoveryShipmentItem, RecoveryShipmentItem]>
+  total_estimated_landed_cost?: number
+  total_actual_landed_cost?: number
+  total_landed_cost_difference?: number
+  status?: RecoveryShipmentStatusCode
+  c88Currency?: string | null
+  refund_status?: RecoveryRefundStatusCode
+}
+
+export type RecoveryShipmentLandedCostEnvelope =
+  RecoveryApiEnvelope<RecoveryShipmentLandedCostContent>

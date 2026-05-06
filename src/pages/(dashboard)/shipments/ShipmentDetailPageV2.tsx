@@ -1,14 +1,22 @@
+/* eslint-disable max-lines */
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import { useGetRecoveryShipmentByIdQuery } from '@/app/services/recoveryApi'
+import {
+  useGetRecoveryShipmentByIdQuery,
+  useLazyGetRecoveryShipmentLandedCostQuery,
+} from '@/app/services/recoveryApi'
 import { CsvExportButton, PrimaryButton } from '@/components/buttons'
 import { DropdownField } from '@/components/fields'
 import { useI18n } from '@/i18n/useI18n'
 import { downloadTextFile } from '@/lib/csv'
 import { DetailsGridCard } from '@/pages/(dashboard)/shipments/components/details-grid-card'
 import { LandedCostComparisonModal } from '@/pages/(dashboard)/shipments/components/landed-cost-comparison-modal'
-import type { RecoveryShipmentDetail, RecoveryShipmentItem } from '@/types/recovery-shipments-api'
+import type {
+  RecoveryShipmentDetail,
+  RecoveryShipmentItem,
+  RecoveryShipmentLandedCostContent,
+} from '@/types/recovery-shipments-api'
 import { mapRecoveryStatusToLegacy } from '@/lib/recovery-shipment-status-map'
 import { getShipmentStatusBadgeClassName } from '@/lib/shipment-status-badge'
 
@@ -162,8 +170,16 @@ export function ShipmentDetailPageV2() {
   const [itemFilter, setItemFilter] = useState<ItemFilter>('all')
   const [copied, setCopied] = useState(false)
   const [showLandedCost, setShowLandedCost] = useState(false)
+  const [landedCostData, setLandedCostData] = useState<{
+    poItem?: RecoveryShipmentItem
+    c88Item?: RecoveryShipmentItem
+    estimatedTotal: number
+    actualTotal: number
+  } | null>(null)
 
   const { data, isLoading, isFetching } = useGetRecoveryShipmentByIdQuery(id, { skip: !id })
+  const [fetchLandedCost, { isFetching: isLandedCostFetching }] =
+    useLazyGetRecoveryShipmentLandedCostQuery()
   const detail = data?.content
   const allItems = useMemo(() => getDisplayItems(detail), [detail])
   const poItems = useMemo(
@@ -182,27 +198,8 @@ export function ShipmentDetailPageV2() {
 
   const displayStatusCode = mapRecoveryStatusToLegacy(detail?.status)
 
-  const estimatedItems = poItems.length ? poItems : filteredItems
-  const actualItems = c88Items.length ? c88Items : filteredItems
-  const estimatedTotal = estimatedItems.reduce(
-    (sum, item) => sum + getItemLandedCostAmount(item),
-    0,
-  )
-  const actualTotal = actualItems.reduce((sum, item) => sum + getItemLandedCostAmount(item), 0)
   const currencySymbol = '£'
   const selectedItem = filteredItems[0]
-  const comparisonPoItem =
-    (selectedItem?.itemNumber
-      ? poItems.find((item) => item.itemNumber === selectedItem.itemNumber)
-      : undefined) ||
-    poItems[0] ||
-    selectedItem
-  const comparisonC88Item =
-    (selectedItem?.itemNumber
-      ? c88Items.find((item) => item.itemNumber === selectedItem.itemNumber)
-      : undefined) ||
-    c88Items[0] ||
-    selectedItem
   const detailLabels = {
     companyName: t('shipments.detail.companyName'),
     address1: t('shipments.detail.address1'),
@@ -241,6 +238,52 @@ export function ShipmentDetailPageV2() {
         {t('shipments.detail.notFound')}
       </div>
     )
+  }
+
+  const handleOpenLandedCost = async () => {
+    if (!id) return
+    try {
+      const response = await fetchLandedCost(id)
+      const payload =
+        (response as { data?: { content?: RecoveryShipmentLandedCostContent } })?.data?.content ||
+        {}
+      const landedCostRows = Array.isArray(payload?.landed_cost) ? payload.landed_cost : []
+      const firstPair = landedCostRows.find(
+        (pair: unknown) =>
+          Array.isArray(pair) &&
+          (Object.keys((pair[0] as object) || {}).length > 0 ||
+            Object.keys((pair[1] as object) || {}).length > 0),
+      ) as [RecoveryShipmentItem, RecoveryShipmentItem] | undefined
+
+      const poItem =
+        firstPair?.[0] && Object.keys(firstPair[0]).length > 0 ? firstPair[0] : undefined
+      const c88Item =
+        firstPair?.[1] && Object.keys(firstPair[1]).length > 0 ? firstPair[1] : undefined
+
+      const fallbackPoItem =
+        (selectedItem?.itemNumber
+          ? poItems.find((item) => item.itemNumber === selectedItem.itemNumber)
+          : undefined) || poItems[0]
+      const fallbackC88Item =
+        (selectedItem?.itemNumber
+          ? c88Items.find((item) => item.itemNumber === selectedItem.itemNumber)
+          : undefined) || c88Items[0]
+
+      setLandedCostData({
+        poItem: poItem || fallbackPoItem || selectedItem,
+        c88Item: c88Item || fallbackC88Item || selectedItem,
+        estimatedTotal:
+          toOptionalNumber(payload?.total_estimated_landed_cost) ??
+          getItemLandedCostAmount(poItem || fallbackPoItem || selectedItem),
+        actualTotal:
+          toOptionalNumber(payload?.total_actual_landed_cost) ??
+          getItemLandedCostAmount(c88Item || fallbackC88Item || selectedItem),
+      })
+      setShowLandedCost(true)
+    } catch {
+      setShowLandedCost(true)
+      setLandedCostData(null)
+    }
   }
 
   return (
@@ -481,23 +524,29 @@ export function ShipmentDetailPageV2() {
 
         <div className="flex justify-end">
           <PrimaryButton
-            onClick={() => setShowLandedCost((prev) => !prev)}
+            onClick={handleOpenLandedCost}
             className="bg-yellow px-4 py-2 text-xs font-light text-white hover:bg-yellow md:text-sm"
+            disabled={isLandedCostFetching}
           >
-            {t('shipments.detail.viewLandedCostComparison')}
+            {isLandedCostFetching
+              ? t('common.loading')
+              : t('shipments.detail.viewLandedCostComparison')}
           </PrimaryButton>
         </div>
 
         {showLandedCost ? (
           <LandedCostComparisonModal
-            poItem={comparisonPoItem}
-            c88Item={comparisonC88Item}
-            estimatedTotal={estimatedTotal}
-            actualTotal={actualTotal}
+            poItem={landedCostData?.poItem}
+            c88Item={landedCostData?.c88Item}
+            estimatedTotal={landedCostData?.estimatedTotal ?? 0}
+            actualTotal={landedCostData?.actualTotal ?? 0}
             currencySymbol={currencySymbol}
             reportFileName={`shipment-landed-cost-report-${id}.csv`}
             reportContent={buildShipmentDetailCsv(detail, filteredItems)}
-            onClose={() => setShowLandedCost(false)}
+            onClose={() => {
+              setShowLandedCost(false)
+              setLandedCostData(null)
+            }}
             formatMoney={formatMoney}
           />
         ) : null}
