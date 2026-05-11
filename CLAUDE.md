@@ -23,6 +23,10 @@ npx madge --circular src/  # Detect circular imports (runs in CI)
 npm run security          # Trivy + npm audit
 ```
 
+### Custom Claude Command
+
+- `/strict-ai-code-review <scope>`: Runs a strict tabular production review using the enforced checklist and summary format.
+
 Coverage thresholds (enforced in CI): 70% lines/statements/functions, 65% branches. Critical paths have higher targets: `api.ts` 90%, `authSession.ts` 85%.
 
 ## Environment

@@ -2,12 +2,9 @@ import { useNavigate } from 'react-router-dom'
 
 import { CustomCheckboxShipment } from '@/components/fields/preset/custom-checkbox-shipment'
 import { Tooltip } from '@/components/ui/tooltip'
-import { getCurrencySymbol, formatShipmentListDate } from '@/lib/format-shipment-list-date'
+import { formatShipmentListDate } from '@/lib/format-shipment-list-date'
 import { MS } from '@/lib/manage-shipments-copy'
 import {
-  getRefundStatusStyle,
-  getRefundStatusText,
-  getRefundStatusTooltipDesc,
   getShipmentStatusStyle,
   getShipmentStatusText,
   getShipmentStatusTooltipDesc,
@@ -21,6 +18,7 @@ export type ManageShipmentsTableRow = {
   purchaseOrderNumber: string
   status: number
   refund_status?: number
+  refunded_amount?: number
   c88DocumentUrl: string
   /** True when list API indicates a C88 exists (URL, S3 key, filename, or items). */
   hasC88Document: boolean
@@ -30,7 +28,6 @@ export type ManageShipmentsTableRow = {
   sanctionDecision?: string
   is_flagged?: boolean
   is_challenged?: boolean
-  refunded_amount?: number
 }
 
 export type AllShipmentsDataTableProps = {
@@ -143,34 +140,24 @@ export function AllShipmentsDataTable({
                     <span
                       id="shipment-status"
                       className={`flex w-fit items-center gap-2 rounded-md px-3 py-1 text-xs font-medium capitalize sm:text-sm ${
-                        shipment.refund_status === 2
-                          ? getRefundStatusStyle(shipment.refund_status)
-                          : [1, 2, 3, 5, 6, 7, 9].includes(shipment.status)
-                            ? getShipmentStatusStyle(shipment.status)
-                            : getShipmentStatusStyle(3)
+                        [1, 2, 3, 5, 6, 7, 9].includes(shipment.status)
+                          ? getShipmentStatusStyle(shipment.status)
+                          : getShipmentStatusStyle(3)
                       }`}
                     >
                       <span className="h-1.5 min-w-1.5 rounded-full bg-current" />
-                      {shipment.refund_status === 2
-                        ? getRefundStatusText(shipment.refund_status, true)
-                        : [1, 2, 3, 5, 6, 7, 9].includes(shipment.status)
-                          ? getShipmentStatusText(shipment.status)
-                          : getShipmentStatusText(3)}
+                      {[1, 2, 3, 5, 6, 7, 9].includes(shipment.status)
+                        ? getShipmentStatusText(shipment.status)
+                        : getShipmentStatusText(3)}
                       <Tooltip
                         heading={MS.statusInfo}
                         position="left"
                         width="w-80"
                         customContent={
                           <div className="text-xs font-normal text-black">
-                            {shipment.refund_status === 2
-                              ? getRefundStatusTooltipDesc(shipment.refund_status)
-                              : shipment.refund_status === 4
-                                ? `Refund processed and completed. Refunded amount is ${getCurrencySymbol(
-                                    'GBP',
-                                  )}${shipment.refunded_amount ?? ''}`
-                                : [1, 2, 3, 5, 6, 7, 9].includes(shipment.status)
-                                  ? getShipmentStatusTooltipDesc(shipment.status)
-                                  : getShipmentStatusTooltipDesc(3)}
+                            {[1, 2, 3, 5, 6, 7, 9].includes(shipment.status)
+                              ? getShipmentStatusTooltipDesc(shipment.status)
+                              : getShipmentStatusTooltipDesc(3)}
                           </div>
                         }
                       >

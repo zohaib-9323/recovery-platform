@@ -7,7 +7,7 @@ import {
   useGetRecoveryShipmentsListQuery,
 } from '@/app/services/recoveryApi'
 import { formatShipmentListDate } from '@/lib/format-shipment-list-date'
-import { getRefundStatusText, getShipmentStatusText } from '@/lib/manage-shipments-table-helper'
+import { getShipmentStatusText } from '@/lib/manage-shipments-table-helper'
 import { mapRecoveryStatusToLegacy } from '@/lib/recovery-shipment-status-map'
 import type { RecoveryShipmentRecord } from '@/types/recovery-shipments-api'
 
@@ -19,13 +19,6 @@ import { ShipmentsBulkActionsBar } from './components/shipments-bulk-actions-bar
 import type { ShipmentListCsvRow } from './components/shipments-csv-types'
 import { ShipmentsPageToolbar } from './components/shipments-page-toolbar'
 import { MS } from '@/lib/manage-shipments-copy'
-
-function toNumericRefundStatus(s: RecoveryShipmentRecord): number | undefined {
-  const raw = s.refund_status ?? s.refundStatus
-  if (raw === undefined || raw === null || raw === '') return undefined
-  const n = Number(raw)
-  return Number.isFinite(n) ? n : undefined
-}
 
 /** Recovery list payloads often omit `c88DocumentUrl` but include S3 key / filename / items. */
 function recoveryListShipmentHasC88Document(shipment: RecoveryShipmentRecord): boolean {
@@ -50,7 +43,6 @@ function recoveryListShipmentHasC88Document(shipment: RecoveryShipmentRecord): b
 
 function toManageShipmentsTableRow(shipment: RecoveryShipmentRecord): ManageShipmentsTableRow {
   const status = mapRecoveryStatusToLegacy(shipment.status)
-  const refund_status = toNumericRefundStatus(shipment)
   const c88Raw = shipment.c88DocumentUrl
   const trimmed = c88Raw === null || c88Raw === undefined ? '' : String(c88Raw).trim()
   const c88DocumentUrl = trimmed === '' ? '' : trimmed
@@ -66,7 +58,6 @@ function toManageShipmentsTableRow(shipment: RecoveryShipmentRecord): ManageShip
     shipVia: shipment.shipVia || '',
     purchaseOrderNumber: shipment.purchaseOrderNumber || '',
     status,
-    refund_status,
     c88DocumentUrl,
     hasC88Document,
     c88Filename,
@@ -75,7 +66,6 @@ function toManageShipmentsTableRow(shipment: RecoveryShipmentRecord): ManageShip
     sanctionDecision: shipment.sanctionDecision,
     is_flagged: shipment.is_flagged,
     is_challenged: shipment.is_challenged,
-    refunded_amount: shipment.refund?.refunded_amount,
   }
 }
 
@@ -135,12 +125,9 @@ export function AllShipmentsPage() {
         Date: formatShipmentListDate(r.dateRaw, timeZone),
         ShipVia: r.shipVia || 'N/A',
         'PO Number': r.purchaseOrderNumber || 'N/A',
-        Status:
-          r.refund_status === 2
-            ? getRefundStatusText(r.refund_status, true)
-            : [1, 2, 3, 5, 6, 7, 9].includes(Number(r.status))
-              ? getShipmentStatusText(Number(r.status))
-              : getShipmentStatusText(3),
+        Status: [1, 2, 3, 5, 6, 7, 9].includes(Number(r.status))
+          ? getShipmentStatusText(Number(r.status))
+          : getShipmentStatusText(3),
       }))
     setCsvData(selectedData as ShipmentListCsvRow[])
   }, [rows, selectedUserIds, timeZone])

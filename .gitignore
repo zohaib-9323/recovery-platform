@@ -14,6 +14,9 @@ coverage
 dist-ssr
 *.local
 
+# Local agent / IDE config (do not commit)
+.claude/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
