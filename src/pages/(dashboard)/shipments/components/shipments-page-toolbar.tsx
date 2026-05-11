@@ -1,5 +1,3 @@
-import { IoMdAdd } from 'react-icons/io'
-
 import { MS } from '@/lib/manage-shipments-copy'
 import { cn } from '@/lib/utils'
 
@@ -17,12 +15,8 @@ export type ShipmentsPageToolbarProps = {
 export function ShipmentsPageToolbar({
   search,
   onSearchChange,
-  onCreateShipment,
-  remainingShipmentLimit,
   className,
 }: ShipmentsPageToolbarProps) {
-  const limitReached = remainingShipmentLimit === 0
-
   return (
     <div
       className={cn(
@@ -43,7 +37,7 @@ export function ShipmentsPageToolbar({
           className="w-[160px] sm:w-[230px] md:w-[275px] lg:w-[350px]"
           inputWidthClass="w-full"
         />
-        <button
+        {/* <button
           type="button"
           id="create-shipment-btn"
           disabled={limitReached}
@@ -57,7 +51,7 @@ export function ShipmentsPageToolbar({
           <span className="text-nowrap text-xs font-light text-whiteOne md:text-sm">
             {MS.createShipment}
           </span>
-        </button>
+        </button> */}
       </div>
     </div>
   )

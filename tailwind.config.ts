@@ -28,7 +28,7 @@ const config: Config = {
         secondary: 'var(--secondary-color, #FFC221)',
         yellow: 'var(--primary-color, #E3A602)',
         bgColor: '#F9F9F9',
-        bottomBorder: '#F2F2F2',
+        bottomBorder: '#E0E0E0',
         searchBorder: '#D9D9D9',
         lightGreyThree: '#B3B3B3',
         blackFive: '#333333',
