@@ -3,29 +3,29 @@
  * Cursor sessionStart hook: inject Recovery Platform context into the agent session.
  * Reads JSON from stdin; writes JSON to stdout (Cursor expects snake_case fields).
  */
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, join } from 'node:path'
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const projectRoot = join(__dirname, "..", "..");
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const projectRoot = join(__dirname, '..', '..')
 
-let input = "";
+let input = ''
 try {
-  input = readFileSync(0, "utf8");
+  input = readFileSync(0, 'utf8')
 } catch {
-  input = "";
+  input = ''
 }
 
-let session = {};
+let session = {}
 try {
-  if (input.trim()) session = JSON.parse(input);
+  if (input.trim()) session = JSON.parse(input)
 } catch {
-  session = {};
+  session = {}
 }
 
-const mode = session.composer_mode ?? "agent";
-const isBg = session.is_background_agent === true;
+const mode = session.composer_mode ?? 'agent'
+const isBg = session.is_background_agent === true
 
 const additional_context = `## Recovery Platform (this repo)
 
@@ -57,13 +57,13 @@ You are in the **recovery-platform** workspace root: \`${projectRoot}\`.
 - composer_mode: ${mode}
 - is_background_agent: ${isBg}
 
-Prefer \`CLAUDE.md\` at the repo root for full architecture detail.`;
+Prefer \`CLAUDE.md\` at the repo root for full architecture detail.`
 
 const out = JSON.stringify({
   env: {
-    RECOVERY_PLATFORM: "1",
+    RECOVERY_PLATFORM: '1',
   },
   additional_context,
-});
+})
 
-process.stdout.write(out);
+process.stdout.write(out)

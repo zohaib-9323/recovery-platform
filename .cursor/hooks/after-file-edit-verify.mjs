@@ -116,10 +116,7 @@ function main() {
     }
   }
 
-  const skipI18n =
-    rel.endsWith('.test.tsx') ||
-    rel.endsWith('.spec.tsx') ||
-    rel.includes('/test/')
+  const skipI18n = rel.endsWith('.test.tsx') || rel.endsWith('.spec.tsx') || rel.includes('/test/')
 
   if (rel.endsWith('.tsx') && rel.startsWith('src/') && !skipI18n) {
     if (
