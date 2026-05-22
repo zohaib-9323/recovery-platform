@@ -31,6 +31,8 @@ export function extractSubdomainFromHostname(
   }
 
   if (normalizedHost.endsWith('.localhost') || normalizedHost.endsWith('.127.0.0.1')) {
+    if (parts[0] === 'recovery') return null
+    if (parts[1] === 'recovery') return parts[0] && parts[0] !== 'www' ? parts[0] : null
     return parts[0] && parts[0] !== 'www' ? parts[0] : null
   }
 
@@ -43,7 +45,13 @@ export function extractSubdomainFromHostname(
       const tenantCandidate = normalizedHost.slice(0, -(mainSiteHostname.length + 1)).split('.')[0]
       return tenantCandidate && tenantCandidate !== 'www' ? tenantCandidate : null
     }
-    return null
+  }
+
+  if (parts.length >= 2) {
+    if (parts[0] === 'recovery') return null
+    if (parts[1] === 'recovery') {
+      return parts[0] && parts[0] !== 'www' ? parts[0] : null
+    }
   }
 
   if (parts.length >= 3) {
