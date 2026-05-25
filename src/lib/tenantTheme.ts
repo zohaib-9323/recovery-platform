@@ -7,6 +7,7 @@ const DEFAULT_THEME = {
   hoverColor: '#fffbea',
   textOnPrimaryColor: '#ffffff',
 } as const
+const RECOVERY_MAIN_PREFIXES = new Set(['recovery', 'recoverydev', 'recoverystaging'])
 
 function resolveHostnameFromUrl(value?: string): string | null {
   if (!value) return null
@@ -31,8 +32,9 @@ export function extractSubdomainFromHostname(
   }
 
   if (normalizedHost.endsWith('.localhost') || normalizedHost.endsWith('.127.0.0.1')) {
-    if (parts[0] === 'recovery') return null
-    if (parts[1] === 'recovery') return parts[0] && parts[0] !== 'www' ? parts[0] : null
+    if (RECOVERY_MAIN_PREFIXES.has(parts[0])) return null
+    if (RECOVERY_MAIN_PREFIXES.has(parts[1]))
+      return parts[0] && parts[0] !== 'www' ? parts[0] : null
     return parts[0] && parts[0] !== 'www' ? parts[0] : null
   }
 
@@ -47,9 +49,13 @@ export function extractSubdomainFromHostname(
     }
   }
 
+  if (parts.length >= 3 && RECOVERY_MAIN_PREFIXES.has(parts[0])) {
+    return null
+  }
+
   if (parts.length >= 2) {
-    if (parts[0] === 'recovery') return null
-    if (parts[1] === 'recovery') {
+    if (RECOVERY_MAIN_PREFIXES.has(parts[0])) return null
+    if (RECOVERY_MAIN_PREFIXES.has(parts[1])) {
       return parts[0] && parts[0] !== 'www' ? parts[0] : null
     }
   }
