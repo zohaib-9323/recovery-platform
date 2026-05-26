@@ -27,14 +27,7 @@ type TenantValidationResult = {
   theme?: TenantThemeData
 }
 
-const MAIN_SUBDOMAINS = new Set([
-  'dev',
-  'ai',
-  'staging',
-  'recovery',
-  'recoverydev',
-  'recoverystaging',
-])
+const MAIN_SUBDOMAINS = new Set(['dev', 'ai'])
 const INVALID_SUBDOMAINS = new Set([
   'www',
   'api',
