@@ -42,10 +42,20 @@ export const overviewKpis: KpiStat[] = [
 
 export type ShipmentRow = {
   id: string
+  username?: string
   title: string
   date: string
   po: string
   shipVia: string
+  status?: 'submitted' | 'in_review' | 'approved' | 'rejected'
+  refundStatus?: 'not_requested' | 'requested' | 'processing' | 'refunded'
+  statusCode?: number
+  refundStatusCode?: number
+  c88DocumentUrl?: string
+  screeningStatus?: string
+  sanctionsScreeningStatus?: string
+  sanctionDecision?: string
+  isFlagged?: boolean
 }
 
 export const latestShipments: ShipmentRow[] = [

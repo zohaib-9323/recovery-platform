@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 
 import { Providers } from '@/app/Providers'
 import { AppRouter } from '@/app/router'
+import { AppErrorBoundary } from '@/components/errors/app-error-boundary'
 
 import './index.css'
 
@@ -14,7 +15,9 @@ if (!root) {
 createRoot(root).render(
   <StrictMode>
     <Providers>
-      <AppRouter />
+      <AppErrorBoundary>
+        <AppRouter />
+      </AppErrorBoundary>
     </Providers>
   </StrictMode>,
 )

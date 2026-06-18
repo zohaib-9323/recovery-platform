@@ -6,7 +6,10 @@ import { TableFooter, TableHeader, TableListing, TableShell } from '@/components
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import type { ShipmentRow } from '@/data/mock/dashboard'
+import { useI18n } from '@/i18n/useI18n'
 import { cn } from '@/lib/utils'
+
+const thCell = 'px-4 py-3 text-left text-xs font-semibold text-rp-muted sm:px-6'
 
 export type ShipmentsDataTableProps = {
   title: string
@@ -21,6 +24,7 @@ export function ShipmentsDataTable({
   rows,
   className,
 }: ShipmentsDataTableProps) {
+  const { t } = useI18n()
   const [pageSize, setPageSize] = useState(5)
   const [page, setPage] = useState(1)
 
@@ -44,11 +48,11 @@ export function ShipmentsDataTable({
         <TableShell>
           <TableHeader>
             <tr>
-              <th className="px-6 py-3 bg-[#F1F1F1] text-[#666666]">Shipment title</th>
-              <th className="px-6 py-3 bg-[#F1F1F1] text-[#666666]">Date</th>
-              <th className="px-6 py-3 bg-[#F1F1F1] text-[#666666]">PO #</th>
-              <th className="px-6 py-3 bg-[#F1F1F1] text-[#666666]">Ship via</th>
-              <th className="px-6 py-3 text-right bg-[#F1F1F1] text-[#666666]">Actions</th>
+              <th className={thCell}>{t('shipments.table.col.title')}</th>
+              <th className={thCell}>{t('shipments.table.col.date')}</th>
+              <th className={thCell}>{t('shipments.table.col.po')}</th>
+              <th className={thCell}>{t('shipments.table.col.shipVia')}</th>
+              <th className={cn(thCell, 'text-right')}>{t('shipments.table.col.actions')}</th>
             </tr>
           </TableHeader>
           <TableListing>
@@ -64,7 +68,7 @@ export function ShipmentsDataTable({
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
-                    aria-label="View"
+                    aria-label={t('common.view')}
                   >
                     <Eye className="h-4 w-4 text-rp-icon" />
                   </Button>

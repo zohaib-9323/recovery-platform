@@ -1,5 +1,6 @@
-import { Search } from 'lucide-react'
+import { useRef, type ChangeEvent } from 'react'
 
+import { MS } from '@/lib/manage-shipments-copy'
 import { cn } from '@/lib/utils'
 
 export type ShipmentsSearchInputProps = {
@@ -8,33 +9,69 @@ export type ShipmentsSearchInputProps = {
   placeholder?: string
   className?: string
   id?: string
+  padding?: string
+  inputWidthClass?: string
 }
 
-/** Search field with magnifying glass on the right. */
+/** Matches trade-harmonizer `SearchBar` used on Manage Shipments. */
 export function ShipmentsSearchInput({
   value,
   onChange,
-  placeholder = 'Search',
-  className,
+  placeholder = MS.searchDot,
+  className = '',
   id = 'shipments-search',
+  padding = 'py-2',
+  inputWidthClass,
 }: ShipmentsSearchInputProps) {
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    onChange(e.target.value)
+    setTimeout(() => {
+      inputRef.current?.focus()
+    }, 0)
+  }
+
+  const handleClearSearch = () => {
+    onChange('')
+    setTimeout(() => {
+      inputRef.current?.focus()
+    }, 0)
+  }
+
   return (
-    <div className={cn('relative w-full min-w-0 sm:max-w-md', className)}>
+    <div className={cn('relative max-w-sm flex-grow', className)}>
       <input
+        ref={inputRef}
         id={id}
-        type="search"
+        type="text"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={handleInputChange}
         placeholder={placeholder}
-        autoComplete="off"
-        className="h-11 w-full rounded-[10px] border border-rp-border bg-rp-input px-3 py-2 pr-10 text-sm text-rp-fg placeholder:text-rp-disabled focus:outline-none focus:ring-2 focus:ring-rp-accent focus:ring-offset-2 focus:ring-offset-rp-bg"
+        className={cn(
+          inputWidthClass ?? 'w-full',
+          'pl-3 pr-8',
+          padding,
+          'rounded border border-searchBorder text-sm font-light text-black placeholder:text-lightGreyThree focus:outline-none',
+        )}
+        aria-label={MS.searchDot}
       />
-      <span
-        className="pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 text-rp-muted"
-        aria-hidden
+
+      <div
+        onClick={handleClearSearch}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            handleClearSearch()
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        className="absolute right-3 top-1/2 -translate-y-1/2 transform cursor-pointer text-black"
+        aria-label={value ? 'Clear search' : 'Search icon'}
       >
-        <Search className="h-5 w-5" strokeWidth={2} />
-      </span>
+        <span className={`${value ? 'icon-close' : 'icon-Search'} text-sm text-black`} />
+      </div>
     </div>
   )
 }

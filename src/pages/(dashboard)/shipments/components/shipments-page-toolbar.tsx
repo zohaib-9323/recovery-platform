@@ -1,44 +1,57 @@
-import { Plus } from 'lucide-react'
-
-import { PrimaryButton } from '@/components/buttons'
-import { ShipmentsSearchInput } from './shipments-search-input'
+import { MS } from '@/lib/manage-shipments-copy'
 import { cn } from '@/lib/utils'
+
+import { ShipmentsSearchInput } from './shipments-search-input'
 
 export type ShipmentsPageToolbarProps = {
   search: string
   onSearchChange: (value: string) => void
-  onAddShipment?: () => void
+  onCreateShipment?: () => void
+  /** When `0`, create is disabled like trade-harmonizer shipment limit. Omit to always allow. */
+  remainingShipmentLimit?: number | null
   className?: string
 }
 
 export function ShipmentsPageToolbar({
   search,
   onSearchChange,
-  onAddShipment,
   className,
 }: ShipmentsPageToolbarProps) {
   return (
     <div
       className={cn(
-        'flex flex-col gap-4  pb-6 sm:flex-row sm:items-center sm:justify-between',
+        'flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center sm:space-x-4',
         className,
       )}
     >
-      <h1 className="text-xl font-bold text-rp-heading sm:text-2xl">All Shipments</h1>
-      <div className="flex w-full flex-col gap-3 sm:w-auto sm:min-w-0 sm:flex-1 sm:flex-row sm:items-center sm:justify-end sm:gap-4">
+      <div className="flex flex-row items-center gap-5">
+        <div className="min-w-fit text-lg font-semibold text-black md:text-lg">
+          {MS.manageShipments}
+        </div>
+      </div>
+      <div className="flex flex-row items-center gap-3">
         <ShipmentsSearchInput
           value={search}
           onChange={onSearchChange}
-          className="sm:max-w-xs md:max-w-md"
+          padding="py-2.5"
+          className="w-[160px] sm:w-[230px] md:w-[275px] lg:w-[350px]"
+          inputWidthClass="w-full"
         />
-        <PrimaryButton
+        {/* <button
           type="button"
-          className="h-11 shrink-0 gap-2 px-4 sm:px-5"
-          onClick={onAddShipment}
+          id="create-shipment-btn"
+          disabled={limitReached}
+          onClick={() => {
+            if (limitReached) return
+            onCreateShipment?.()
+          }}
+          className="dashboard flex items-center justify-center gap-1 rounded-[4px] bg-yellow p-2.5 disabled:bg-disableColor"
         >
-          <Plus className="h-4 w-4" strokeWidth={2.5} aria-hidden />
-          Add New Shipment
-        </PrimaryButton>
+          <IoMdAdd color="white" />
+          <span className="text-nowrap text-xs font-light text-whiteOne md:text-sm">
+            {MS.createShipment}
+          </span>
+        </button> */}
       </div>
     </div>
   )
