@@ -1,8 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { City, Country } from 'country-state-city'
-import Select, { components, type DropdownIndicatorProps, type SingleValue } from 'react-select'
-import CreatableSelect from 'react-select/creatable'
-import countryList from 'react-select-country-list'
 
 import { updateUserFields } from '@/app/features/auth/authSlice'
 import {
@@ -10,7 +6,7 @@ import {
   usePatchRecoveryProfileMutation,
 } from '@/app/services/recoveryApi'
 import { useAppDispatch } from '@/app/redux-hooks'
-import { InputField } from '@/components/fields'
+import { CityDropdown, CountryDropdown, InputField } from '@/components/fields'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n/useI18n'
 import { getRtkErrorMessage } from '@/lib/api-errors'
@@ -23,16 +19,6 @@ const PLACEHOLDER_AVATAR = `${process.env.PUBLIC_URL}/images/no-profile.png`
 const MAX_IMAGE_BYTES = 1_500_000
 const PHONE_PATTERN = /^\+?[1-9]\d{6,14}$/
 const NAME_MAX_LENGTH = 30
-
-type CountryOption = {
-  label: string
-  value: string
-}
-
-type CityOption = {
-  label: string
-  value: string
-}
 
 function fileToDataUrl(file: File, t: (key: string) => string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -61,28 +47,6 @@ function isPhoneValid(value: string): boolean {
   return PHONE_PATTERN.test(normalized)
 }
 
-function resolveCountryOptionByLabel(
-  options: CountryOption[],
-  label: string,
-): CountryOption | null {
-  if (!label) return null
-  const directMatch = options.find((opt) => opt.label === label)
-  if (directMatch) return directMatch
-  if (label === 'UK') {
-    return options.find((opt) => opt.value === 'GB' || opt.label === 'United Kingdom') ?? null
-  }
-  return null
-}
-
-const DropdownIndicator = (props: DropdownIndicatorProps<CountryOption | CityOption, false>) => {
-  const isOpen = props.selectProps.menuIsOpen
-  return (
-    <components.DropdownIndicator {...props}>
-      <span className={`icon-arrow-${isOpen ? 'up' : 'down'} text-xs text-rp-fg`} />
-    </components.DropdownIndicator>
-  )
-}
-
 type EditProfileFormProps = {
   profile: RecoveryUserProfile
   formInstance: number
@@ -99,7 +63,6 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
   const [patchProfile, { isLoading: saving }] = usePatchRecoveryProfileMutation()
   const today = useMemo(() => toLocalDateInputValue(new Date()), [])
   const [baselineProfile, setBaselineProfile] = useState(profile)
-  const countryOptions = useMemo(() => countryList().getData(), [])
 
   const [form, setForm] = useState<ProfileFormValues>(() => ({
     firstName: profile.firstName ?? '',
@@ -145,29 +108,6 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
     () => form.lastName.trim().length > NAME_MAX_LENGTH,
     [form.lastName],
   )
-
-  const selectedCountry = useMemo(
-    () => resolveCountryOptionByLabel(countryOptions, form.country),
-    [countryOptions, form.country],
-  )
-  const cityOptions = useMemo(() => {
-    if (!selectedCountry) return []
-    const countryByIso = Country.getCountryByCode(selectedCountry.value)
-    if (!countryByIso) return []
-    return (
-      City.getCitiesOfCountry(countryByIso.isoCode)?.map((city) => ({
-        label: city.name,
-        value: city.name,
-      })) ?? []
-    )
-  }, [selectedCountry])
-
-  const selectedCity = useMemo(() => {
-    if (!form.city) return null
-    return (
-      cityOptions.find((opt) => opt.value === form.city) ?? { label: form.city, value: form.city }
-    )
-  }, [cityOptions, form.city])
 
   const formInvalid =
     hasEmptyRequiredField || dobInFuture || phoneInvalid || firstNameTooLong || lastNameTooLong
@@ -382,37 +322,15 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
             <label htmlFor="rp-country" className="font-semibold text-rp-fg">
               {t('settings.edit.country')}
             </label>
-            <Select
-              inputId="rp-country"
-              options={countryOptions}
-              value={selectedCountry}
-              onChange={(next: SingleValue<CountryOption>) => {
-                const countryName = next?.label ?? ''
+            <CountryDropdown
+              id="rp-country"
+              value={form.country}
+              placeholder={t('settings.edit.countryPlaceholder')}
+              onChange={(countryName) => {
                 if (countryName !== form.country) {
                   updateField('city', '')
                 }
                 updateField('country', countryName)
-              }}
-              placeholder={t('settings.edit.countryPlaceholder')}
-              isSearchable
-              menuPosition="fixed"
-              classNamePrefix="rp-country-select"
-              styles={{
-                control: (base, state) => ({
-                  ...base,
-                  minHeight: 44,
-                  borderRadius: 10,
-                  borderColor: state.isFocused ? 'var(--rp-accent)' : 'var(--rp-border)',
-                  backgroundColor: 'var(--rp-input)',
-                  boxShadow: 'none',
-                  '&:hover': { borderColor: 'var(--rp-border)' },
-                }),
-                menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-              }}
-              menuPortalTarget={typeof window !== 'undefined' ? document.body : undefined}
-              components={{
-                IndicatorSeparator: () => null,
-                DropdownIndicator,
               }}
             />
           </div>
@@ -420,36 +338,15 @@ function EditProfileForm({ profile, formInstance, refetch, onBanner }: EditProfi
             <label htmlFor="rp-city" className="font-semibold text-rp-fg">
               {t('settings.edit.city')}
             </label>
-            <CreatableSelect
-              inputId="rp-city"
-              isDisabled={!selectedCountry}
-              options={cityOptions}
-              value={selectedCity}
-              onChange={(next: SingleValue<CityOption>) => updateField('city', next?.value ?? '')}
+            <CityDropdown
+              id="rp-city"
+              value={form.city}
+              countryName={form.country}
               placeholder={t('settings.edit.cityPlaceholder')}
-              isSearchable
-              menuPosition="fixed"
-              classNamePrefix="rp-city-select"
               formatCreateLabel={(inputValue) =>
                 `${t('settings.edit.cityPlaceholder')}: "${inputValue}"`
               }
-              styles={{
-                control: (base, state) => ({
-                  ...base,
-                  minHeight: 44,
-                  borderRadius: 10,
-                  borderColor: state.isFocused ? 'var(--rp-accent)' : 'var(--rp-border)',
-                  backgroundColor: 'var(--rp-input)',
-                  boxShadow: 'none',
-                  '&:hover': { borderColor: 'var(--rp-border)' },
-                }),
-                menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-              }}
-              menuPortalTarget={typeof window !== 'undefined' ? document.body : undefined}
-              components={{
-                IndicatorSeparator: () => null,
-                DropdownIndicator,
-              }}
+              onChange={(city) => updateField('city', city)}
             />
           </div>
           <div className="md:col-span-2">

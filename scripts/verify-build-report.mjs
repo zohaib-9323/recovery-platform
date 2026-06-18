@@ -11,7 +11,11 @@ import { dirname, join } from 'node:path'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const npmExecPath = process.env.npm_execpath
-const skipTrivy = ['1', 'true', 'yes'].includes((process.env.SKIP_TRIVY || '').toLowerCase())
+const skipTrivyEnv = ['1', 'true', 'yes'].includes((process.env.SKIP_TRIVY || '').toLowerCase())
+const trivyAvailable =
+  spawnSync('trivy', ['--version'], { stdio: 'ignore' }).status === 0 ||
+  spawnSync('sh', ['-c', 'command -v trivy'], { stdio: 'ignore' }).status === 0
+const skipTrivy = skipTrivyEnv || !trivyAvailable
 
 function runNpm(args) {
   if (npmExecPath) {
@@ -67,9 +71,12 @@ const checks = [
 ]
 
 if (skipTrivy) {
+  const reason = skipTrivyEnv
+    ? 'SKIPPED (SKIP_TRIVY=1). Run npm run security:trivy in CI/locally.'
+    : 'SKIPPED (trivy not installed). Run npm run security:trivy in CI/locally.'
   checks.push({
     name: 'Trivy',
-    detail: 'SKIPPED (SKIP_TRIVY=1). Run npm run security:trivy in CI/locally.',
+    detail: reason,
     skip: true,
   })
 } else {
