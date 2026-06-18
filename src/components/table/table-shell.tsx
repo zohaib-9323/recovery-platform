@@ -10,12 +10,12 @@ export type TableShellProps = HTMLAttributes<HTMLDivElement> & {
 /** Scroll container + `<table>` wrapper. Place `TableHeader` and `TableListing` inside. */
 export function TableShell({
   className,
-  tableMinWidthClassName = 'min-w-[720px]',
+  tableMinWidthClassName = 'min-w-[980px]',
   children,
   ...props
 }: TableShellProps) {
   return (
-    <div className={cn('overflow-x-auto', className)} {...props}>
+    <div className={cn('no-scrollbar w-full overflow-x-auto', className)} {...props}>
       <table className={cn('w-full text-left text-sm', tableMinWidthClassName)}>{children}</table>
     </div>
   )

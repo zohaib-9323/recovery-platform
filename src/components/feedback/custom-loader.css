@@ -1,0 +1,67 @@
+.customLoader {
+  animation: rp-rotate 1s infinite;
+  height: 50px;
+  width: 50px;
+}
+
+.customLoader:before,
+.customLoader:after {
+  border-radius: 50%;
+  content: '';
+  display: block;
+  height: 20px;
+  width: 20px;
+}
+.customLoader:before {
+  animation: rp-ball1 1s infinite;
+  background-color: var(--primary-color, #e3a602);
+  box-shadow: 30px 0 0 var(--primary-color, #e3a602);
+  margin-bottom: 10px;
+}
+.customLoader:after {
+  animation: rp-ball2 1s infinite;
+  background-color: var(--primary-color, #e3a602);
+  box-shadow: 30px 0 0 var(--primary-color, #e3a602);
+}
+
+@keyframes rp-rotate {
+  0% {
+    transform: rotate(0deg) scale(0.8);
+  }
+  50% {
+    transform: rotate(360deg) scale(1.2);
+  }
+  100% {
+    transform: rotate(720deg) scale(0.8);
+  }
+}
+
+@keyframes rp-ball1 {
+  0% {
+    box-shadow: 30px 0 0 var(--primary-color, #e3a602);
+  }
+  50% {
+    box-shadow: 0 0 0 var(--primary-color, #e3a602);
+    margin-bottom: 0;
+    transform: translate(15px, 15px);
+  }
+  100% {
+    box-shadow: 30px 0 0 var(--primary-color, #e3a602);
+    margin-bottom: 10px;
+  }
+}
+
+@keyframes rp-ball2 {
+  0% {
+    box-shadow: 30px 0 0 var(--primary-color, #e3a602);
+  }
+  50% {
+    box-shadow: 0 0 0 var(--primary-color, #e3a602);
+    margin-top: -20px;
+    transform: translate(15px, 15px);
+  }
+  100% {
+    box-shadow: 30px 0 0 var(--primary-color, #e3a602);
+    margin-top: 0;
+  }
+}
