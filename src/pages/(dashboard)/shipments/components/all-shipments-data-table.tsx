@@ -13,6 +13,7 @@ import {
   getShipmentStatusText,
   getShipmentStatusTooltipDesc,
   isShipmentListDisplayStatus,
+  shouldShowRefundStatusBadge,
 } from '@/lib/manage-shipments-table-helper'
 import {
   canOpenSanctionModal,
@@ -93,6 +94,10 @@ export function AllShipmentsDataTable({
                 const displayStatus = resolveShipmentStatusForDisplay(
                   Number(shipment.status),
                   shipment.sanctionDecision as 'stopped' | 'ignored' | 'none' | undefined,
+                )
+                const showRefundBadge = shouldShowRefundStatusBadge(
+                  shipment.refund_status,
+                  displayStatus,
                 )
 
                 return (
@@ -178,7 +183,7 @@ export function AllShipmentsDataTable({
                       <span
                         id="shipment-status"
                         className={`flex w-fit items-center gap-2 rounded-md px-3 py-1 text-xs font-medium capitalize sm:text-sm ${
-                          shipment.refund_status === 2
+                          showRefundBadge && shipment.refund_status !== undefined
                             ? getRefundStatusStyle(shipment.refund_status)
                             : isShipmentListDisplayStatus(displayStatus)
                               ? getShipmentStatusStyle(displayStatus)
@@ -186,7 +191,7 @@ export function AllShipmentsDataTable({
                         }`}
                       >
                         <span className="h-1.5 min-w-1.5 rounded-full bg-current" />
-                        {shipment.refund_status === 2
+                        {showRefundBadge && shipment.refund_status !== undefined
                           ? getRefundStatusText(shipment.refund_status, true)
                           : isShipmentListDisplayStatus(displayStatus)
                             ? getShipmentStatusText(displayStatus)
@@ -197,7 +202,7 @@ export function AllShipmentsDataTable({
                           width="w-80"
                           customContent={
                             <div className="text-xs font-normal text-black">
-                              {shipment.refund_status === 2
+                              {showRefundBadge && shipment.refund_status !== undefined
                                 ? getRefundStatusTooltipDesc(shipment.refund_status)
                                 : shipment.refund_status === 4
                                   ? `Refund processed and completed. Refunded amount is ${getCurrencySymbol(MS.GBP)}${shipment.refunded_amount ?? 0}`

@@ -209,7 +209,7 @@ export function AllShipmentsPage() {
 
   return (
     <>
-      <div className="flex flex-col gap-5 bg-white p-3 sm:p-5">
+      <div className="flex min-h-0 flex-1 flex-col gap-5 bg-white p-3 sm:p-5">
         <ShipmentsPageToolbar
           search={searchQuery}
           onSearchChange={(v) => {
@@ -219,13 +219,13 @@ export function AllShipmentsPage() {
         />
 
         {listLoading ? (
-          <div className="flex h-[70svh] items-center justify-center">
+          <div className="flex min-h-0 flex-1 items-center justify-center">
             <CustomLoader />
           </div>
         ) : (
           <>
             {rows.length > 0 ? (
-              <div className="flex w-full flex-col gap-3 rounded-lg border border-bottomBorder p-4">
+              <div className="flex min-h-0 w-full flex-1 flex-col gap-3 rounded-lg border border-bottomBorder p-4">
                 <ShipmentsBulkActionsBar
                   isAllSelected={isAllSelected}
                   onSelectAll={handleSelectAll}
@@ -255,8 +255,8 @@ export function AllShipmentsPage() {
                 ) : null}
               </div>
             ) : (
-              <div className="flex h-[69svh] w-full flex-col items-center justify-center gap-3 rounded-lg border border-bottomBorder p-4 2xl:h-[79svh]">
-                <div className="flex h-full min-h-full w-full max-w-lg flex-grow flex-col items-center justify-center gap-5">
+              <div className="flex min-h-0 flex-1 w-full flex-col items-center justify-center gap-3 rounded-lg border border-bottomBorder p-4">
+                <div className="flex w-full max-w-lg flex-col items-center justify-center gap-5">
                   <img src="/images/emptybox.svg" alt="" width={200} height={200} />
 
                   <p className="text-center text-lg font-light text-black">
