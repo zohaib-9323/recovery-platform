@@ -25,7 +25,6 @@ function deriveMainDomainUrl(subdomain: string): string {
   if (hostname.endsWith('.localhost') || hostname.endsWith('.127.0.0.1')) {
     return `${protocol}//localhost${port ? `:${port}` : ''}/login`
   }
-
   const labels = hostname.split('.')
   if (labels[0] === subdomain && labels.length > 1) {
     try {
