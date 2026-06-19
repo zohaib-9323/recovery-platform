@@ -19,7 +19,7 @@
     "i18n:audit:strict": "node scripts/audit-hardcoded-text.mjs --fail-on-findings",
     "i18n:baseline:update": "node scripts/audit-hardcoded-text.mjs --update-baseline",
     "test:ci": "cross-env CI=true craco test --watchAll=false",
-    "security:trivy": "trivy fs --scanners vuln --severity CRITICAL --exit-code 1 --skip-dirs node_modules,build,dist,coverage,.git .",
+    "security:trivy": "sh scripts/trivy-fs.sh",
     "trivy:scan": "trivy fs --config trivy.yaml --scanners vuln,secret --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL .",
     "security:audit": "npm audit --audit-level=high",
     "prepare": "husky"

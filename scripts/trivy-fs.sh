@@ -21,9 +21,12 @@ run_trivy() {
 
 if command -v trivy >/dev/null 2>&1; then
   run_trivy trivy
+elif [ -x "$ROOT/bin/trivy" ]; then
+  run_trivy "$ROOT/bin/trivy"
 elif command -v docker >/dev/null 2>&1; then
   run_trivy docker run --rm -v "$ROOT:/repo" -w /repo aquasec/trivy:latest
 else
-  echo "trivy-fs: install Trivy (https://trivy.dev/latest/getting-started/installation/) or Docker."
-  exit 1
+  echo "trivy-fs: ensuring local Trivy binary..."
+  node "$ROOT/scripts/ensure-trivy.mjs"
+  run_trivy "$ROOT/bin/trivy"
 fi
