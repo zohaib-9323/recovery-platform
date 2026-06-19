@@ -58,8 +58,8 @@ export function ShipmentLogsPage() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 bg-white p-3 sm:p-6">
-      <header className="flex items-start gap-2 sm:items-center">
+    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden bg-white p-3 sm:p-6">
+      <header className="flex shrink-0 items-start gap-2 sm:items-center">
         <button
           type="button"
           onClick={() => navigate(`/shipments/${id}`)}
@@ -81,7 +81,7 @@ export function ShipmentLogsPage() {
         </div>
       </header>
 
-      <main className="flex min-h-0 w-full flex-1 flex-col gap-3">
+      <main className="no-scrollbar flex min-h-0 w-full flex-1 flex-col gap-3 overflow-y-auto">
         <div className="flex items-center border border-bottomBorder bg-greyFour p-4">
           {shipmentLogHeadingTitles.map((item) => (
             <div key={item} className="w-1/3">
