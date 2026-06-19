@@ -5,20 +5,36 @@ import { CustomPagination } from '@/components/pagination/custom-pagination'
 import {
   useGetRecoveryPreferencesQuery,
   useGetRecoveryShipmentsListQuery,
+  useUpdateRecoveryShipmentSanctionDecisionMutation,
 } from '@/app/services/recoveryApi'
 import { formatShipmentListDate } from '@/lib/format-shipment-list-date'
-import { getShipmentStatusText } from '@/lib/manage-shipments-table-helper'
+import {
+  getShipmentStatusText,
+  isShipmentListDisplayStatus,
+} from '@/lib/manage-shipments-table-helper'
 import { mapRecoveryStatusToLegacy } from '@/lib/recovery-shipment-status-map'
+import { buildSanctionModalProps } from '@/lib/sanction-modal-helper'
+import { resolveShipmentStatusForDisplay } from '@/lib/sanction-decision'
+import { showCustomToast } from '@/lib/showCustomToast'
 import type { RecoveryShipmentRecord } from '@/types/recovery-shipments-api'
 
 import {
   AllShipmentsDataTable,
   type ManageShipmentsTableRow,
 } from './components/all-shipments-data-table'
+import { SanctionResultModal } from './components/sanction-result-modal'
 import { ShipmentsBulkActionsBar } from './components/shipments-bulk-actions-bar'
 import type { ShipmentListCsvRow } from './components/shipments-csv-types'
 import { ShipmentsPageToolbar } from './components/shipments-page-toolbar'
+import { UploadC88DocumentModal } from './components/upload-c88-document-modal'
 import { MS } from '@/lib/manage-shipments-copy'
+
+function toNumericRefundStatus(s: RecoveryShipmentRecord): number | undefined {
+  const raw = s.refund_status ?? s.refundStatus
+  if (raw === undefined || raw === null || raw === '') return undefined
+  const n = Number(raw)
+  return Number.isFinite(n) ? n : undefined
+}
 
 /** Recovery list payloads often omit `c88DocumentUrl` but include S3 key / filename / items. */
 function recoveryListShipmentHasC88Document(shipment: RecoveryShipmentRecord): boolean {
@@ -43,6 +59,7 @@ function recoveryListShipmentHasC88Document(shipment: RecoveryShipmentRecord): b
 
 function toManageShipmentsTableRow(shipment: RecoveryShipmentRecord): ManageShipmentsTableRow {
   const status = mapRecoveryStatusToLegacy(shipment.status)
+  const refund_status = toNumericRefundStatus(shipment)
   const c88Raw = shipment.c88DocumentUrl
   const trimmed = c88Raw === null || c88Raw === undefined ? '' : String(c88Raw).trim()
   const c88DocumentUrl = trimmed === '' ? '' : trimmed
@@ -58,6 +75,8 @@ function toManageShipmentsTableRow(shipment: RecoveryShipmentRecord): ManageShip
     shipVia: shipment.shipVia || '',
     purchaseOrderNumber: shipment.purchaseOrderNumber || '',
     status,
+    refund_status,
+    refunded_amount: shipment.refund?.refunded_amount,
     c88DocumentUrl,
     hasC88Document,
     c88Filename,
@@ -66,6 +85,9 @@ function toManageShipmentsTableRow(shipment: RecoveryShipmentRecord): ManageShip
     sanctionDecision: shipment.sanctionDecision,
     is_flagged: shipment.is_flagged,
     is_challenged: shipment.is_challenged,
+    vendor: shipment.vendor,
+    vendorId: shipment.vendorId,
+    sanctionsMatch: shipment.sanctionsMatch,
   }
 }
 
@@ -76,16 +98,24 @@ export function AllShipmentsPage() {
   const pageSize = 10
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
   const [csvData, setCsvData] = useState<ShipmentListCsvRow[]>([])
+  const [uploadC88Open, setUploadC88Open] = useState(false)
+  const [uploadC88ShipmentId, setUploadC88ShipmentId] = useState<string | null>(null)
+  const [selectedSanctionShipment, setSelectedSanctionShipment] =
+    useState<ManageShipmentsTableRow | null>(null)
+  const [isSanctionModalOpen, setIsSanctionModalOpen] = useState(false)
 
   const { data: prefs } = useGetRecoveryPreferencesQuery()
   const timeZone = prefs?.content?.timezone ?? null
 
-  const { data, isFetching } = useGetRecoveryShipmentsListQuery({
+  const { data, isFetching, refetch } = useGetRecoveryShipmentsListQuery({
     page: currentPage,
     limit: pageSize,
     pageSize,
     search: debouncedSearch.trim() || undefined,
   })
+
+  const [updateSanctionDecision, { isLoading: isUpdatingSanctionDecision }] =
+    useUpdateRecoveryShipmentSanctionDecisionMutation()
 
   const rows = useMemo(
     () =>
@@ -120,18 +150,61 @@ export function AllShipmentsPage() {
   const generateCsv = useCallback(() => {
     const selectedData = rows
       .filter((r) => selectedUserIds.includes(r._id))
-      .map((r) => ({
-        ShipmentTitle: r.shipmentTitle || 'N/A',
-        Date: formatShipmentListDate(r.dateRaw, timeZone),
-        ShipVia: r.shipVia || 'N/A',
-        'PO Number': r.purchaseOrderNumber || 'N/A',
-        Status: [1, 2, 3, 5, 6, 7, 9].includes(Number(r.status))
-          ? getShipmentStatusText(Number(r.status))
-          : getShipmentStatusText(3),
-      }))
+      .map((r) => {
+        const displayStatus = resolveShipmentStatusForDisplay(
+          Number(r.status),
+          r.sanctionDecision as 'stopped' | 'ignored' | 'none' | undefined,
+        )
+        return {
+          ShipmentTitle: r.shipmentTitle || 'N/A',
+          Date: formatShipmentListDate(r.dateRaw, timeZone),
+          ShipVia: r.shipVia || 'N/A',
+          'PO Number': r.purchaseOrderNumber || 'N/A',
+          Status: isShipmentListDisplayStatus(displayStatus)
+            ? getShipmentStatusText(displayStatus)
+            : getShipmentStatusText(3),
+        }
+      })
     setCsvData(selectedData as ShipmentListCsvRow[])
   }, [rows, selectedUserIds, timeZone])
 
+  const handleSanctionWarning = useCallback((shipment: ManageShipmentsTableRow) => {
+    setSelectedSanctionShipment(shipment)
+    setIsSanctionModalOpen(true)
+  }, [])
+
+  const handleSanctionDecision = async (decision: 'stopped' | 'ignored') => {
+    if (!selectedSanctionShipment) return
+    const previousDecision = selectedSanctionShipment.sanctionDecision
+    try {
+      await updateSanctionDecision({
+        shipmentId: selectedSanctionShipment._id,
+        decision,
+      }).unwrap()
+      setIsSanctionModalOpen(false)
+      setSelectedSanctionShipment(null)
+      refetch()
+      const toastMessage =
+        decision === 'stopped'
+          ? 'Shipment processing has been stopped due to the DPS match.'
+          : previousDecision === 'stopped'
+            ? 'Decision updated. You can continue processing this shipment.'
+            : 'Shipment marked as ignored. You can continue processing.'
+      showCustomToast({
+        type: 'success',
+        title: 'Decision Recorded',
+        message: toastMessage,
+      })
+    } catch {
+      showCustomToast({
+        type: 'error',
+        title: MS.error,
+        message: 'Failed to update decision',
+      })
+    }
+  }
+
+  const uploadC88Row = rows.find((r) => r._id === uploadC88ShipmentId)
   const listLoading = isFetching
 
   return (
@@ -143,7 +216,6 @@ export function AllShipmentsPage() {
             setSearchQuery(v)
             setCurrentPage(1)
           }}
-          onCreateShipment={() => {}}
         />
 
         {listLoading ? (
@@ -153,7 +225,7 @@ export function AllShipmentsPage() {
         ) : (
           <>
             {rows.length > 0 ? (
-              <div className="flex w-full flex-col gap-3 overflow-hidden rounded-lg border border-bottomBorder p-4">
+              <div className="flex w-full flex-col gap-3 rounded-lg border border-bottomBorder p-4">
                 <ShipmentsBulkActionsBar
                   isAllSelected={isAllSelected}
                   onSelectAll={handleSelectAll}
@@ -166,7 +238,11 @@ export function AllShipmentsPage() {
                     data={rows}
                     selectedUserIds={selectedUserIds}
                     onCheckChange={handleSelect}
-                    onSanctionWarning={() => {}}
+                    onSanctionWarning={handleSanctionWarning}
+                    uploadC88Document={(id) => {
+                      setUploadC88ShipmentId(id)
+                      setUploadC88Open(true)
+                    }}
                     timeZone={timeZone}
                   />
                 </div>
@@ -192,6 +268,36 @@ export function AllShipmentsPage() {
           </>
         )}
       </div>
+
+      {uploadC88Open && uploadC88ShipmentId ? (
+        <UploadC88DocumentModal
+          shipmentId={uploadC88ShipmentId}
+          uploadedDocument={uploadC88Row?.c88DocumentUrl || undefined}
+          onClose={() => {
+            setUploadC88Open(false)
+            setUploadC88ShipmentId(null)
+          }}
+          refetch={() => {
+            void refetch()
+          }}
+        />
+      ) : null}
+
+      {selectedSanctionShipment ? (
+        <SanctionResultModal
+          isOpen={isSanctionModalOpen}
+          onClose={() => {
+            setIsSanctionModalOpen(false)
+            setSelectedSanctionShipment(null)
+          }}
+          {...buildSanctionModalProps(selectedSanctionShipment)}
+          currentDecision={
+            selectedSanctionShipment.sanctionDecision as 'stopped' | 'ignored' | 'none' | null
+          }
+          onDecision={handleSanctionDecision}
+          isLoading={isUpdatingSanctionDecision}
+        />
+      ) : null}
     </>
   )
 }

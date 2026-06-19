@@ -38,6 +38,8 @@ import type {
 import type {
   RecoveryShipmentDetailEnvelope,
   RecoveryShipmentLandedCostEnvelope,
+  RecoveryShipmentLogsEnvelope,
+  RecoveryShipmentLogsQuery,
   RecoveryShipmentsListEnvelope,
   RecoveryShipmentsListQuery,
 } from '@/types/recovery-shipments-api'
@@ -317,6 +319,19 @@ export const recoveryApi = createApi({
         method: 'POST',
       }),
     }),
+    getRecoveryShipmentLogs: builder.query<RecoveryShipmentLogsEnvelope, RecoveryShipmentLogsQuery>(
+      {
+        query: ({ id, page = 1, limit = 10, search = '' }) => ({
+          url: `/recovery/shipments/${id}/logs`,
+          method: 'GET',
+          params: {
+            page,
+            limit,
+            search,
+          },
+        }),
+      },
+    ),
     /** Same contract as trade-harmonizer `POST /shipments/upload-c88-document` (FormData: file, shipmentId). */
     uploadRecoveryShipmentC88Document: builder.mutation<
       RecoveryApiEnvelope<unknown>,
@@ -332,6 +347,20 @@ export const recoveryApi = createApi({
           body,
         }
       },
+      invalidatesTags: (_result, _error, arg) => [
+        { type: 'RecoveryShipments', id: 'LIST' },
+        { type: 'RecoveryShipment', id: arg.shipmentId },
+      ],
+    }),
+    updateRecoveryShipmentSanctionDecision: builder.mutation<
+      RecoveryApiEnvelope<unknown>,
+      { shipmentId: string; decision: 'stopped' | 'ignored' }
+    >({
+      query: (body) => ({
+        url: '/sanctions/shipment-decision',
+        method: 'POST',
+        body,
+      }),
       invalidatesTags: (_result, _error, arg) => [
         { type: 'RecoveryShipments', id: 'LIST' },
         { type: 'RecoveryShipment', id: arg.shipmentId },
@@ -409,9 +438,11 @@ export const {
   useGetRecoveryInboxDocumentByIdQuery,
   useGetRecoveryShipmentsListQuery,
   useGetRecoveryShipmentByIdQuery,
+  useGetRecoveryShipmentLogsQuery,
   useLazyGetRecoveryShipmentLandedCostQuery,
   useMoveUnprocessableToProcessableMutation,
   useMoveProcessableToUnprocessableMutation,
   useGetRecoveryDownloadUrlMutation,
   useUploadRecoveryShipmentC88DocumentMutation,
+  useUpdateRecoveryShipmentSanctionDecisionMutation,
 } = recoveryApi

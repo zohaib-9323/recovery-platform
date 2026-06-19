@@ -59,3 +59,38 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Trade-harmonizer table defaults (GenericTable / ItemCard) */
+@layer base {
+  table {
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+}
+
+/* Shipment detail PDF capture — desktop layout on narrow viewports (off-screen clone only) */
+.pdf-capture-root {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  z-index: -1;
+  width: 1024px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pdf-capture-root #report-content,
+.pdf-capture-root [data-report-content] {
+  width: 1024px;
+  max-width: 1024px;
+  transform: scale(1);
+  margin: 0 auto;
+}
+
+@media screen and (max-width: 767px) {
+  .pdf-capture-root #report-content,
+  .pdf-capture-root [data-report-content] {
+    display: block !important;
+    flex-direction: column !important;
+  }
+}

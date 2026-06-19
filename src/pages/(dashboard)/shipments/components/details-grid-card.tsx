@@ -17,10 +17,16 @@ export function DetailsGridCard({
   title,
   party,
   labels,
+  gridColsLimit = true,
+  padding,
+  className = '',
 }: {
   title: string
   party?: RecoveryShipmentParty
   labels: DetailLabels
+  gridColsLimit?: boolean
+  padding?: string
+  className?: string
 }) {
   const website = party?.companyWebsite || party?.website || 'N/A'
   const entries = [
@@ -37,9 +43,17 @@ export function DetailsGridCard({
   ]
 
   return (
-    <div className="w-full overflow-hidden rounded-lg border border-bottomBorder bg-white p-4 shadow-[4px_2px_8px_0px_#00000024] sm:p-5">
-      <p className="mb-4 text-lg font-semibold text-black sm:text-xl">{title}</p>
-      <div className="grid grid-cols-1 gap-x-8 gap-y-3 md:grid-cols-2">
+    <div
+      className={`${padding || 'p-4 sm:p-5'} ${
+        gridColsLimit ? 'border border-bottomBorder shadow-[4px_2px_8px_0px_#00000024]' : ''
+      } w-full overflow-hidden rounded-lg bg-white ${className}`}
+    >
+      <p className="mb-4 truncate break-all text-base font-semibold text-black sm:text-lg">
+        {title}
+      </p>
+      <div
+        className={`grid grid-cols-1 gap-x-8 gap-y-3 ${gridColsLimit ? 'md:grid-cols-2' : 'md:grid-cols-1'}`}
+      >
         {entries.map(([label, value]) => (
           <div key={label} className="flex min-w-0 items-start gap-2 text-xs sm:text-sm">
             <span className="w-24 shrink-0 font-semibold text-[#7F7F7F] sm:w-28">{label}</span>

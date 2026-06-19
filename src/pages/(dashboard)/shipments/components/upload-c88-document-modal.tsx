@@ -10,12 +10,14 @@ export type UploadC88DocumentModalProps = {
   /** Existing document URL when editing (manage-shipments passes this from the row). */
   uploadedDocument?: string
   onClose: () => void
+  refetch?: () => void
 }
 
 export function UploadC88DocumentModal({
   shipmentId,
   uploadedDocument,
   onClose,
+  refetch,
 }: UploadC88DocumentModalProps) {
   const inputId = useId()
   const [file, setFile] = useState<File | null>(null)
@@ -51,6 +53,7 @@ export function UploadC88DocumentModal({
         title: MS.uploadC88SuccessTitle,
         message: MS.uploadC88SuccessMessage,
       })
+      refetch?.()
       onClose()
     } catch {
       setUploadError(MS.uploadC88Failed)
