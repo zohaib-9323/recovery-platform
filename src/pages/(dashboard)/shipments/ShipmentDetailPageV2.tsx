@@ -20,6 +20,7 @@ import {
   getShipmentStatusStyle,
   getShipmentStatusText,
   isShipmentListDisplayStatus,
+  shouldShowRefundStatusBadge,
 } from '@/lib/manage-shipments-table-helper'
 import { mapRecoveryStatusToLegacy } from '@/lib/recovery-shipment-status-map'
 import { buildSanctionModalProps } from '@/lib/sanction-modal-helper'
@@ -159,6 +160,7 @@ export function ShipmentDetailPageV2() {
     detail?.sanctionDecision as 'stopped' | 'ignored' | 'none' | undefined,
   )
   const refundStatus = toNumericRefundStatus(detail)
+  const showRefundBadge = shouldShowRefundStatusBadge(refundStatus, displayStatusCode)
   const hasC88Document = recoveryDetailHasC88Document(detail)
 
   const detailLabels = {
@@ -176,7 +178,7 @@ export function ShipmentDetailPageV2() {
 
   if (!id) {
     return (
-      <div className="rounded-lg bg-white p-6 text-sm text-black">
+      <div className="flex min-h-0 flex-1 rounded-lg bg-white p-6 text-sm text-black">
         {t('shipments.detail.notFound')}
       </div>
     )
@@ -186,7 +188,7 @@ export function ShipmentDetailPageV2() {
     return (
       <div
         id="report-content"
-        className="flex min-h-[40vh] items-center justify-center bg-white p-3 sm:p-6"
+        className="flex min-h-0 flex-1 items-center justify-center bg-white p-3 sm:p-6"
       >
         <CustomLoader />
       </div>
@@ -195,7 +197,7 @@ export function ShipmentDetailPageV2() {
 
   if (!detail) {
     return (
-      <div className="rounded-lg bg-white p-6 text-sm text-black">
+      <div className="flex min-h-0 flex-1 rounded-lg bg-white p-6 text-sm text-black">
         {t('shipments.detail.notFound')}
       </div>
     )
@@ -296,7 +298,7 @@ export function ShipmentDetailPageV2() {
       <div
         id="report-content"
         data-report-content
-        className="no-scrollbar flex flex-col gap-5 overflow-y-scroll bg-white p-3 sm:p-6"
+        className="no-scrollbar flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto bg-white p-3 sm:p-6"
       >
         <div className="flex flex-col items-start justify-between gap-2 space-y-2 sm:items-center">
           <div className="flex w-full flex-col items-start justify-between space-y-2 sm:flex-row sm:items-center sm:space-y-0">
@@ -328,7 +330,7 @@ export function ShipmentDetailPageV2() {
             <div
               id="badge"
               className={`flex flex-row items-center justify-center rounded-md ${
-                refundStatus === 2
+                showRefundBadge && refundStatus !== undefined
                   ? getRefundStatusStyle(refundStatus)
                   : isShipmentListDisplayStatus(displayStatusCode)
                     ? getShipmentStatusStyle(displayStatusCode)
@@ -337,7 +339,7 @@ export function ShipmentDetailPageV2() {
             >
               <span className="flex w-fit items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium sm:text-sm">
                 <span className="h-1 w-1 rounded-full bg-current" />
-                {refundStatus === 2
+                {showRefundBadge && refundStatus !== undefined
                   ? getRefundStatusText(refundStatus, true)
                   : isShipmentListDisplayStatus(displayStatusCode)
                     ? getShipmentStatusText(displayStatusCode)
