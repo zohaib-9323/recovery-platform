@@ -3,6 +3,7 @@ import jsPDF from 'jspdf'
 
 const REPORT_CONTENT_ID = 'report-content'
 const PDF_EXCLUDE_SELECTOR = '[data-pdf-exclude]'
+const PDF_CAPTURE_WIDTH = 1200
 
 function getBrandName(): string {
   if (typeof document === 'undefined') return 'Trade Harmonizer'
@@ -26,6 +27,28 @@ async function loadImage(src: string): Promise<HTMLImageElement | null> {
   })
 }
 
+function prepareElementForPdfCapture(root: HTMLElement): void {
+  root.style.overflow = 'visible'
+  root.style.height = 'auto'
+  root.style.maxHeight = 'none'
+  root.style.minHeight = 'auto'
+
+  root.querySelectorAll<HTMLElement>('[class*="max-w-"]').forEach((el) => {
+    el.style.maxWidth = 'none'
+  })
+
+  root.querySelectorAll<HTMLElement>('table').forEach((table) => {
+    table.style.width = '100%'
+    table.style.tableLayout = 'auto'
+  })
+
+  root.querySelectorAll<HTMLElement>('#shipment-items td, #shipment-items th').forEach((cell) => {
+    cell.style.maxWidth = 'none'
+    cell.style.whiteSpace = 'normal'
+    cell.style.wordBreak = 'break-word'
+  })
+}
+
 function createPdfCaptureClone(source: HTMLElement): {
   captureTarget: HTMLElement
   cleanup: () => void
@@ -41,6 +64,8 @@ function createPdfCaptureClone(source: HTMLElement): {
   const title = clone.querySelector('[data-pdf-title]')
   title?.classList.add('pl-3')
 
+  prepareElementForPdfCapture(clone)
+
   wrapper.appendChild(clone)
   document.body.appendChild(wrapper)
 
@@ -48,6 +73,14 @@ function createPdfCaptureClone(source: HTMLElement): {
     captureTarget: clone,
     cleanup: () => wrapper.remove(),
   }
+}
+
+async function waitForLayout(): Promise<void> {
+  await new Promise<void>((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve())
+    })
+  })
 }
 
 export async function downloadShipmentDetailPdf(shipmentId: string): Promise<void> {
@@ -60,18 +93,25 @@ export async function downloadShipmentDetailPdf(shipmentId: string): Promise<voi
 
   try {
     await document.fonts.ready
+    await waitForLayout()
     await new Promise((resolve) => window.setTimeout(resolve, 300))
+
+    const captureWidth = Math.max(captureTarget.scrollWidth, PDF_CAPTURE_WIDTH)
+    const captureHeight = captureTarget.scrollHeight
 
     const canvas = await html2canvas(captureTarget, {
       scale: 1.5,
       useCORS: true,
       allowTaint: false,
+      scrollX: 0,
       scrollY: 0,
-      windowWidth: 1200,
+      windowWidth: PDF_CAPTURE_WIDTH,
+      width: captureWidth,
+      height: captureHeight,
       backgroundColor: '#ffffff',
     })
 
-    const imgData = canvas.toDataURL('image/png', 0.7)
+    const imgData = canvas.toDataURL('image/png', 0.92)
     const pdf = new jsPDF({
       orientation: 'p',
       unit: 'mm',

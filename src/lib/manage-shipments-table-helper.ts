@@ -4,6 +4,16 @@ import { SANCTION_STOPPED_DISPLAY_STATUS } from '@/lib/sanction-decision'
 /** Status codes shown in manage-shipment lists (includes sanction-stopped overlay). */
 export const SHIPMENT_LIST_DISPLAY_STATUSES = [1, 2, 3, 5, 6, 7, 9, SANCTION_STOPPED_DISPLAY_STATUS]
 
+export const COST_DISCREPANCY_STATUS = 9
+
+/** Refund-pending overlay applies only when shipment status is not cost discrepancy. */
+export function shouldShowRefundStatusBadge(
+  refundStatus: number | undefined,
+  displayStatus: number,
+): boolean {
+  return refundStatus === 2 && displayStatus !== COST_DISCREPANCY_STATUS
+}
+
 export function isShipmentListDisplayStatus(status: number): boolean {
   return SHIPMENT_LIST_DISPLAY_STATUSES.includes(status)
 }

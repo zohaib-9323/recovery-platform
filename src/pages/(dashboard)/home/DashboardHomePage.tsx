@@ -152,7 +152,7 @@ export function DashboardHomePage() {
   ]
 
   return (
-    <div className="flex flex-col gap-8 p-4 md:p-6">
+    <div className="flex min-h-0 flex-1 flex-col gap-8 p-4 md:p-6">
       <section>
         <h2 className="mb-4 text-base font-semibold text-rp-fg">{t('dashboard.home.overview')}</h2>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

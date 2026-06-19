@@ -73,22 +73,52 @@
   position: fixed;
   left: -10000px;
   top: 0;
-  z-index: -1;
-  width: 1024px;
-  opacity: 0;
+  width: 1200px;
   pointer-events: none;
 }
 
-.pdf-capture-root #report-content,
 .pdf-capture-root [data-report-content] {
-  width: 1024px;
-  max-width: 1024px;
+  width: 1200px;
+  max-width: 1200px;
+  overflow: visible !important;
+  height: auto !important;
+  max-height: none !important;
+  min-height: auto !important;
+  flex: none !important;
   transform: scale(1);
   margin: 0 auto;
 }
 
+.pdf-capture-root .truncate {
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+}
+
+.pdf-capture-root [data-pdf-title] {
+  max-width: none !important;
+  overflow: visible !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+}
+
+.pdf-capture-root .overflow-hidden,
+.pdf-capture-root .overflow-x-auto,
+.pdf-capture-root .overflow-y-auto,
+.pdf-capture-root .no-scrollbar {
+  overflow: visible !important;
+}
+
+.pdf-capture-root table {
+  width: 100% !important;
+}
+
+.pdf-capture-root thead.text-nowrap {
+  white-space: normal;
+}
+
 @media screen and (max-width: 767px) {
-  .pdf-capture-root #report-content,
   .pdf-capture-root [data-report-content] {
     display: block !important;
     flex-direction: column !important;
