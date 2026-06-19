@@ -1,6 +1,11 @@
 # Recovery Platform
 
-Production-oriented React app: **Vite**, **TypeScript**, **Redux Toolkit**, **React Router v7**, **Vitest**, **ESLint 9 (flat)**, **Prettier**, **Husky + lint-staged**, and **Trivy** for filesystem / dependency scanning.
+Production-oriented React app: **Create React App** (`react-scripts`) with **CRACO** for path aliases, **TypeScript**, **Redux Toolkit**, **React Router v6**, **Jest** (via `react-scripts test`), **Tailwind CSS v3**, **ESLint 9 (flat)**, **Prettier**, **Husky + lint-staged**, and **Trivy** for filesystem / dependency scanning.
+
+## Runtime requirements
+
+- Node.js: **22.x** (CI uses Node 22)
+- npm: **10+**
 
 ## Quick start
 
@@ -8,53 +13,92 @@ Production-oriented React app: **Vite**, **TypeScript**, **Redux Toolkit**, **Re
 cd recovery-platform
 cp .env.example .env
 npm install
-npm run dev
+npm start
 ```
 
-Open [http://localhost:5173](http://localhost:5173). Use `npm start` as an alias for `npm run dev`.
+(`npm run dev` is the same as `npm start`.)
+
+Open [http://localhost:3000](http://localhost:3000).
 
 ## Scripts
 
-| Script                      | Purpose                                                                                |
-| --------------------------- | -------------------------------------------------------------------------------------- |
-| `npm run dev` / `npm start` | Vite dev server                                                                        |
-| `npm run build`             | Typecheck + production build                                                           |
-| `npm run preview`           | Preview production build                                                               |
-| `npm run lint`              | ESLint                                                                                 |
-| `npm run format`            | Prettier write                                                                         |
-| `npm run format:check`      | Prettier check (CI)                                                                    |
-| `npm run test`              | Vitest (watch)                                                                         |
-| `npm run test -- --run`     | Vitest once (CI)                                                                       |
-| `npm run test:coverage`     | Coverage report                                                                        |
-| `npm run trivy:scan`        | Trivy vuln + secret scan (requires [Trivy](https://aquasecurity.github.io/trivy/) CLI) |
+| Script                  | Purpose                                       |
+| ----------------------- | --------------------------------------------- |
+| `npm start`             | CRA dev server (CRACO)                        |
+| `npm run build`         | Production build → `build/`                   |
+| `npm run typecheck`     | `tsc --noEmit` (types not run inside webpack) |
+| `npm run lint`          | ESLint                                        |
+| `npm run dep:cycles`    | Dependency cycle detection (Madge)            |
+| `npm run format`        | Prettier write                                |
+| `npm run format:check`  | Prettier check (CI)                           |
+| `npm test`              | Jest (interactive)                            |
+| `npm run test:ci`       | Jest once (CI)                                |
+| `npm run test:coverage` | Jest once with coverage thresholds            |
+| `npm run trivy:scan`    | Trivy vuln + secret scan                      |
+
+## Environment variables
+
+Use the `REACT_APP_` prefix (see `.env.example`). Access via `process.env.REACT_APP_*` in code (`src/utils/env.ts`).
+
+### Rules
+
+- `REACT_APP_API_BASE_URL` is **required** and validated at startup.
+- Missing required env variables fail fast to avoid accidental bad deployments.
+- Never commit secrets; use `.env.local` for local-only overrides.
 
 ## Layout
 
-- `src/app/` — Redux store and typed hooks, providers, router entry
+- `src/app/` — Redux store, providers, router
 - `src/features/` — Feature slices (e.g. `auth/authSlice.ts`)
 - `src/pages/` — Route-level screens
-- `src/components/` — Shared UI (e.g. `layout/AppLayout`)
-- `src/services/` — API helpers
-- `src/hooks/` — App hooks (`useAuth` reads from Redux)
-- `src/utils/` — `env` helpers for `import.meta.env`
-- `src/types/` — Shared TypeScript types
+- `src/components/` — Shared UI
+- `src/pages/**/hooks` — feature/page business logic hooks
+- `src/pages/**/components` — presentational page UI blocks
+- `public/` — Static assets and `index.html`
+- `docs/adr/` — architecture decision records
 
-Path alias: `@/` → `src/` (see `vite.config.ts` and `tsconfig.app.json`).
+Path alias: `@/` → `src/` (see `craco.config.cjs` and `tsconfig.json`).
 
 ## Linting
 
-Configuration lives in **`eslint.config.js`** (ESLint 9 flat config). Prettier is applied last via `eslint-config-prettier/flat` so there are no rule conflicts.
+Configuration: **`eslint.config.mjs`**. Prettier is applied last via `eslint-config-prettier/flat`.
+
+- `no-console` is enforced (except `warn`/`error`).
+- CI enforces lint + format + typecheck + tests + dependency cycle check.
 
 ## Git hooks
 
-After `git clone` / `npm install`, Husky runs `prepare` and installs `.husky/pre-commit` to run **lint-staged** (ESLint fix + Prettier on staged files).
+After `npm install`, Husky runs `prepare` and installs hooks:
 
-## CI
+- `pre-commit`: `lint-staged` + `typecheck`
+- `pre-push`: `test:ci`
 
-See `.github/workflows/ci.yml` for lint, format check, tests, build, and Trivy.
+## Testing standards
 
-## Environment
+- Coverage thresholds are enforced in Jest config (via CRACO):
+  - lines/statements >= 80%
+  - functions >= 75%
+  - branches >= 70%
+- Prefer testing business logic through hooks/services and API edge paths (failures/retry).
 
-Only variables prefixed with `VITE_` are exposed to the client. Copy `.env.example` to `.env` and adjust values.
+## API validation strategy
 
-# Recovery-Platform
+- Request and response schemas are defined with **Zod** in `src/lib/schemas`.
+- Validation is applied in API boundaries and sensitive auth flows.
+
+## Dependency management
+
+- Dependabot is configured at `.github/dependabot.yml` (weekly npm updates).
+- Upgrade strategy:
+  1. Auto-merge patch/minor updates after CI passes.
+  2. Review major updates manually with changelog impact analysis.
+  3. Run `lint`, `typecheck`, `test:coverage`, and `build` before merge.
+
+## Common issues
+
+- **`Missing required environment variable: REACT_APP_API_BASE_URL`**
+  - Ensure `.env` or `.env.local` defines `REACT_APP_API_BASE_URL`.
+- **Hook/CI failures after dependency changes**
+  - Run `npm ci` then `npm run lint && npm run typecheck && npm run test:coverage`.
+- **Cycle check failure**
+  - Run `npm run dep:cycles` and remove bidirectional imports.

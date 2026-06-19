@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx -y skills find security)",
+      "Bash(npx -y skills find code-review)",
+      "Bash(npx -y skills find i18n)",
+      "Bash(npx -y skills find frontend-design)",
+      "Bash(npx -y skills find performance)"
+    ]
+  }
+}

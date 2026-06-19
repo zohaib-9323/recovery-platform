@@ -1,36 +1,126 @@
-:root {
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@import './styles/trade-harmonizer-icons.css';
 
-  --rp-bg: #0f1419;
-  --rp-surface: #1a222c;
-  --rp-fg: #e8edf2;
-  --rp-muted: #8b98a5;
-  --rp-border: #2a3542;
-  --rp-accent: #3b82f6;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    line-height: 1.5;
+    font-weight: 400;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    /* Trade Harmonizer theme tokens (see trade-harmonizer/src/app/globals.css) */
+    --primary-color: #e3a602;
+    --secondary-color: #ffc221;
+    --hover-color: #fffbea;
+    --text-on-primary-color: #ffffff;
+
+    --rp-heading: #000000;
+    --rp-fg: #333333;
+    --rp-muted: #666666;
+    --rp-description: #333333;
+    --rp-disabled: #cccccc;
+    --rp-page: #ffffff;
+    --rp-bg: #ffffff;
+    --rp-surface: #f9f9f9;
+    --rp-input: #f9f9f9;
+    --rp-border: #f2f2f2;
+    --rp-accent: #e3a602;
+    --rp-accent-dark: #c48f00;
+    --rp-icon: #e3a602;
+    --rp-success: #22c55e;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply min-h-screen bg-bgColor font-sans text-rp-fg;
+    margin: 0;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-body {
-  margin: 0;
-  min-height: 100vh;
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
-#root {
-  min-height: 100vh;
+/* Trade-harmonizer table defaults (GenericTable / ItemCard) */
+@layer base {
+  table {
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+}
+
+/* Shipment detail PDF capture — desktop layout on narrow viewports (off-screen clone only) */
+.pdf-capture-root {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 1200px;
+  pointer-events: none;
+}
+
+.pdf-capture-root [data-report-content] {
+  width: 1200px;
+  max-width: 1200px;
+  overflow: visible !important;
+  height: auto !important;
+  max-height: none !important;
+  min-height: auto !important;
+  flex: none !important;
+  transform: scale(1);
+  margin: 0 auto;
+}
+
+.pdf-capture-root .truncate {
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+}
+
+.pdf-capture-root [data-pdf-title] {
+  max-width: none !important;
+  overflow: visible !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+}
+
+.pdf-capture-root .overflow-hidden,
+.pdf-capture-root .overflow-x-auto,
+.pdf-capture-root .overflow-y-auto,
+.pdf-capture-root .no-scrollbar {
+  overflow: visible !important;
+}
+
+.pdf-capture-root table {
+  width: 100% !important;
+}
+
+.pdf-capture-root thead.text-nowrap {
+  white-space: normal;
+}
+
+@media screen and (max-width: 767px) {
+  .pdf-capture-root [data-report-content] {
+    display: block !important;
+    flex-direction: column !important;
+  }
 }

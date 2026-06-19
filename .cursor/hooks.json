@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "node .cursor/hooks/session-start.mjs",
+        "timeout": 5
+      }
+    ],
+    "afterFileEdit": [
+      {
+        "command": "node .cursor/hooks/after-file-edit-verify.mjs",
+        "matcher": "^Write$",
+        "timeout": 300,
+        "failClosed": true
+      }
+    ]
+  }
+}
