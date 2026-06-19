@@ -38,6 +38,14 @@ export type RecoveryShipmentRecord = {
     lastName?: string
     email?: string
   }
+  vendorId?: string
+  vendor?: RecoveryShipmentParty & {
+    sanctionDetails?: {
+      highestRiskLevel?: string
+      allMatches?: unknown[]
+    }
+  }
+  sanctionsMatch?: unknown
 }
 
 export type RecoveryShipmentsListContent = {
@@ -93,10 +101,17 @@ export type RecoveryShipmentItem = {
   dutyAmount?: number
   dutyRate?: number
   totalPrice?: number
+  Total?: number
   landedCost?: number
   currency?: string | null
   flagged?: boolean
   isFlagged?: boolean
+  is_flagged?: number
+  reason?: string
+  item_reason?: string
+  source?: string
+  shipment?: string
+  shipment_id?: string
 }
 
 export type RecoveryShipmentDetail = RecoveryShipmentRecord & {
@@ -104,6 +119,7 @@ export type RecoveryShipmentDetail = RecoveryShipmentRecord & {
   shippingTerms?: string
   user?: string
   unit?: string
+  refundStatus?: RecoveryRefundStatusCode
   poDocumentUrl?: string
   additionalDocuments?: string[]
   company?: RecoveryShipmentParty
@@ -125,8 +141,46 @@ export type RecoveryShipmentLandedCostContent = {
   total_landed_cost_difference?: number
   status?: RecoveryShipmentStatusCode
   c88Currency?: string | null
+  c88unit?: string
+  unit?: string
   refund_status?: RecoveryRefundStatusCode
 }
 
 export type RecoveryShipmentLandedCostEnvelope =
   RecoveryApiEnvelope<RecoveryShipmentLandedCostContent>
+
+export type RecoveryShipmentLogEvent = {
+  _id: string
+  title: string
+  description: string | Record<string, unknown> | unknown[]
+  userId?: string
+  logType?: string
+  time: string
+  color: string
+  details?: string | Record<string, unknown> | unknown[]
+}
+
+export type RecoveryShipmentLogDayGroup = {
+  date: string
+  events: RecoveryShipmentLogEvent[]
+}
+
+export type RecoveryShipmentLogsContent = {
+  logs?: RecoveryShipmentLogDayGroup[]
+  pagination?: {
+    totalPages?: number
+    page?: number
+    limit?: number
+    total?: number
+  }
+  ShipmentName?: string
+}
+
+export type RecoveryShipmentLogsQuery = {
+  id: string
+  page?: number
+  limit?: number
+  search?: string
+}
+
+export type RecoveryShipmentLogsEnvelope = RecoveryApiEnvelope<RecoveryShipmentLogsContent>

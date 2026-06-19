@@ -3,31 +3,45 @@ import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import {
+  useGetRecoveryPreferencesQuery,
   useGetRecoveryShipmentByIdQuery,
   useLazyGetRecoveryShipmentLandedCostQuery,
+  useUpdateRecoveryShipmentSanctionDecisionMutation,
 } from '@/app/services/recoveryApi'
 import { CsvExportButton, PrimaryButton } from '@/components/buttons'
+import { CustomLoader } from '@/components/feedback/custom-loader'
 import { DropdownField } from '@/components/fields'
+import { formatShipmentListDate } from '@/lib/format-shipment-list-date'
+import { MS } from '@/lib/manage-shipments-copy'
 import { useI18n } from '@/i18n/useI18n'
-import { downloadTextFile } from '@/lib/csv'
-import { DetailsGridCard } from '@/pages/(dashboard)/shipments/components/details-grid-card'
-import { LandedCostComparisonModal } from '@/pages/(dashboard)/shipments/components/landed-cost-comparison-modal'
-import type {
-  RecoveryShipmentDetail,
-  RecoveryShipmentItem,
-  RecoveryShipmentLandedCostContent,
-} from '@/types/recovery-shipments-api'
+import {
+  getRefundStatusStyle,
+  getRefundStatusText,
+  getShipmentStatusStyle,
+  getShipmentStatusText,
+  isShipmentListDisplayStatus,
+} from '@/lib/manage-shipments-table-helper'
 import { mapRecoveryStatusToLegacy } from '@/lib/recovery-shipment-status-map'
-import { getShipmentStatusBadgeClassName } from '@/lib/shipment-status-badge'
+import { buildSanctionModalProps } from '@/lib/sanction-modal-helper'
+import { downloadShipmentDetailPdf } from '@/lib/download-shipment-detail-pdf'
+import {
+  hasSanctionMatch,
+  isSanctionStopped,
+  needsSanctionDecision,
+  resolveShipmentStatusForDisplay,
+} from '@/lib/sanction-decision'
+import { showCustomToast } from '@/lib/showCustomToast'
+import { DetailsGridCard } from '@/pages/(dashboard)/shipments/components/details-grid-card'
+import {
+  LandedCostComparisonModal,
+  type LandedCostComparisonContent,
+} from '@/pages/(dashboard)/shipments/components/landed-cost-comparison-modal'
+import { SanctionResultModal } from '@/pages/(dashboard)/shipments/components/sanction-result-modal'
+import { ShipmentItemsTable } from '@/pages/(dashboard)/shipments/components/shipment-items-table'
+import { UploadC88DocumentModal } from '@/pages/(dashboard)/shipments/components/upload-c88-document-modal'
+import type { RecoveryShipmentDetail, RecoveryShipmentItem } from '@/types/recovery-shipments-api'
 
-type ItemFilter = 'all' | 'flagged' | 'unflagged'
-
-function formatDate(value?: string): string {
-  if (!value) return '-'
-  const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return value
-  return d.toLocaleDateString()
-}
+type ItemFilter = 'All' | 'Flagged' | 'Unflagged'
 
 function toNumber(value: unknown, fallback = 0): number {
   if (typeof value === 'number') return value
@@ -44,23 +58,19 @@ function toOptionalNumber(value: unknown): number | undefined {
 function getItemDutyAmount(item: RecoveryShipmentItem): number {
   const duty = toOptionalNumber(item.duty)
   if (duty !== undefined) return duty
-
   const dutyAmount = toOptionalNumber(item.dutyAmount)
   if (dutyAmount !== undefined) return dutyAmount
-
   const rate = toOptionalNumber(item.dutyRate)
   if (rate !== undefined) {
     const base = toOptionalNumber(item.totalPrice) ?? toNumber(item.qty) * toNumber(item.unitPrice)
     return (base * rate) / 100
   }
-
   return 0
 }
 
 function getItemLandedCostAmount(item: RecoveryShipmentItem): number {
   const landed = toOptionalNumber(item.landedCost)
   if (landed !== undefined) return landed
-
   const total = toOptionalNumber(item.totalPrice) ?? toNumber(item.qty) * toNumber(item.unitPrice)
   return total + getItemDutyAmount(item)
 }
@@ -71,6 +81,7 @@ function normalizeShipmentItem(item: RecoveryShipmentItem, index: number): Recov
     itemNumber: item.itemNumber || String(index + 1),
     duty: getItemDutyAmount(item),
     landedCost: getItemLandedCostAmount(item),
+    Total: item.Total ?? item.totalPrice,
   }
 }
 
@@ -84,133 +95,83 @@ function getDisplayItems(detail?: RecoveryShipmentDetail): RecoveryShipmentItem[
   return rawItems.map((item, index) => normalizeShipmentItem(item, index))
 }
 
-function shipmentStatusText(statusCode?: number): string {
-  switch (statusCode) {
-    case 1:
-      return 'HS Code Processing'
-    case 2:
-      return 'C88 Upload Pending'
-    case 3:
-      return 'Shipment Processing'
-    case 4:
-      return 'Shipment Pending'
-    case 5:
-      return 'Shipment Successful'
-    case 6:
-      return 'Shipment Rejected'
-    case 7:
-      return 'HS Code Challenged'
-    case 8:
-      return 'Item Mapping Failed'
-    case 9:
-      return 'Cost Discrepancy'
-    default:
-      return 'Shipment Processing'
-  }
-}
-
 function isItemFlagged(item: RecoveryShipmentItem): boolean {
-  return Boolean(item.flagged || item.isFlagged)
+  return Boolean(item.flagged || item.isFlagged || item.is_flagged === 1)
 }
 
-function formatMoney(value: unknown, currencySymbol = '£'): string {
-  const n = toNumber(value, 0)
-  return `${currencySymbol}${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+function toNumericRefundStatus(detail?: RecoveryShipmentDetail): number | undefined {
+  const raw = detail?.refund_status ?? detail?.refundStatus
+  if (raw === undefined || raw === null || raw === '') return undefined
+  const n = Number(raw)
+  return Number.isFinite(n) ? n : undefined
 }
 
-function buildShipmentDetailCsv(
-  detail?: RecoveryShipmentDetail,
-  items: RecoveryShipmentItem[] = [],
-): string {
-  const headers = [
-    'ShipmentTitle',
-    'Date',
-    'ShipVia',
-    'PO Number',
-    'Status',
-    'Requisitioner',
-    'ShippingTerms',
-    'Item Number',
-    'Description',
-    'Quantity',
-    'Currency',
-    'Unit Price',
-    'HS Code',
-    'Duty',
-    'Landed Cost',
-  ]
-  const statusCode = mapRecoveryStatusToLegacy(detail?.status)
-  const rows = (items.length ? items : [{}]).map((item) => [
-    detail?.shipmentTitle || detail?.shipmentReference || detail?.sourceShipmentId || '-',
-    formatDate(detail?.date),
-    detail?.shipVia || '-',
-    detail?.purchaseOrderNumber || '-',
-    shipmentStatusText(statusCode),
-    detail?.requisitioner || '-',
-    detail?.shippingTerms || '-',
-    item.itemNumber || '-',
-    item.description || '-',
-    String(item.qty ?? '-'),
-    detail?.unit || 'USD',
-    String(item.unitPrice ?? 0),
-    item.hsCode || '-',
-    String(item.duty ?? 0),
-    String(item.landedCost ?? 0),
-  ])
-  const escapeCell = (v: string) => (/[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v)
-  return [headers, ...rows]
-    .map((line) => line.map((c) => escapeCell(String(c))).join(','))
-    .join('\r\n')
+function recoveryDetailHasC88Document(detail?: RecoveryShipmentDetail): boolean {
+  if (!detail) return false
+  const url = detail.c88DocumentUrl
+  if (url !== null && url !== undefined && String(url).trim() !== '') return true
+  const key = detail.c88S3Key
+  if (key !== null && key !== undefined && String(key).trim() !== '') return true
+  const name = detail.c88Filename
+  if (name !== null && name !== undefined && String(name).trim() !== '') return true
+  const items = detail.c88Items
+  if (Array.isArray(items) && items.length > 0) return true
+  return false
 }
 
 export function ShipmentDetailPageV2() {
-  const { t } = useI18n()
   const navigate = useNavigate()
+  const { t } = useI18n()
   const { id = '' } = useParams()
-  const [itemFilter, setItemFilter] = useState<ItemFilter>('all')
+  const [itemFilter, setItemFilter] = useState<ItemFilter>('All')
   const [copied, setCopied] = useState(false)
   const [showLandedCost, setShowLandedCost] = useState(false)
-  const [landedCostData, setLandedCostData] = useState<{
-    poItem?: RecoveryShipmentItem
-    c88Item?: RecoveryShipmentItem
-    estimatedTotal: number
-    actualTotal: number
-  } | null>(null)
+  const [landedCostContent, setLandedCostContent] = useState<LandedCostComparisonContent | null>(
+    null,
+  )
+  const [uploadDocument, setUploadDocument] = useState(false)
+  const [isSanctionModalOpen, setIsSanctionModalOpen] = useState(false)
+  const [isPdfDownloading, setIsPdfDownloading] = useState(false)
+  const [csvData, setCsvData] = useState<Record<string, unknown>[]>([])
 
-  const { data, isLoading, isFetching } = useGetRecoveryShipmentByIdQuery(id, { skip: !id })
+  const { data: prefs } = useGetRecoveryPreferencesQuery()
+  const timeZone = prefs?.content?.timezone ?? null
+
+  const { data, isLoading, isFetching, refetch } = useGetRecoveryShipmentByIdQuery(id, {
+    skip: !id,
+  })
   const [fetchLandedCost, { isFetching: isLandedCostFetching }] =
     useLazyGetRecoveryShipmentLandedCostQuery()
+  const [updateSanctionDecision, { isLoading: isUpdatingSanctionDecision }] =
+    useUpdateRecoveryShipmentSanctionDecisionMutation()
+
   const detail = data?.content
   const allItems = useMemo(() => getDisplayItems(detail), [detail])
-  const poItems = useMemo(
-    () => (detail?.poItems || []).map((item, index) => normalizeShipmentItem(item, index)),
-    [detail?.poItems],
-  )
-  const c88Items = useMemo(
-    () => (detail?.c88Items || []).map((item, index) => normalizeShipmentItem(item, index)),
-    [detail?.c88Items],
-  )
   const filteredItems = useMemo(() => {
-    if (itemFilter === 'flagged') return allItems.filter(isItemFlagged)
-    if (itemFilter === 'unflagged') return allItems.filter((item) => !isItemFlagged(item))
+    if (itemFilter === 'Flagged') return allItems.filter(isItemFlagged)
+    if (itemFilter === 'Unflagged') return allItems.filter((item) => !isItemFlagged(item))
     return allItems
   }, [allItems, itemFilter])
 
-  const displayStatusCode = mapRecoveryStatusToLegacy(detail?.status)
+  const legacyStatus = mapRecoveryStatusToLegacy(detail?.status)
+  const displayStatusCode = resolveShipmentStatusForDisplay(
+    legacyStatus,
+    detail?.sanctionDecision as 'stopped' | 'ignored' | 'none' | undefined,
+  )
+  const refundStatus = toNumericRefundStatus(detail)
+  const hasC88Document = recoveryDetailHasC88Document(detail)
 
-  const currencySymbol = '£'
-  const selectedItem = filteredItems[0]
   const detailLabels = {
-    companyName: t('shipments.detail.companyName'),
-    address1: t('shipments.detail.address1'),
-    address2: t('shipments.detail.address2'),
-    country: t('shipments.detail.country'),
-    city: t('shipments.detail.city'),
-    phoneNumber: t('shipments.detail.phoneNumber'),
-    fax: t('shipments.detail.fax'),
-    website: t('shipments.detail.website'),
-    industryType: t('shipments.detail.industryType'),
-    postalCode: t('shipments.detail.postalCode'),
+    companyName: 'Company Name',
+    address1: 'Address 1',
+    address2: 'Address 2',
+    country: 'Country',
+    city: 'City',
+    phoneNumber: 'Phone Number',
+    fax: 'Fax',
+    website: 'Website',
+    industryType: 'Industry Type',
+    postalCode: 'Postal Code',
   }
 
   if (!id) {
@@ -227,7 +188,7 @@ export function ShipmentDetailPageV2() {
         id="report-content"
         className="flex min-h-[40vh] items-center justify-center bg-white p-3 sm:p-6"
       >
-        <div className="text-sm text-lightBlackOne">{t('common.loading')}</div>
+        <CustomLoader />
       </div>
     )
   }
@@ -242,315 +203,374 @@ export function ShipmentDetailPageV2() {
 
   const handleOpenLandedCost = async () => {
     if (!id) return
+    setShowLandedCost(true)
     try {
       const response = await fetchLandedCost(id)
-      const payload =
-        (response as { data?: { content?: RecoveryShipmentLandedCostContent } })?.data?.content ||
-        {}
-      const landedCostRows = Array.isArray(payload?.landed_cost) ? payload.landed_cost : []
-      const firstPair = landedCostRows.find(
-        (pair: unknown) =>
-          Array.isArray(pair) &&
-          (Object.keys((pair[0] as object) || {}).length > 0 ||
-            Object.keys((pair[1] as object) || {}).length > 0),
-      ) as [RecoveryShipmentItem, RecoveryShipmentItem] | undefined
-
-      const poItem =
-        firstPair?.[0] && Object.keys(firstPair[0]).length > 0 ? firstPair[0] : undefined
-      const c88Item =
-        firstPair?.[1] && Object.keys(firstPair[1]).length > 0 ? firstPair[1] : undefined
-
-      const fallbackPoItem =
-        (selectedItem?.itemNumber
-          ? poItems.find((item) => item.itemNumber === selectedItem.itemNumber)
-          : undefined) || poItems[0]
-      const fallbackC88Item =
-        (selectedItem?.itemNumber
-          ? c88Items.find((item) => item.itemNumber === selectedItem.itemNumber)
-          : undefined) || c88Items[0]
-
-      setLandedCostData({
-        poItem: poItem || fallbackPoItem || selectedItem,
-        c88Item: c88Item || fallbackC88Item || selectedItem,
-        estimatedTotal:
-          toOptionalNumber(payload?.total_estimated_landed_cost) ??
-          getItemLandedCostAmount(poItem || fallbackPoItem || selectedItem),
-        actualTotal:
-          toOptionalNumber(payload?.total_actual_landed_cost) ??
-          getItemLandedCostAmount(c88Item || fallbackC88Item || selectedItem),
-      })
-      setShowLandedCost(true)
+      const payload = response?.data?.content ?? null
+      setLandedCostContent(payload as LandedCostComparisonContent | null)
     } catch {
-      setShowLandedCost(true)
-      setLandedCostData(null)
+      setLandedCostContent(null)
+    }
+  }
+
+  const handleSanctionDecision = async (decision: 'stopped' | 'ignored') => {
+    if (!id) return
+    const previousDecision = detail.sanctionDecision
+    try {
+      await updateSanctionDecision({ shipmentId: id, decision }).unwrap()
+      setIsSanctionModalOpen(false)
+      refetch()
+      const toastMessage =
+        decision === 'stopped'
+          ? 'Shipment processing has been stopped due to the DPS match.'
+          : previousDecision === 'stopped'
+            ? 'Decision updated. You can continue processing this shipment.'
+            : 'Shipment marked as ignored. You can continue processing.'
+      showCustomToast({
+        type: 'success',
+        title: 'Decision Recorded',
+        message: toastMessage,
+      })
+    } catch {
+      showCustomToast({
+        type: 'error',
+        title: MS.error,
+        message: 'Failed to update decision',
+      })
+    }
+  }
+
+  const generateCsv = () => {
+    const baseShipmentData = {
+      ShipmentTitle: detail.shipmentTitle || 'N/A',
+      Date: formatShipmentListDate(detail.date, timeZone),
+      ShipVia: detail.shipVia || 'N/A',
+      'PO Number': detail.purchaseOrderNumber || 'N/A',
+      Status: isShipmentListDisplayStatus(displayStatusCode)
+        ? getShipmentStatusText(displayStatusCode)
+        : getShipmentStatusText(3),
+      Requisitioner: detail.requisitioner || 'N/A',
+      ShippingTerms: detail.shippingTerms || 'N/A',
+    }
+    if (filteredItems.length > 0) {
+      setCsvData(
+        filteredItems.map((item, index) => ({
+          ...(index === 0 ? baseShipmentData : {}),
+          'Item Number': item.itemNumber || 'N/A',
+          Description: item.description || 'N/A',
+          Quantity: item.qty || 'N/A',
+          Currency: detail.unit ?? 'USD',
+          'Unit Price': item.unitPrice ?? 0,
+          'HS Code': item.hsCode || 'N/A',
+          Duty: item.duty ?? 0,
+          'Landed Cost': item.landedCost ?? 0,
+        })),
+      )
+    } else {
+      setCsvData([baseShipmentData])
+    }
+  }
+
+  const landedCostDisabled =
+    !hasC88Document ||
+    (![5, 9].includes(legacyStatus) && ![2, 4].includes(Number(refundStatus ?? 0)))
+
+  const downloadAsPDF = async () => {
+    if (!id || isPdfDownloading) return
+    setIsPdfDownloading(true)
+    try {
+      await downloadShipmentDetailPdf(id)
+    } catch {
+      showCustomToast({
+        type: 'error',
+        title: MS.error,
+        message: 'Failed to generate PDF.',
+      })
+    } finally {
+      setIsPdfDownloading(false)
     }
   }
 
   return (
-    <div id="report-content" className="flex w-full min-w-0 flex-col gap-5 bg-white p-3 sm:p-6">
-      <>
-        <div className="flex flex-col items-start justify-between gap-3 md:flex-row md:items-center">
-          <div className="flex min-w-0 items-center gap-3">
-            <button
-              type="button"
-              onClick={() => navigate('/shipments')}
-              className="flex h-6 w-6 items-center justify-center rounded border border-bottomBorder"
-            >
-              <span className="icon-arrow-left text-large text-black" />
-            </button>
-            <p
-              className="max-w-[58vw] truncate text-base font-medium text-black sm:max-w-[70vw] sm:text-lg"
-              title={
-                detail.shipmentTitle || detail.shipmentReference || detail.sourceShipmentId || ''
-              }
-            >
-              {detail.shipmentTitle ||
-                detail.shipmentReference ||
-                detail.sourceShipmentId ||
-                'Untitled Shipment'}
-            </p>
-          </div>
-          <div
-            className={`flex w-fit max-w-full items-center gap-2 rounded-md px-3 py-1 text-sm font-medium capitalize ${getShipmentStatusBadgeClassName(displayStatusCode)}`}
-          >
-            <span className="icon-dot mt-0.5 text-[5px] text-current" />
-            <span className="truncate whitespace-nowrap">
-              {shipmentStatusText(displayStatusCode)}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex w-full flex-wrap items-center justify-start gap-2 md:justify-end">
-          <button
-            type="button"
-            className="flex min-w-0 flex-row items-center gap-2 rounded-md border border-bottomBorder bg-white p-2"
-          >
-            <span className="icon-File-text text-xs text-black md:text-sm" />
-            <p className="truncate text-xs font-light text-black md:text-sm">
-              {t('shipments.rowAction.viewLogs')}
-            </p>
-          </button>
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="flex min-w-0 flex-row items-center gap-2 rounded-md border border-bottomBorder bg-white p-2"
-          >
-            <span className="icon-pdf text-xs text-black md:text-sm" />
-            <p className="truncate text-xs font-light text-black md:text-sm">
-              {t('shipments.detail.action.downloadPdf')}
-            </p>
-          </button>
-          <CsvExportButton
-            buttonText={t('shipments.detail.action.exportCsv')}
-            onClick={() => {
-              const csv = buildShipmentDetailCsv(detail, filteredItems)
-              downloadTextFile(csv, `shipment-${id}.csv`)
-            }}
-          />
-        </div>
-
-        <div className="flex flex-col gap-3 rounded-lg bg-greyFour px-4 py-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <p className="text-xs text-lightBlackOne sm:text-sm">
-              {t('shipments.detail.purchaseOrderNumber')}
-            </p>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <p
-                className="max-w-[65vw] truncate text-sm font-normal text-yellow sm:max-w-[40vw] sm:text-lg"
-                title={detail.purchaseOrderNumber || ''}
+    <>
+      <div
+        id="report-content"
+        data-report-content
+        className="no-scrollbar flex flex-col gap-5 overflow-y-scroll bg-white p-3 sm:p-6"
+      >
+        <div className="flex flex-col items-start justify-between gap-2 space-y-2 sm:items-center">
+          <div className="flex w-full flex-col items-start justify-between space-y-2 sm:flex-row sm:items-center sm:space-y-0">
+            <div id="shipment-title" className="flex flex-row items-center gap-3">
+              <button
+                type="button"
+                onClick={() => navigate('/shipments')}
+                data-pdf-exclude
+                className="flex h-6 w-6 items-center justify-center rounded border border-bottomBorder"
               >
-                {detail.purchaseOrderNumber || '-'}
+                <span className="icon-arrow-left text-large text-black" />
+              </button>
+              <span
+                id="title"
+                data-pdf-title
+                className="mr-auto max-w-64 truncate text-base font-medium text-black md:max-w-lg lg:max-w-3xl lg:text-lg xl:max-w-4xl 2xl:max-w-full"
+                title={
+                  detail.shipmentTitle || detail.shipmentReference || detail.sourceShipmentId || ''
+                }
+              >
+                <p className="py-3">
+                  {detail.shipmentTitle ||
+                    detail.shipmentReference ||
+                    detail.sourceShipmentId ||
+                    'Untitled Shipment'}
+                </p>
+              </span>
+            </div>
+            <div
+              id="badge"
+              className={`flex flex-row items-center justify-center rounded-md ${
+                refundStatus === 2
+                  ? getRefundStatusStyle(refundStatus)
+                  : isShipmentListDisplayStatus(displayStatusCode)
+                    ? getShipmentStatusStyle(displayStatusCode)
+                    : getShipmentStatusStyle(3)
+              }`}
+            >
+              <span className="flex w-fit items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium sm:text-sm">
+                <span className="h-1 w-1 rounded-full bg-current" />
+                {refundStatus === 2
+                  ? getRefundStatusText(refundStatus, true)
+                  : isShipmentListDisplayStatus(displayStatusCode)
+                    ? getShipmentStatusText(displayStatusCode)
+                    : getShipmentStatusText(3)}
+              </span>
+            </div>
+          </div>
+
+          {hasSanctionMatch(detail) && isSanctionStopped(detail.sanctionDecision) ? (
+            <div className="flex w-full flex-col gap-3 rounded-lg border border-redOne bg-lightRedOne px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-black">
+                Processing is stopped due to a DPS match. Choose{' '}
+                <span className="font-semibold">Ignore &amp; Continue</span>{' '}
+                {t('shipments.detail.sanctionStoppedContinue')}
               </p>
               <button
                 type="button"
-                onClick={async () => {
-                  if (!detail.purchaseOrderNumber) return
-                  await navigator.clipboard.writeText(detail.purchaseOrderNumber)
-                  setCopied(true)
-                  setTimeout(() => setCopied(false), 1200)
-                }}
+                onClick={() => setIsSanctionModalOpen(true)}
+                data-pdf-exclude
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white"
               >
-                <span
-                  className={`${copied ? 'icon-tick text-green' : 'icon-copy-text text-lightBlackOne'} text-xs sm:text-sm`}
-                />
+                {t('shipments.detail.updateDecision')}
               </button>
             </div>
-          </div>
-          <div className="min-w-0">
-            <p className="text-xs text-lightBlackOne sm:text-sm">{t('shipments.table.col.date')}</p>
-            <p className="text-sm font-normal text-black sm:text-lg">{formatDate(detail.date)}</p>
-          </div>
-        </div>
+          ) : null}
 
-        <div className="flex flex-wrap gap-3">
           <div
-            className="max-w-full rounded-md bg-greyFour p-2 text-xs sm:text-sm"
-            title={detail.requisitioner || '-'}
+            data-pdf-exclude
+            className="flex w-full flex-wrap items-center justify-start gap-2 md:justify-end"
           >
-            <span className="font-medium">{t('shipments.detail.requisitioner')}: </span>
-            <span className="inline-block max-w-full truncate align-bottom">
-              {detail.requisitioner || '-'}
-            </span>
-          </div>
-          <div
-            className="max-w-full rounded-md bg-greyFour p-2 text-xs sm:text-sm"
-            title={detail.shipVia || '-'}
-          >
-            <span className="font-medium">{t('shipments.detail.shipVia')}: </span>
-            <span className="inline-block max-w-full truncate align-bottom">
-              {detail.shipVia || '-'}
-            </span>
-          </div>
-          <div
-            className="max-w-full rounded-md bg-greyFour p-2 text-xs sm:text-sm"
-            title={detail.shippingTerms || '-'}
-          >
-            <span className="font-medium">{t('shipments.detail.shippingTerms')}: </span>
-            <span className="inline-block max-w-full truncate align-bottom">
-              {detail.shippingTerms || '-'}
-            </span>
-          </div>
-        </div>
-
-        <DetailsGridCard
-          title={t('shipments.detail.companyInformation')}
-          party={detail.company}
-          labels={detailLabels}
-        />
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <DetailsGridCard
-            title={t('shipments.detail.vendorDetails')}
-            party={detail.vendor}
-            labels={detailLabels}
-          />
-          <DetailsGridCard
-            title={t('shipments.detail.shipToDetails')}
-            party={detail.shipTo}
-            labels={detailLabels}
-          />
-        </div>
-
-        <div className="mt-2 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
-          <p className="text-lg font-semibold text-black">{t('shipments.detail.shipmentItems')}</p>
-          <div className="w-full sm:w-40">
-            <DropdownField
-              id="shipment-item-filter"
-              options={[
-                { value: 'all', label: t('shipments.detail.filter.all') },
-                { value: 'flagged', label: t('shipments.detail.filter.flagged') },
-                { value: 'unflagged', label: t('shipments.detail.filter.unflagged') },
-              ]}
-              value={itemFilter}
-              onChange={(e) => setItemFilter(e.target.value as ItemFilter)}
+            <button
+              type="button"
+              onClick={() => navigate(`/shipments/${id}/logs`)}
+              className="flex flex-row items-center gap-2 rounded-md border border-bottomBorder bg-white p-2"
+            >
+              <span className="icon-File-text text-xs text-black md:text-sm" />
+              <p className="text-xs font-light text-black md:text-sm">{MS.viewShipmentLogs}</p>
+            </button>
+            <button
+              type="button"
+              id="download-pdf-button"
+              onClick={() => void downloadAsPDF()}
+              disabled={isPdfDownloading}
+              className="flex flex-row items-center gap-2 rounded-md border border-bottomBorder bg-white p-2 disabled:opacity-50"
+            >
+              <span className="icon-pdf text-xs text-black md:text-sm" />
+              <p className="text-xs font-light text-black md:text-sm">
+                {isPdfDownloading ? 'Generating…' : MS.downloadPDF}
+              </p>
+            </button>
+            <CsvExportButton
+              isDisabled={false}
+              data={csvData}
+              moduleName="Shipment-Detail(Recovery)"
+              className="export-btn"
+              onClick={generateCsv}
+              iconSize="text-xs md:text-sm"
             />
+            <button
+              type="button"
+              onClick={() => setUploadDocument(true)}
+              disabled={
+                hasC88Document || [1, 6, 7].includes(legacyStatus) || needsSanctionDecision(detail)
+              }
+              className={`flex flex-row items-center gap-2 rounded-md p-2 disabled:bg-disableColor ${
+                hasC88Document ? 'bg-green' : 'bg-yellow'
+              }`}
+            >
+              <span className="icon-upload-cloud text-xs text-white md:text-sm" />
+              <p className="text-xs font-light text-white md:text-sm">
+                {hasC88Document ? MS.editC88Document : MS.uploadC88DocumentBtn}
+              </p>
+            </button>
           </div>
         </div>
 
-        <div className="w-full overflow-x-auto rounded-lg border border-bottomBorder">
-          <table className="w-full min-w-[860px] table-auto bg-white">
-            <thead className="bg-greyFour text-black">
-              <tr className="text-left text-xs sm:text-sm">
-                <th className="w-[70px] p-3 whitespace-nowrap">
-                  {t('shipments.detail.col.itemNumber')}
-                </th>
-                <th className="min-w-[240px] p-3 whitespace-nowrap">
-                  {t('shipments.detail.col.description')}
-                </th>
-                <th className="w-[120px] p-3 whitespace-nowrap">
-                  {t('shipments.detail.col.hsCode')}
-                </th>
-                <th className="w-[110px] p-3 whitespace-nowrap">
-                  {t('shipments.detail.col.unitPrice')}
-                </th>
-                <th className="w-[80px] p-3 whitespace-nowrap">{t('shipments.detail.col.qty')}</th>
-                <th className="w-[110px] p-3 whitespace-nowrap">
-                  {t('shipments.detail.col.total')}
-                </th>
-                <th className="w-[95px] p-3 whitespace-nowrap">{t('shipments.detail.col.duty')}</th>
-                <th className="w-[130px] p-3 whitespace-nowrap">
-                  {t('shipments.detail.col.landedCost')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredItems.map((item, idx) => (
-                <tr
-                  key={item.id || item._id || `${idx}`}
-                  className="border-t border-bottomBorder text-xs sm:text-sm"
+        <div id="shipment-overview" className="flex flex-col gap-5">
+          <div className="item-center flex justify-between rounded-lg bg-greyFour px-4 py-2">
+            <div className="flex flex-col">
+              <p className="text-xs font-normal text-lightBlackOne sm:text-sm">
+                {MS.purchaseOrderNumber}
+              </p>
+              <div className="flex items-center gap-2 sm:gap-3">
+                <p className="text-sm font-normal text-yellow sm:text-lg">
+                  {detail.purchaseOrderNumber}
+                </p>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!detail.purchaseOrderNumber) return
+                    await navigator.clipboard.writeText(detail.purchaseOrderNumber)
+                    setCopied(true)
+                    setTimeout(() => setCopied(false), 2000)
+                  }}
+                  className="text-black"
                 >
-                  <td className="p-3 align-middle">{item.itemNumber || '-'}</td>
-                  <td className="p-3 align-middle">
-                    <p
-                      className="overflow-hidden break-words leading-6"
-                      style={{
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                      }}
-                    >
-                      {item.description || '-'}
-                    </p>
-                  </td>
-                  <td className="p-3 align-middle whitespace-nowrap">{item.hsCode || '-'}</td>
-                  <td className="p-3 align-middle whitespace-nowrap">
-                    {formatMoney(item.unitPrice, currencySymbol)}
-                  </td>
-                  <td className="p-3 align-middle whitespace-nowrap">{item.qty ?? '-'}</td>
-                  <td className="p-3 align-middle whitespace-nowrap">
-                    {formatMoney(
-                      toOptionalNumber(item.totalPrice) ??
-                        toNumber(item.unitPrice) * toNumber(item.qty),
-                      currencySymbol,
-                    )}
-                  </td>
-                  <td className="p-3 align-middle whitespace-nowrap">
-                    {formatMoney(item.duty, currencySymbol)}
-                  </td>
-                  <td className="p-3 align-middle whitespace-nowrap">
-                    {formatMoney(item.landedCost, currencySymbol)}
-                  </td>
-                </tr>
-              ))}
-              {!filteredItems.length ? (
-                <tr>
-                  <td className="p-3 text-sm text-lightBlackOne" colSpan={8}>
-                    {t('shipments.detail.noShipmentItems')}
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+                  <span
+                    className={`${
+                      copied
+                        ? 'icon-tick text-tiny text-green'
+                        : 'icon-copy-text text-xs text-lightBlackOne sm:text-normal'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+            <div className="flex flex-col">
+              <p className="text-xs font-normal text-lightBlackOne sm:text-sm">{MS.date}</p>
+              <p className="text-sm font-normal text-black sm:text-lg">
+                {formatShipmentListDate(detail.date, timeZone)}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex w-full flex-wrap gap-3">
+            {[
+              { key: MS.requisitioner1, detail: detail.requisitioner },
+              { key: MS.shipVia1, detail: detail.shipVia },
+              { key: MS.shippingTerms1, detail: detail.shippingTerms },
+            ].map((item) => (
+              <div
+                key={item.key}
+                className="flex flex-col items-start gap-1 rounded-md bg-greyFour p-1.5 sm:flex-row sm:p-2"
+              >
+                <p className="text-xs font-medium leading-tight text-black sm:text-sm">
+                  {item.key}
+                </p>
+                <span className="text-xs font-light leading-tight text-black sm:text-sm">
+                  {item.detail}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-col gap-5">
+            <DetailsGridCard
+              title={MS.companyInformation}
+              party={detail.company}
+              labels={detailLabels}
+              gridColsLimit
+            />
+            <div className="rounded-lg border border-bottomBorder bg-white shadow-[4px_2px_8px_0px_#00000024]">
+              <div className="grid w-full grid-cols-1 gap-1 md:grid-cols-2">
+                <DetailsGridCard
+                  title={MS.vendorDetails}
+                  party={detail.vendor}
+                  labels={detailLabels}
+                  gridColsLimit={false}
+                  className="border-0 shadow-none"
+                />
+                <div className="p-5 md:p-0 md:py-5">
+                  <DetailsGridCard
+                    title={MS.shipToDetails}
+                    party={detail.shipTo}
+                    labels={detailLabels}
+                    gridColsLimit={false}
+                    padding="p-0 md:px-5"
+                    className="border-0 shadow-none"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="flex justify-end">
-          <PrimaryButton
-            onClick={handleOpenLandedCost}
-            className="bg-yellow px-4 py-2 text-xs font-light text-white hover:bg-yellow md:text-sm"
-            disabled={isLandedCostFetching}
-          >
-            {isLandedCostFetching
-              ? t('common.loading')
-              : t('shipments.detail.viewLandedCostComparison')}
-          </PrimaryButton>
-        </div>
-
-        {showLandedCost ? (
-          <LandedCostComparisonModal
-            poItem={landedCostData?.poItem}
-            c88Item={landedCostData?.c88Item}
-            estimatedTotal={landedCostData?.estimatedTotal ?? 0}
-            actualTotal={landedCostData?.actualTotal ?? 0}
-            currencySymbol={currencySymbol}
-            reportFileName={`shipment-landed-cost-report-${id}.csv`}
-            reportContent={buildShipmentDetailCsv(detail, filteredItems)}
-            onClose={() => {
-              setShowLandedCost(false)
-              setLandedCostData(null)
-            }}
-            formatMoney={formatMoney}
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-row items-center justify-between">
+            <p className="text-lg font-semibold text-black">{MS.shipmentItems}</p>
+            <div data-pdf-exclude className="w-28 smallScreen:w-40">
+              <DropdownField
+                id="shipment-item-filter"
+                options={[
+                  { value: 'All', label: 'All' },
+                  { value: 'Flagged', label: 'Flagged' },
+                  { value: 'Unflagged', label: 'Unflagged' },
+                ]}
+                value={itemFilter}
+                onChange={(e) => setItemFilter(e.target.value as ItemFilter)}
+              />
+            </div>
+          </div>
+          <ShipmentItemsTable
+            items={filteredItems}
+            itemsUnit={detail.unit}
+            shipmentStatus={legacyStatus}
           />
-        ) : null}
-      </>
-    </div>
+          <div data-pdf-exclude className="mb-2 mt-5 w-full">
+            <div id="landed-cost-btn" className="float-right">
+              <PrimaryButton
+                type="button"
+                onClick={handleOpenLandedCost}
+                disabled={landedCostDisabled || isLandedCostFetching}
+                className="bg-yellow px-4 py-2 text-xs font-light text-white hover:bg-yellow md:text-sm"
+              >
+                {isLandedCostFetching ? 'Loading…' : MS.viewLandedCostComparison}
+              </PrimaryButton>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {showLandedCost ? (
+        <LandedCostComparisonModal
+          content={landedCostContent}
+          isLoading={isLandedCostFetching}
+          onClose={() => {
+            setShowLandedCost(false)
+            setLandedCostContent(null)
+          }}
+        />
+      ) : null}
+
+      {uploadDocument ? (
+        <UploadC88DocumentModal
+          shipmentId={id}
+          uploadedDocument={detail.c88DocumentUrl}
+          onClose={() => setUploadDocument(false)}
+          refetch={() => {
+            void refetch()
+          }}
+        />
+      ) : null}
+
+      {hasSanctionMatch(detail) ? (
+        <SanctionResultModal
+          isOpen={isSanctionModalOpen}
+          onClose={() => setIsSanctionModalOpen(false)}
+          {...buildSanctionModalProps(detail)}
+          currentDecision={detail.sanctionDecision as 'stopped' | 'ignored' | 'none' | null}
+          onDecision={handleSanctionDecision}
+          isLoading={isUpdatingSanctionDecision}
+        />
+      ) : null}
+    </>
   )
 }

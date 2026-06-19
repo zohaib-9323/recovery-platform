@@ -22,6 +22,8 @@ export function getShipmentStatusBadgeClassName(status: number | undefined): str
       return 'bg-lightRed text-redOne text-xs sm:text-sm'
     case 9:
       return 'bg-purpleTwo/10 text-purpleTwo text-xs sm:text-sm'
+    case 10:
+      return 'bg-redOne text-whiteOne text-xs sm:text-sm'
     default:
       return 'bg-lightYellowThree text-yellow text-xs sm:text-sm'
   }

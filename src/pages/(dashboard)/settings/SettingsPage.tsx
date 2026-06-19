@@ -32,7 +32,7 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 p-4 md:p-6">
       <h1 className="text-base font-semibold text-rp-fg sm:text-lg">{t('settings.pageTitle')}</h1>
 
       <div className="flex flex-wrap items-center gap-2 rounded-lg bg-white p-3 shadow-[0px_4px_16px_0px_#4C67641A] sm:p-4">
