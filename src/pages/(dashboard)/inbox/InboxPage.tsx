@@ -118,29 +118,31 @@ export function InboxPage() {
     : null
 
   return (
-    <div className="flex h-[min(720px,calc(100vh-7rem))] min-h-0 flex-col overflow-hidden rounded-lg border border-bottomBorder bg-white text-[#4B4B4B] lg:flex-row">
-      <InboxListSidebar
-        emails={emails}
-        selectedId={effectiveSelectedId}
-        onSelect={setSelectedId}
-        isLoading={isInitialListLoading}
-        filterValue={recordFilter}
-        onFilterChange={handleFilterChange}
-        onLoadMore={() => setPage((prev) => prev + 1)}
-        canLoadMore={canLoadMore}
-        isLoadingMore={isLoadingMore}
-        errorMessage={sidebarError}
-        className="max-h-[50vh] w-full lg:max-h-none lg:w-[min(100%,320px)] lg:shrink-0"
-      />
-      <InboxDetailPanel
-        email={selected}
-        isLoading={isDetailFetching}
-        errorMessage={detailPanelError}
-        onInboxUpdated={async () => {
-          await Promise.all([refetchDetail(), refetchList()])
-        }}
-        className="min-h-0 min-w-0 flex-1"
-      />
+    <div className="p-4 md:p-6">
+      <div className="flex h-[min(720px,calc(100vh-7rem))] min-h-0 flex-col overflow-hidden rounded-lg border border-bottomBorder bg-white text-[#4B4B4B] lg:flex-row">
+        <InboxListSidebar
+          emails={emails}
+          selectedId={effectiveSelectedId}
+          onSelect={setSelectedId}
+          isLoading={isInitialListLoading}
+          filterValue={recordFilter}
+          onFilterChange={handleFilterChange}
+          onLoadMore={() => setPage((prev) => prev + 1)}
+          canLoadMore={canLoadMore}
+          isLoadingMore={isLoadingMore}
+          errorMessage={sidebarError}
+          className="max-h-[50vh] w-full lg:max-h-none lg:w-[min(100%,320px)] lg:shrink-0"
+        />
+        <InboxDetailPanel
+          email={selected}
+          isLoading={isDetailFetching}
+          errorMessage={detailPanelError}
+          onInboxUpdated={async () => {
+            await Promise.all([refetchDetail(), refetchList()])
+          }}
+          className="min-h-0 min-w-0 flex-1"
+        />
+      </div>
     </div>
   )
 }

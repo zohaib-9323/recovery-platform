@@ -1,4 +1,12 @@
 import { MS } from '@/lib/manage-shipments-copy'
+import { SANCTION_STOPPED_DISPLAY_STATUS } from '@/lib/sanction-decision'
+
+/** Status codes shown in manage-shipment lists (includes sanction-stopped overlay). */
+export const SHIPMENT_LIST_DISPLAY_STATUSES = [1, 2, 3, 5, 6, 7, 9, SANCTION_STOPPED_DISPLAY_STATUS]
+
+export function isShipmentListDisplayStatus(status: number): boolean {
+  return SHIPMENT_LIST_DISPLAY_STATUSES.includes(status)
+}
 
 export const getShipmentStatusStyle = (status: number) => {
   switch (status) {
@@ -20,6 +28,8 @@ export const getShipmentStatusStyle = (status: number) => {
       return 'bg-lightRed text-redOne text-xs sm:text-sm'
     case 9:
       return 'bg-purpleTwo/10 text-purpleTwo text-xs sm:text-sm'
+    case 10:
+      return 'bg-redOne text-whiteOne text-xs sm:text-sm'
     default:
       return 'bg-lightYellowThree text-yellow text-xs sm:text-sm'
   }
@@ -45,6 +55,8 @@ export const getShipmentStatusText = (status: number) => {
       return MS.itemMappingFailed
     case 9:
       return MS.costDiscrepancy
+    case 10:
+      return MS.dpsProcessingStopped
     default:
       return ''
   }
@@ -70,6 +82,8 @@ export const getShipmentStatusTooltipDesc = (status: number) => {
       return MS.itemMappingFailedDesc
     case 9:
       return MS.costDiscrepancyDesc
+    case 10:
+      return MS.dpsProcessingStoppedDesc
     default:
       return ''
   }
