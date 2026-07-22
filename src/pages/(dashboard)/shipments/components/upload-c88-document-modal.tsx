@@ -34,9 +34,25 @@ export function UploadC88DocumentModal({
     }
   }, [])
 
+  const MAX_C88_BYTES = 10 * 1024 * 1024
+
   const handleSubmit = async () => {
     if (!file) return
     setUploadError(null)
+
+    // Fail-fast client checks — the backend remains the authoritative validator.
+    if (file.size > MAX_C88_BYTES) {
+      setUploadError(MS.uploadC88TooLarge)
+      showCustomToast({ type: 'error', title: MS.error, message: MS.uploadC88TooLarge })
+      return
+    }
+    const magic = await file.slice(0, 5).text()
+    if (magic !== '%PDF-') {
+      setUploadError(MS.uploadC88InvalidType)
+      showCustomToast({ type: 'error', title: MS.error, message: MS.uploadC88InvalidType })
+      return
+    }
+
     try {
       const res = await uploadC88({ shipmentId, file }).unwrap()
       if (res.status === false) {

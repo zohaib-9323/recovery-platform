@@ -1,9 +1,15 @@
-/** Escape a CSV cell (RFC-style: quotes if needed). */
+/** Neutralize spreadsheet formula injection: prefix cells starting with = + - @ tab or CR. */
+export function neutralizeFormula(value: string): string {
+  return /^[=+\-@\t\r]/.test(value) ? `'${value}` : value
+}
+
+/** Escape a CSV cell (RFC-style: quotes if needed) after neutralizing formula triggers. */
 function escapeCell(value: string): string {
-  if (/[",\n\r]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`
+  const safe = neutralizeFormula(value)
+  if (/[",\n\r]/.test(safe)) {
+    return `"${safe.replace(/"/g, '""')}"`
   }
-  return value
+  return safe
 }
 
 export function buildShipmentsCsv(

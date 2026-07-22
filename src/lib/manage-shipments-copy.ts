@@ -70,6 +70,8 @@ export const MS = {
   uploadFile: 'Upload File',
   updateFile: 'Update File',
   uploadC88Failed: 'Failed to upload document. Please try again.',
+  uploadC88TooLarge: 'File is too large. Please upload a PDF up to 10 MB.',
+  uploadC88InvalidType: 'Invalid file. Please upload a valid PDF document.',
   uploadC88SuccessTitle: 'Success',
   uploadC88SuccessMessage: 'C88 document uploaded successfully.',
   dpsProcessingStopped: 'DPS Processing Stopped',

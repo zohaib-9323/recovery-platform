@@ -1,3 +1,5 @@
+import { isAuthUrl } from '@/app/services/auth-urls'
+
 type QueryResult<TError> = { data: unknown } | { error: TError }
 
 type BaseQueryLike<TError> = (
@@ -13,16 +15,6 @@ type ReauthContext = {
 
 type AuthErrorLike = {
   status?: number | string
-}
-
-function isAuthUrl(url: string | undefined): boolean {
-  if (!url) return false
-  return (
-    url.includes('/recovery/auth/login') ||
-    url.includes('/recovery/auth/refresh') ||
-    url.includes('/recovery/auth/request-password-reset') ||
-    url.includes('/recovery/auth/reset-password')
-  )
 }
 
 export async function runBaseQueryWithReauth<TError extends AuthErrorLike>(
