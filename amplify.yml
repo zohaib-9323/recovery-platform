@@ -4,12 +4,17 @@ frontend:
     preBuild:
       commands:
         - npm ci
-        - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b ./bin
+        # Pin the Trivy installer to a release tag (never mutable `main`) for supply-chain integrity.
+        - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/v0.71.1/contrib/install.sh | sh -s -- -b ./bin v0.71.1
         - export PATH="$PWD/bin:$PATH"
         - trivy --version
     build:
       commands:
         - export PATH="$PWD/bin:$PATH"
+        # Non-blocking security scans (report-only until dev-only advisories are cleared).
+        # Tighten to blocking (drop `|| true`) once `npm audit` is clean.
+        - npm run security:audit || true
+        - trivy fs --config trivy.yaml --severity CRITICAL,HIGH . || true
         - npm run build
   artifacts:
     baseDirectory: build

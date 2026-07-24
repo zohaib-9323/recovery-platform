@@ -4,6 +4,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { applyTokens, logout, type AuthState } from '@/app/features/auth/authSlice'
 import { reportRuntimeError } from '@/lib/error-reporting'
 import { refreshSession } from '@/services/authSession'
+import { isAuthUrl } from '@/app/services/auth-urls'
 import { runBaseQueryWithReauth } from '@/app/services/reauth'
 import type {
   ApiMessageEnvelope,
@@ -48,19 +49,6 @@ import { env } from '@/utils/env'
 type StateWithAuth = { auth: AuthState }
 
 const baseUrl = env.apiBaseUrl.replace(/\/$/, '')
-
-function isAuthUrl(url: string | undefined): boolean {
-  if (!url) return false
-  return (
-    url.includes('/recovery/auth/login') ||
-    url.includes('/recovery/auth/refresh') ||
-    url.includes('/recovery/auth/request-password-reset') ||
-    url.includes('/recovery/auth/reset-password') ||
-    url.includes('/recovery/auth/first-login/verify-otp') ||
-    url.includes('/recovery/auth/first-login/request-otp') ||
-    url.includes('/recovery/auth/first-login/setup-password')
-  )
-}
 
 function isFetchBaseQueryErrorLike(error: unknown): error is FetchBaseQueryError {
   return Boolean(error && typeof error === 'object' && 'status' in error)
