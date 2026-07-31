@@ -145,9 +145,6 @@ export function ShipmentLogsPage() {
                             >
                               {descriptionText}
                             </p>
-                            <p className="break-words text-xs font-light text-darkColor">
-                              {formatLogValue(event.details)}
-                            </p>
                           </div>
                         </div>
                       </div>
