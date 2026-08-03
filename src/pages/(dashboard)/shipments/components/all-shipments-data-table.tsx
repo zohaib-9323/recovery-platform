@@ -29,6 +29,7 @@ export type ManageShipmentsTableRow = SanctionShipmentSource & {
   _id: string
   shipmentTitle: string
   dateRaw?: string | null
+  createdAtRaw?: string | null
   shipVia: string
   purchaseOrderNumber: string
   status: number
@@ -56,6 +57,8 @@ export type AllShipmentsDataTableProps = {
   uploadC88Document?: (id: string) => void
   timeZone?: string | null
   className?: string
+  /** Show separate Upload Date / Shipment Date columns instead of a single Date column. */
+  showDateSplit?: boolean
 }
 
 export function AllShipmentsDataTable({
@@ -65,6 +68,7 @@ export function AllShipmentsDataTable({
   onSanctionWarning,
   uploadC88Document,
   timeZone,
+  showDateSplit = true,
 }: AllShipmentsDataTableProps) {
   const navigate = useNavigate()
   const { t } = useI18n()
@@ -79,7 +83,20 @@ export function AllShipmentsDataTable({
               <th className="p-3 text-left text-xs font-normal capitalize sm:text-sm">
                 {MS.shipmentTitle}
               </th>
-              <th className="p-3 text-left text-xs font-normal capitalize sm:text-sm">{MS.date}</th>
+              {showDateSplit ? (
+                <>
+                  <th className="p-3 text-left text-xs font-normal capitalize sm:text-sm">
+                    {MS.uploadDate}
+                  </th>
+                  <th className="p-3 text-left text-xs font-normal capitalize sm:text-sm">
+                    {MS.shipmentDate}
+                  </th>
+                </>
+              ) : (
+                <th className="p-3 text-left text-xs font-normal capitalize sm:text-sm">
+                  {MS.date}
+                </th>
+              )}
               <th className="p-3 text-left text-xs font-normal sm:text-sm">{MS.shipVia}</th>
               <th className="max-w-[150px] p-3 text-left text-xs font-normal sm:text-sm">
                 {MS.PO}
@@ -140,6 +157,11 @@ export function AllShipmentsDataTable({
                         </Tooltip>
                       ) : null}
                     </td>
+                    {showDateSplit && (
+                      <td className="break-all p-3 text-xs font-medium text-black sm:text-sm">
+                        {formatShipmentListDate(shipment.createdAtRaw, timeZone)}
+                      </td>
+                    )}
                     <td className="break-all p-3 text-xs font-medium text-black sm:text-sm">
                       {formatShipmentListDate(shipment.dateRaw, timeZone)}
                     </td>
@@ -276,7 +298,7 @@ export function AllShipmentsDataTable({
               })
             ) : (
               <tr className="h-[40svh]">
-                <td colSpan={7} className="p-4 text-center text-black">
+                <td colSpan={8} className="p-4 text-center text-black">
                   {MS.noshipmentsAvailable}
                 </td>
               </tr>

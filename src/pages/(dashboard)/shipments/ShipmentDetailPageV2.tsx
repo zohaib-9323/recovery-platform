@@ -447,7 +447,13 @@ export function ShipmentDetailPageV2() {
               </div>
             </div>
             <div className="flex flex-col">
-              <p className="text-xs font-normal text-lightBlackOne sm:text-sm">{MS.date}</p>
+              <p className="text-xs font-normal text-lightBlackOne sm:text-sm">{MS.uploadDate}</p>
+              <p className="text-sm font-normal text-black sm:text-lg">
+                {formatShipmentListDate(detail.createdAt, timeZone)}
+              </p>
+            </div>
+            <div className="flex flex-col">
+              <p className="text-xs font-normal text-lightBlackOne sm:text-sm">{MS.shipmentDate}</p>
               <p className="text-sm font-normal text-black sm:text-lg">
                 {formatShipmentListDate(detail.date, timeZone)}
               </p>

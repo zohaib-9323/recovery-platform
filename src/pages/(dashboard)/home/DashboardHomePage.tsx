@@ -72,6 +72,7 @@ function toManageShipmentsTableRow(shipment: RecoveryShipmentRecord): ManageShip
     _id: shipment._id,
     shipmentTitle: shipment.shipmentTitle || shipment.shipmentReference || 'Untitled Shipment',
     dateRaw: shipment.date,
+    createdAtRaw: shipment.createdAt,
     shipVia: shipment.shipVia || '',
     purchaseOrderNumber: shipment.purchaseOrderNumber || '',
     status,
@@ -172,6 +173,7 @@ export function DashboardHomePage() {
           onCheckChange={handleSelect}
           onSanctionWarning={() => {}}
           timeZone={timeZone}
+          showDateSplit={true}
         />
       </section>
 

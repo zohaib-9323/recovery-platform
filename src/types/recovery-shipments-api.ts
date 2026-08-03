@@ -9,6 +9,7 @@ export type RecoveryShipmentRecord = {
   shipmentReference?: string
   purchaseOrderNumber?: string
   date?: string
+  createdAt?: string
   shipVia?: string
   status?: RecoveryShipmentStatusCode
   refund_status?: RecoveryRefundStatusCode

@@ -8,6 +8,8 @@ export const MS = {
   manageShipments: 'Manage Shipments',
   shipmentTitle: ' Shipment Title ',
   date: 'Date',
+  shipmentDate: 'Shipment Date',
+  uploadDate: 'Upload Date',
   shipVia: 'Ship Via',
   PO: 'PO #',
   status: 'Status',
