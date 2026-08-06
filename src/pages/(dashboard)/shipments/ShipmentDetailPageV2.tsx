@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import {
+  useChallengeRecoveryHsCodeMutation,
   useGetRecoveryPreferencesQuery,
   useGetRecoveryShipmentByIdQuery,
   useLazyGetRecoveryShipmentLandedCostQuery,
@@ -43,6 +44,7 @@ import {
 } from '@/pages/(dashboard)/shipments/components/landed-cost-comparison-modal'
 import { SanctionResultModal } from '@/pages/(dashboard)/shipments/components/sanction-result-modal'
 import { ShipmentItemsTable } from '@/pages/(dashboard)/shipments/components/shipment-items-table'
+import { ChallengeHsCodeModal } from '@/pages/(dashboard)/shipments/components/challenge-hs-code-modal'
 import { UploadC88DocumentModal } from '@/pages/(dashboard)/shipments/components/upload-c88-document-modal'
 import type { RecoveryShipmentDetail, RecoveryShipmentItem } from '@/types/recovery-shipments-api'
 
@@ -137,6 +139,7 @@ export function ShipmentDetailPageV2() {
   const [uploadDocument, setUploadDocument] = useState(false)
   const [showFileUploads, setShowFileUploads] = useState(false)
   const [isSanctionModalOpen, setIsSanctionModalOpen] = useState(false)
+  const [challengeItem, setChallengeItem] = useState<RecoveryShipmentItem | null>(null)
   const [isPdfDownloading, setIsPdfDownloading] = useState(false)
   const [csvData, setCsvData] = useState<Record<string, unknown>[]>([])
 
@@ -150,6 +153,7 @@ export function ShipmentDetailPageV2() {
     useLazyGetRecoveryShipmentLandedCostQuery()
   const [updateSanctionDecision, { isLoading: isUpdatingSanctionDecision }] =
     useUpdateRecoveryShipmentSanctionDecisionMutation()
+  const [challengeHsCode, { isLoading: isChallengingHsCode }] = useChallengeRecoveryHsCodeMutation()
 
   const detail = data?.content
   const allItems = useMemo(() => getDisplayItems(detail), [detail])
@@ -247,6 +251,33 @@ export function ShipmentDetailPageV2() {
     }
   }
 
+  const handleChallengeSubmit = async (values: {
+    proposedHsCode: string
+    reason: string
+    description?: string
+  }) => {
+    if (!id || !challengeItem?._id) return
+    try {
+      await challengeHsCode({
+        recoveryShipmentId: id,
+        poItemId: challengeItem._id,
+        ...values,
+      }).unwrap()
+      setChallengeItem(null)
+      refetch()
+      showCustomToast({
+        type: 'success',
+        title: 'Challenge Submitted',
+        message: 'Your HS code challenge has been submitted for admin review.',
+      })
+    } catch (err) {
+      const message =
+        (err as { data?: { message?: string } })?.data?.message ||
+        'Failed to submit HS code challenge'
+      showCustomToast({ type: 'error', title: MS.error, message })
+    }
+  }
+
   const generateCsv = () => {
     const baseShipmentData = {
       ShipmentTitle: detail.shipmentTitle || 'N/A',
@@ -314,7 +345,7 @@ export function ShipmentDetailPageV2() {
   ) {
     shipmentDocuments.push({
       type: 'po',
-      label: 'Purchase Order Document',
+      label: 'Commercial Invoice Document',
       fileName: detail.poFilename ?? undefined,
     })
   }
@@ -567,6 +598,8 @@ export function ShipmentDetailPageV2() {
             items={filteredItems}
             itemsUnit={detail.unit}
             shipmentStatus={legacyStatus}
+            onChallenge={(item) => setChallengeItem(item)}
+            disableChallenge={detail.status === 'rejected'}
           />
           <div data-pdf-exclude className="mb-2 mt-5 w-full">
             <div id="landed-cost-btn" className="float-right">
@@ -610,6 +643,15 @@ export function ShipmentDetailPageV2() {
           refetch={() => {
             void refetch()
           }}
+        />
+      ) : null}
+
+      {challengeItem ? (
+        <ChallengeHsCodeModal
+          item={challengeItem}
+          onClose={() => setChallengeItem(null)}
+          onSubmit={handleChallengeSubmit}
+          isLoading={isChallengingHsCode}
         />
       ) : null}
 

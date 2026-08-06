@@ -13,9 +13,17 @@ export type ShipmentItemsTableProps = {
   items: RecoveryShipmentItem[]
   itemsUnit?: string
   shipmentStatus?: number
+  onChallenge?: (item: RecoveryShipmentItem) => void
+  disableChallenge?: boolean
 }
 
-export function ShipmentItemsTable({ items, itemsUnit, shipmentStatus }: ShipmentItemsTableProps) {
+export function ShipmentItemsTable({
+  items,
+  itemsUnit,
+  shipmentStatus,
+  onChallenge,
+  disableChallenge = false,
+}: ShipmentItemsTableProps) {
   const { t } = useI18n()
 
   if (shipmentStatus === 1) {
@@ -113,7 +121,23 @@ export function ShipmentItemsTable({ items, itemsUnit, shipmentStatus }: Shipmen
                   id="hs-code-reference"
                   className="px-4 py-2 text-xs font-normal text-black md:text-sm"
                 >
-                  <div className="flex flex-row items-center gap-2">{item.hsCode}</div>
+                  <div className="flex flex-row items-center gap-2">
+                    {item.challengeData?.proposedHsCode ? (
+                      <Tooltip
+                        content={t('shipments.detail.hsCodeUnderReviewTooltip', {
+                          proposedHsCode: item.challengeData.proposedHsCode,
+                        })}
+                        heading={t('shipments.detail.hsCodeUnderReview')}
+                        position="bottom"
+                      >
+                        <span
+                          id="hs-code-requires-approval"
+                          className="icon-alert-triangle-2 text-yellow"
+                        />
+                      </Tooltip>
+                    ) : null}
+                    {item.hsCode}
+                  </div>
                 </td>
                 <td className="px-4 py-2 text-xs font-normal text-black md:text-sm">
                   {getCurrencySymbol(itemsUnit)}
@@ -132,7 +156,20 @@ export function ShipmentItemsTable({ items, itemsUnit, shipmentStatus }: Shipmen
                   {getCurrencySymbol(itemsUnit)}
                   {formatCurrency(item.landedCost ?? 0)}
                 </td>
-                <td data-pdf-exclude className="px-4 py-2" />
+                <td data-pdf-exclude className="px-4 py-2 text-center sm:text-left">
+                  {onChallenge ? (
+                    <button
+                      type="button"
+                      onClick={() => onChallenge(item)}
+                      disabled={disableChallenge || Boolean(item.is_challenged)}
+                      className="whitespace-nowrap text-xs font-medium text-primary disabled:cursor-not-allowed disabled:text-greySix"
+                    >
+                      {item.is_challenged
+                        ? t('shipments.detail.challenged')
+                        : t('shipments.detail.challengeHsCode')}
+                    </button>
+                  ) : null}
+                </td>
               </tr>
             ))}
           </tbody>

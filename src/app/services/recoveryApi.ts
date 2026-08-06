@@ -394,6 +394,29 @@ export const recoveryApi = createApi({
         { type: 'RecoveryShipment', id: arg.shipmentId },
       ],
     }),
+    /**
+     * Disputes a poItems[] entry's HS code. Creates a pending RecoveryHsCodeChallenge
+     * reviewed by an admin (approve/reject) in trade-harmonizer's admin console.
+     */
+    challengeRecoveryHsCode: builder.mutation<
+      RecoveryApiEnvelope<unknown>,
+      {
+        recoveryShipmentId: string
+        poItemId: string
+        proposedHsCode: string
+        reason: string
+        description?: string
+      }
+    >({
+      query: (body) => ({
+        url: '/recovery/shipments/challenge-hs-code',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: (_result, _error, arg) => [
+        { type: 'RecoveryShipment', id: arg.recoveryShipmentId },
+      ],
+    }),
     moveUnprocessableToProcessable: builder.mutation<
       RecoveryApiEnvelope<unknown>,
       { id: string; unprocessableIndex: number }
@@ -475,4 +498,5 @@ export const {
   useGetRecoveryDownloadUrlMutation,
   useUploadRecoveryShipmentC88DocumentMutation,
   useUpdateRecoveryShipmentSanctionDecisionMutation,
+  useChallengeRecoveryHsCodeMutation,
 } = recoveryApi
