@@ -430,7 +430,9 @@ export function ShipmentDetailPageV2() {
               className="flex flex-row items-center gap-2 rounded-md border border-bottomBorder bg-white p-2 transition-colors"
             >
               <span className="icon-File-text text-xs text-black md:text-sm" />
-              <p className="text-xs font-light text-black md:text-sm">File Uploads</p>
+              <p className="text-xs font-light text-black md:text-sm">
+                {t('shipments.detail.fileUploads')}
+              </p>
             </button>
             <button
               type="button"

@@ -1,6 +1,8 @@
 import { useState } from 'react'
 
 import { useDownloadRecoveryShipmentFileBlobMutation } from '@/app/services/recoveryApi'
+import { useI18n } from '@/i18n/useI18n'
+import { MS } from '@/lib/manage-shipments-copy'
 import { showCustomToast } from '@/lib/showCustomToast'
 import type { RecoveryShipmentDownloadFileType } from '@/types/recovery-shipments-api'
 
@@ -17,6 +19,7 @@ type FileUploadsSidebarProps = {
 }
 
 export function FileUploadsSidebar({ shipmentId, documents, onClose }: FileUploadsSidebarProps) {
+  const { t } = useI18n()
   const [downloadFileBlob] = useDownloadRecoveryShipmentFileBlobMutation()
   const [downloadingType, setDownloadingType] = useState<string | null>(null)
 
@@ -43,8 +46,8 @@ export function FileUploadsSidebar({ shipmentId, documents, onClose }: FileUploa
     } catch {
       showCustomToast({
         type: 'error',
-        title: 'Error',
-        message: 'Failed to download file.',
+        title: MS.error,
+        message: t('shipments.detail.downloadFailed'),
       })
     } finally {
       setTimeout(() => setDownloadingType(null), 1000)
@@ -55,14 +58,14 @@ export function FileUploadsSidebar({ shipmentId, documents, onClose }: FileUploa
     <>
       <button
         type="button"
-        aria-label="Close file uploads"
+        aria-label={t('shipments.detail.closeFileUploads')}
         className="fixed inset-0 z-40 bg-black bg-opacity-25 backdrop-blur-sm"
         onClick={onClose}
       />
 
       <div className="fixed right-0 top-0 z-50 flex h-full w-full animate-slide-in-right flex-col bg-white shadow-lg sm:w-96">
         <div className="flex items-center justify-between border-b border-bottomBorder p-4">
-          <h2 className="text-lg font-semibold text-black">File Uploads</h2>
+          <h2 className="text-lg font-semibold text-black">{t('shipments.detail.fileUploads')}</h2>
           <button
             type="button"
             onClick={onClose}
@@ -76,7 +79,7 @@ export function FileUploadsSidebar({ shipmentId, documents, onClose }: FileUploa
           {!hasDocuments ? (
             <div className="flex h-full flex-col items-center justify-center text-lightBlackOne">
               <span className="icon-File-text mb-2 text-4xl" />
-              <p className="text-sm">No documents available</p>
+              <p className="text-sm">{t('shipments.detail.noDocumentsAvailable')}</p>
             </div>
           ) : (
             documents.map((doc) => (
@@ -104,7 +107,7 @@ export function FileUploadsSidebar({ shipmentId, documents, onClose }: FileUploa
                     onClick={() => void handleDownload(doc)}
                     disabled={downloadingType === doc.type}
                     className="flex h-8 w-8 items-center justify-center rounded-full border border-bottomBorder text-black transition-colors hover:bg-greyFour disabled:cursor-not-allowed disabled:opacity-50"
-                    title="Download"
+                    title={t('shipments.detail.download')}
                   >
                     <span className="icon-Download text-sm" />
                   </button>
