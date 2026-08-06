@@ -13,7 +13,10 @@ export function AppSidebar() {
   const pathname = useLocation().pathname
   const expanded = useAppSelector((s) => s.sideBar.sideBarExpanded)
 
-  const isActive = useCallback((link: string) => pathname === link, [pathname])
+  const isActive = useCallback(
+    (link: string) => pathname === link || pathname.startsWith(`${link}/`),
+    [pathname],
+  )
 
   const go = (link: string) => {
     navigate(link)
