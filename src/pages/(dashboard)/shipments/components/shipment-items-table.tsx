@@ -124,8 +124,10 @@ export function ShipmentItemsTable({
                   <div className="flex flex-row items-center gap-2">
                     {item.challengeData?.proposedHsCode ? (
                       <Tooltip
-                        content={`This HS Code is under review. Admin approval is required before final confirmation. Proposed HS Code is ${item.challengeData.proposedHsCode}`}
-                        heading="HS Code Under Review"
+                        content={t('shipments.detail.hsCodeUnderReviewTooltip', {
+                          proposedHsCode: item.challengeData.proposedHsCode,
+                        })}
+                        heading={t('shipments.detail.hsCodeUnderReview')}
                         position="bottom"
                       >
                         <span
@@ -162,7 +164,9 @@ export function ShipmentItemsTable({
                       disabled={disableChallenge || Boolean(item.is_challenged)}
                       className="whitespace-nowrap text-xs font-medium text-primary disabled:cursor-not-allowed disabled:text-greySix"
                     >
-                      {item.is_challenged ? 'Challenged' : 'Challenge HS Code'}
+                      {item.is_challenged
+                        ? t('shipments.detail.challenged')
+                        : t('shipments.detail.challengeHsCode')}
                     </button>
                   ) : null}
                 </td>

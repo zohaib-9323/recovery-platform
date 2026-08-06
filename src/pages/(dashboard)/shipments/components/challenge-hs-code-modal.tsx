@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { OutlinedButton, PrimaryButton } from '@/components/buttons'
 import { DropdownField, InputField } from '@/components/fields'
+import { useI18n } from '@/i18n/useI18n'
 import type { RecoveryShipmentItem } from '@/types/recovery-shipments-api'
 
 const REASON_OPTIONS = [
@@ -24,6 +25,7 @@ export function ChallengeHsCodeModal({
   onSubmit,
   isLoading = false,
 }: ChallengeHsCodeModalProps) {
+  const { t } = useI18n()
   const [proposedHsCode, setProposedHsCode] = useState('')
   const [reason, setReason] = useState('')
   const [description, setDescription] = useState('')
@@ -61,7 +63,9 @@ export function ChallengeHsCodeModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-25 backdrop-blur-sm p-3">
       <div className="w-full max-w-md overflow-hidden rounded-xl bg-white shadow-lg">
         <div className="flex items-center justify-between border-b border-lightGrey px-6 py-4">
-          <h3 className="text-lg font-semibold text-black">Challenge HS Code</h3>
+          <h3 className="text-lg font-semibold text-black">
+            {t('shipments.detail.challengeHsCode')}
+          </h3>
           <button
             type="button"
             onClick={onClose}
@@ -74,14 +78,18 @@ export function ChallengeHsCodeModal({
 
         <div className="max-h-[70vh] space-y-4 overflow-y-auto px-6 py-4">
           <div className="space-y-1">
-            <p className="text-xs font-semibold text-greySix">Current HS Code</p>
+            <p className="text-xs font-semibold text-greySix">
+              {t('shipments.detail.currentHsCode')}
+            </p>
             <div className="rounded-md bg-greyFour px-3 py-2 text-sm text-black">
               {item.hsCode || 'N/A'}
             </div>
           </div>
 
           <div className="space-y-1">
-            <p className="text-xs font-semibold text-greySix">Description</p>
+            <p className="text-xs font-semibold text-greySix">
+              {t('shipments.detail.col.description')}
+            </p>
             <div className="rounded-md bg-greyFour px-3 py-2 text-sm text-black">
               {item.description || 'N/A'}
             </div>
@@ -89,16 +97,16 @@ export function ChallengeHsCodeModal({
 
           <InputField
             fieldType="text"
-            label="Expected HS Code *"
-            placeholder="Enter the correct HS Code you believe is appropriate"
+            label={t('shipments.detail.expectedHsCode')}
+            placeholder={t('shipments.detail.expectedHsCodePlaceholder')}
             value={proposedHsCode}
             maxLength={10}
             onChange={(e) => setProposedHsCode(e.target.value.replace(/\D/g, ''))}
           />
 
           <DropdownField
-            label="Reason for Challenge *"
-            placeholder="Select a reason"
+            label={t('shipments.detail.reasonForChallenge')}
+            placeholder={t('shipments.detail.selectReason')}
             options={REASON_OPTIONS.map((r) => ({ value: r, label: r }))}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
@@ -107,7 +115,9 @@ export function ChallengeHsCodeModal({
           <InputField
             fieldType="richtext"
             label={
-              reason === 'Other' ? 'Please specify the reason *' : 'Additional details (optional)'
+              reason === 'Other'
+                ? t('shipments.detail.specifyReason')
+                : t('shipments.detail.additionalDetailsOptional')
             }
             rows={3}
             value={description}
@@ -124,7 +134,7 @@ export function ChallengeHsCodeModal({
             disabled={isLoading}
             className="h-10 text-sm"
           >
-            Cancel
+            {t('common.cancel')}
           </OutlinedButton>
           <PrimaryButton
             type="button"
@@ -132,7 +142,7 @@ export function ChallengeHsCodeModal({
             disabled={isLoading || !proposedHsCode || !reason}
             className="h-10 text-sm"
           >
-            {isLoading ? 'Submitting…' : 'Submit'}
+            {isLoading ? t('common.submitting') : t('common.submit')}
           </PrimaryButton>
         </div>
       </div>
