@@ -38,6 +38,9 @@ import type {
 } from '@/types/recovery-inbox-api'
 import type {
   RecoveryShipmentDetailEnvelope,
+  RecoveryShipmentDownloadEnvelope,
+  RecoveryShipmentDownloadFileType,
+  RecoveryShipmentDownloadRequest,
   RecoveryShipmentLandedCostEnvelope,
   RecoveryShipmentLogsEnvelope,
   RecoveryShipmentLogsQuery,
@@ -301,6 +304,32 @@ export const recoveryApi = createApi({
       }),
       providesTags: (_result, _error, id) => [{ type: 'RecoveryShipment', id }],
     }),
+    getRecoveryShipmentDownloadUrls: builder.mutation<
+      RecoveryShipmentDownloadEnvelope,
+      RecoveryShipmentDownloadRequest
+    >({
+      query: ({ id, fileType = 'both', expiresIn = 300 }) => ({
+        url: `/recovery/shipments/${id}/download`,
+        method: 'GET',
+        params: {
+          fileType,
+          expiresIn,
+        },
+      }),
+    }),
+    // Streams the file through our own API (not a presigned S3 URL) so the
+    // download works regardless of the source bucket's CORS config.
+    downloadRecoveryShipmentFileBlob: builder.mutation<
+      Blob,
+      { id: string; fileType: Exclude<RecoveryShipmentDownloadFileType, 'both'> }
+    >({
+      query: ({ id, fileType }) => ({
+        url: `/recovery/shipments/${id}/download-file`,
+        method: 'GET',
+        params: { fileType },
+        responseHandler: (response) => response.blob(),
+      }),
+    }),
     getRecoveryShipmentLandedCost: builder.query<RecoveryShipmentLandedCostEnvelope, string>({
       query: (id) => ({
         url: `/recovery/shipments/landedcost/${id}`,
@@ -320,7 +349,14 @@ export const recoveryApi = createApi({
         }),
       },
     ),
-    /** Same contract as trade-harmonizer `POST /shipments/upload-c88-document` (FormData: file, shipmentId). */
+    /**
+     * Recovery-guarded twin of trade-harmonizer `POST /shipments/upload-c88-document`.
+     * Same multipart contract (FormData: file), but the shipment id is a route param and
+     * the route is validated by `RecoveryJwtAuthGuard` against the `recoveryusers`
+     * collection. The main-app route is guarded by the global `JwtAuthGuard`, which
+     * rejected recovery bearer tokens with a misleading
+     * "Your account has been deleted or does not exist" 401.
+     */
     uploadRecoveryShipmentC88Document: builder.mutation<
       RecoveryApiEnvelope<unknown>,
       { shipmentId: string; file: File }
@@ -328,9 +364,8 @@ export const recoveryApi = createApi({
       query: ({ shipmentId, file }) => {
         const body = new FormData()
         body.append('file', file)
-        body.append('shipmentId', shipmentId)
         return {
-          url: '/shipments/upload-c88-document',
+          url: `/recovery/shipments/${shipmentId}/upload-c88-document`,
           method: 'POST',
           body,
         }
@@ -340,12 +375,17 @@ export const recoveryApi = createApi({
         { type: 'RecoveryShipment', id: arg.shipmentId },
       ],
     }),
+    /**
+     * Recovery-guarded twin of trade-harmonizer `POST /sanctions/shipment-decision`.
+     * Same body contract ({ shipmentId, decision }); the shipment is resolved against
+     * `recoveryshipments` and scoped to the authenticated recovery user.
+     */
     updateRecoveryShipmentSanctionDecision: builder.mutation<
       RecoveryApiEnvelope<unknown>,
       { shipmentId: string; decision: 'stopped' | 'ignored' }
     >({
       query: (body) => ({
-        url: '/sanctions/shipment-decision',
+        url: '/recovery/shipments/sanction-decision',
         method: 'POST',
         body,
       }),
@@ -426,6 +466,8 @@ export const {
   useGetRecoveryInboxDocumentByIdQuery,
   useGetRecoveryShipmentsListQuery,
   useGetRecoveryShipmentByIdQuery,
+  useGetRecoveryShipmentDownloadUrlsMutation,
+  useDownloadRecoveryShipmentFileBlobMutation,
   useGetRecoveryShipmentLogsQuery,
   useLazyGetRecoveryShipmentLandedCostQuery,
   useMoveUnprocessableToProcessableMutation,
