@@ -113,6 +113,15 @@ export type RecoveryShipmentItem = {
   source?: string
   shipment?: string
   shipment_id?: string
+  /** Set when this poItems[] entry has a pending HS code challenge. */
+  is_challenged?: boolean
+  challengeData?: {
+    _id?: string
+    proposedHsCode?: string
+    reason?: string
+    description?: string
+    status?: string
+  }
 }
 
 export type RecoveryShipmentDetail = RecoveryShipmentRecord & {

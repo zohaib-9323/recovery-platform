@@ -336,7 +336,7 @@ export const messages: Record<string, string> = {
   'shipments.detail.industryType': 'Industry Type',
   'shipments.detail.postalCode': 'Postal Code',
   'shipments.detail.shipmentItems': 'Shipment Items',
-  'shipments.detail.fileUploads': 'File Uploads',
+  'shipments.detail.fileUploads': 'Download Documents',
   'shipments.detail.closeFileUploads': 'Close file uploads',
   'shipments.detail.noDocumentsAvailable': 'No documents available',
   'shipments.detail.download': 'Download',
