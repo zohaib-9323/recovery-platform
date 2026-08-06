@@ -38,6 +38,9 @@ import type {
 } from '@/types/recovery-inbox-api'
 import type {
   RecoveryShipmentDetailEnvelope,
+  RecoveryShipmentDownloadEnvelope,
+  RecoveryShipmentDownloadFileType,
+  RecoveryShipmentDownloadRequest,
   RecoveryShipmentLandedCostEnvelope,
   RecoveryShipmentLogsEnvelope,
   RecoveryShipmentLogsQuery,
@@ -301,6 +304,32 @@ export const recoveryApi = createApi({
       }),
       providesTags: (_result, _error, id) => [{ type: 'RecoveryShipment', id }],
     }),
+    getRecoveryShipmentDownloadUrls: builder.mutation<
+      RecoveryShipmentDownloadEnvelope,
+      RecoveryShipmentDownloadRequest
+    >({
+      query: ({ id, fileType = 'both', expiresIn = 300 }) => ({
+        url: `/recovery/shipments/${id}/download`,
+        method: 'GET',
+        params: {
+          fileType,
+          expiresIn,
+        },
+      }),
+    }),
+    // Streams the file through our own API (not a presigned S3 URL) so the
+    // download works regardless of the source bucket's CORS config.
+    downloadRecoveryShipmentFileBlob: builder.mutation<
+      Blob,
+      { id: string; fileType: Exclude<RecoveryShipmentDownloadFileType, 'both'> }
+    >({
+      query: ({ id, fileType }) => ({
+        url: `/recovery/shipments/${id}/download-file`,
+        method: 'GET',
+        params: { fileType },
+        responseHandler: (response) => response.blob(),
+      }),
+    }),
     getRecoveryShipmentLandedCost: builder.query<RecoveryShipmentLandedCostEnvelope, string>({
       query: (id) => ({
         url: `/recovery/shipments/landedcost/${id}`,
@@ -437,6 +466,8 @@ export const {
   useGetRecoveryInboxDocumentByIdQuery,
   useGetRecoveryShipmentsListQuery,
   useGetRecoveryShipmentByIdQuery,
+  useGetRecoveryShipmentDownloadUrlsMutation,
+  useDownloadRecoveryShipmentFileBlobMutation,
   useGetRecoveryShipmentLogsQuery,
   useLazyGetRecoveryShipmentLandedCostQuery,
   useMoveUnprocessableToProcessableMutation,

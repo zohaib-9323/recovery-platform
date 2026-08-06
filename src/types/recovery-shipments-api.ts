@@ -122,6 +122,10 @@ export type RecoveryShipmentDetail = RecoveryShipmentRecord & {
   unit?: string
   refundStatus?: RecoveryRefundStatusCode
   poDocumentUrl?: string
+  /** Recovery detail: PO stored in S3 — presence means a PO document exists. */
+  poS3Key?: string | null
+  poFilename?: string | null
+  poBucket?: string | null
   additionalDocuments?: string[]
   company?: RecoveryShipmentParty
   vendor?: RecoveryShipmentParty
@@ -185,3 +189,27 @@ export type RecoveryShipmentLogsQuery = {
 }
 
 export type RecoveryShipmentLogsEnvelope = RecoveryApiEnvelope<RecoveryShipmentLogsContent>
+
+export type RecoveryShipmentDownloadFileType = 'c88' | 'po' | 'both'
+
+export type RecoveryShipmentDownloadFile = {
+  type: RecoveryShipmentDownloadFileType
+  downloadUrl?: string
+  bucket?: string
+  key?: string
+  fileName?: string
+  expiresIn?: number
+}
+
+export type RecoveryShipmentDownloadContent = {
+  shipmentId: string
+  files: RecoveryShipmentDownloadFile[]
+}
+
+export type RecoveryShipmentDownloadEnvelope = RecoveryApiEnvelope<RecoveryShipmentDownloadContent>
+
+export type RecoveryShipmentDownloadRequest = {
+  id: string
+  fileType?: RecoveryShipmentDownloadFileType
+  expiresIn?: number
+}

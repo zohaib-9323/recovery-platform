@@ -34,6 +34,10 @@ import {
 import { showCustomToast } from '@/lib/showCustomToast'
 import { DetailsGridCard } from '@/pages/(dashboard)/shipments/components/details-grid-card'
 import {
+  FileUploadsSidebar,
+  type ShipmentDocumentRow,
+} from '@/pages/(dashboard)/shipments/components/file-uploads-sidebar'
+import {
   LandedCostComparisonModal,
   type LandedCostComparisonContent,
 } from '@/pages/(dashboard)/shipments/components/landed-cost-comparison-modal'
@@ -131,6 +135,7 @@ export function ShipmentDetailPageV2() {
     null,
   )
   const [uploadDocument, setUploadDocument] = useState(false)
+  const [showFileUploads, setShowFileUploads] = useState(false)
   const [isSanctionModalOpen, setIsSanctionModalOpen] = useState(false)
   const [isPdfDownloading, setIsPdfDownloading] = useState(false)
   const [csvData, setCsvData] = useState<Record<string, unknown>[]>([])
@@ -293,6 +298,27 @@ export function ShipmentDetailPageV2() {
     }
   }
 
+  const hasDocValue = (value?: string | null) => typeof value === 'string' && value.trim() !== ''
+  const shipmentDocuments: ShipmentDocumentRow[] = []
+  if (hasC88Document) {
+    shipmentDocuments.push({
+      type: 'c88',
+      label: 'C88 Document',
+      fileName: detail.c88Filename ?? undefined,
+    })
+  }
+  if (
+    hasDocValue(detail.poS3Key) ||
+    hasDocValue(detail.poFilename) ||
+    hasDocValue(detail.poDocumentUrl)
+  ) {
+    shipmentDocuments.push({
+      type: 'po',
+      label: 'Purchase Order Document',
+      fileName: detail.poFilename ?? undefined,
+    })
+  }
+
   return (
     <>
       <div
@@ -398,6 +424,14 @@ export function ShipmentDetailPageV2() {
               onClick={generateCsv}
               iconSize="text-xs md:text-sm"
             />
+            <button
+              type="button"
+              onClick={() => setShowFileUploads(true)}
+              className="flex flex-row items-center gap-2 rounded-md border border-bottomBorder bg-white p-2 transition-colors"
+            >
+              <span className="icon-File-text text-xs text-black md:text-sm" />
+              <p className="text-xs font-light text-black md:text-sm">File Uploads</p>
+            </button>
             <button
               type="button"
               onClick={() => setUploadDocument(true)}
@@ -555,6 +589,14 @@ export function ShipmentDetailPageV2() {
             setShowLandedCost(false)
             setLandedCostContent(null)
           }}
+        />
+      ) : null}
+
+      {showFileUploads ? (
+        <FileUploadsSidebar
+          shipmentId={id}
+          documents={shipmentDocuments}
+          onClose={() => setShowFileUploads(false)}
         />
       ) : null}
 
