@@ -5,11 +5,18 @@ import {
   useMoveProcessableToUnprocessableMutation,
   useMoveUnprocessableToProcessableMutation,
 } from '@/app/services/recoveryApi'
+import { useRetryUnprocessableMutation } from '@/app/services/recoveryDocumentActionsApi'
 import { useI18n } from '@/i18n/useI18n'
+import { getRtkErrorMessage } from '@/lib/api-errors'
 import { showCustomToast } from '@/lib/showCustomToast'
 import { cn } from '@/lib/utils'
-import type { InboxAttachment, InboxEmail } from '@/pages/(dashboard)/inbox/types'
+import type {
+  InboxAttachment,
+  InboxEmail,
+  InboxUnprocessedShipmentRow,
+} from '@/pages/(dashboard)/inbox/types'
 
+import { CreateShipmentModal } from './create-shipment-modal'
 import { InboxAttachmentsTable } from './inbox-attachments-table'
 import { InboxProcessedShipmentsTable } from './inbox-processed-shipments-table'
 import { InboxUnprocessedShipmentsTable } from './inbox-unprocessed-shipments-table'
@@ -33,10 +40,14 @@ export function InboxDetailPanel({
   const [getRecoveryDownloadUrl] = useGetRecoveryDownloadUrlMutation()
   const [moveUnprocessableToProcessable] = useMoveUnprocessableToProcessableMutation()
   const [moveProcessableToUnprocessable] = useMoveProcessableToUnprocessableMutation()
+  const [retryUnprocessable] = useRetryUnprocessableMutation()
   const [convertingProcessableIndex, setConvertingProcessableIndex] = useState<number | null>(null)
   const [convertingUnprocessableIndex, setConvertingUnprocessableIndex] = useState<number | null>(
     null,
   )
+  const [retryingUnprocessableIndex, setRetryingUnprocessableIndex] = useState<number | null>(null)
+  const [isRetryingAll, setIsRetryingAll] = useState(false)
+  const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false)
   const [downloadingAttachmentId, setDownloadingAttachmentId] = useState<string | null>(null)
   const statusValue = String(email?.status ?? '')
     .toLowerCase()
@@ -81,6 +92,61 @@ export function InboxDetailPanel({
       // Keep UI stable; parent refresh handles visible state changes.
     } finally {
       setConvertingProcessableIndex(null)
+    }
+  }
+
+  const handleRetryUnprocessable = async (row: InboxUnprocessedShipmentRow) => {
+    if (!email) return
+    if (!row.s3Key) {
+      showCustomToast({
+        type: 'error',
+        title: 'Error',
+        message: 'Missing file reference for this item. Please refresh and try again.',
+      })
+      return
+    }
+    try {
+      setRetryingUnprocessableIndex(row.sourceIndex)
+      await retryUnprocessable({
+        id: email.id,
+        targets: [{ index: row.sourceIndex, s3Key: row.s3Key }],
+      }).unwrap()
+      showCustomToast({
+        type: 'success',
+        title: 'Success',
+        message: t('inbox.actions.retrySuccess'),
+      })
+      await onInboxUpdated?.()
+    } catch (error) {
+      showCustomToast({
+        type: 'error',
+        title: 'Error',
+        message: getRtkErrorMessage(error),
+      })
+    } finally {
+      setRetryingUnprocessableIndex(null)
+    }
+  }
+
+  const handleRetryAllUnprocessable = async () => {
+    if (!email) return
+    try {
+      setIsRetryingAll(true)
+      await retryUnprocessable({ id: email.id, targets: [] }).unwrap()
+      showCustomToast({
+        type: 'success',
+        title: 'Success',
+        message: t('inbox.actions.retryAllSuccess'),
+      })
+      await onInboxUpdated?.()
+    } catch (error) {
+      showCustomToast({
+        type: 'error',
+        title: 'Error',
+        message: getRtkErrorMessage(error),
+      })
+    } finally {
+      setIsRetryingAll(false)
     }
   }
 
@@ -277,16 +343,40 @@ export function InboxDetailPanel({
             convertingIndex={convertingProcessableIndex}
           />
 
-          <h2 className="mb-2 mt-2 text-[18px] font-semibold leading-[100%] tracking-[0] text-black">
-            {t('inbox.detail.unprocessedShipments')}
-          </h2>
+          <div className="mb-2 mt-2 flex items-center justify-between">
+            <h2 className="text-[18px] font-semibold leading-[100%] tracking-[0] text-black">
+              {t('inbox.detail.unprocessedShipments')}
+            </h2>
+            {email.unprocessedShipments.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setIsCreateShipmentOpen(true)}
+                className="rounded-md bg-yellow px-3 py-1.5 text-sm font-medium text-white transition-colors hover:opacity-90"
+              >
+                {t('inbox.createShipment.button')}
+              </button>
+            ) : null}
+          </div>
           <InboxUnprocessedShipmentsTable
             rows={email.unprocessedShipments}
             onConvertToProcessable={handleConvertToProcessable}
             convertingIndex={convertingUnprocessableIndex}
+            onRetry={handleRetryUnprocessable}
+            retryingIndex={retryingUnprocessableIndex}
+            onRetryAll={handleRetryAllUnprocessable}
+            isRetryingAll={isRetryingAll}
           />
         </>
       )}
+
+      {isCreateShipmentOpen && email ? (
+        <CreateShipmentModal
+          documentId={email.id}
+          rows={email.unprocessedShipments}
+          onClose={() => setIsCreateShipmentOpen(false)}
+          onCreated={onInboxUpdated}
+        />
+      ) : null}
     </section>
   )
 }

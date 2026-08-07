@@ -65,4 +65,27 @@ describe('mapRecoveryDocumentToInboxEmail — unprocessed status labels', () => 
     const email = mapRecoveryDocumentToInboxEmail(baseRecord(undefined))
     expect(email.unprocessedShipments).toEqual([])
   })
+
+  it('carries the s3Key through so retry can echo it back for stale-selection validation', () => {
+    const email = mapRecoveryDocumentToInboxEmail(
+      baseRecord([
+        {
+          filename: 'invoice.pdf',
+          type: 'UNKNOWN',
+          s3Key: 'accepted/doc-1/mid-1/unprocessable/invoice.pdf',
+        },
+      ]),
+    )
+
+    expect(email.unprocessedShipments[0].s3Key).toBe(
+      'accepted/doc-1/mid-1/unprocessable/invoice.pdf',
+    )
+  })
+
+  it('leaves s3Key undefined when the source item has none', () => {
+    const email = mapRecoveryDocumentToInboxEmail(
+      baseRecord([{ filename: 'old-doc.pdf', type: 'UNKNOWN' }]),
+    )
+    expect(email.unprocessedShipments[0].s3Key).toBeUndefined()
+  })
 })

@@ -82,3 +82,9 @@ Direct HTTP utilities in `src/services/api.ts` are used only for the session ref
 ### Multi-Tenant Theming
 
 Tenant config (colors, logo) is fetched once on load and stored in the `tenantTheme` Redux slice. `src/app/TenantThemeBootstrap.tsx` applies CSS variables; `src/lib/tenantTheme.ts` contains the mapping logic.
+
+## Feature reference docs
+
+`docs/` mostly holds ADRs (`docs/adr/`, decisions) and pre-build design briefs (`docs/design/`). A small number of already-shipped features that are easy to get wrong on a follow-up change get a flat reference doc directly under `docs/` instead — check there before re-deriving a feature's design from the diff:
+
+- [`docs/retry-and-manual-shipment-creation.md`](./docs/retry-and-manual-shipment-creation.md) — Inbox → Unprocessable Files "Retry" and "Create Shipment" actions (file map, API contract incl. the `s3Key` stale-selection guard, test coverage, known gaps). Companion backend doc: `trade-harmonizer-be/docs/10-business-flows/recovery-retry-manual-shipment.md`.

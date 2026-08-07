@@ -29,6 +29,12 @@ export type InboxUnprocessedShipmentRow = {
   status: string
   /** Longer explanation shown as a tooltip on the status cell; undefined when there's nothing more specific than `status` itself. */
   statusDetail?: string
+  /**
+   * The item's current s3Key, as last seen from the server. Echoed back on retry so the
+   * backend can detect a stale selection (409) if another action shifted this index in
+   * the meantime — see RetryUnprocessableTargetDto server-side.
+   */
+  s3Key?: string
 }
 
 export type InboxEmail = {
