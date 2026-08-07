@@ -71,6 +71,10 @@ const FAILURE_REASON_LABELS: Record<string, string> = {
   UNSUPPORTED_BINARY_FORMAT: 'Unsupported format',
   GEMINI_ERROR: 'AI processing error',
   PARSING_FAILURE: 'Parsing failed',
+  // Document classified fine (it IS a C88 or a commercial invoice/PO) but its
+  // pairing counterpart was never found anywhere else in the same email.
+  C88_MISSING: 'C88 missing',
+  PO_MISSING: 'CI missing',
 }
 
 function getUnprocessableStatus(shipment: RecoveryDocumentUnprocessable): {

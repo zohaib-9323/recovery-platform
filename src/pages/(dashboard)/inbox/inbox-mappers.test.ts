@@ -61,6 +61,28 @@ describe('mapRecoveryDocumentToInboxEmail — unprocessed status labels', () => 
     expect(email.unprocessedShipments[1].status).toBe('Parsing failed')
   })
 
+  it('maps a classified-but-unpaired PO (C88_MISSING) and C88 (PO_MISSING) to specific labels, not the generic "Failed"', () => {
+    const email = mapRecoveryDocumentToInboxEmail(
+      baseRecord([
+        {
+          filename: 'invoice.pdf',
+          type: 'PO',
+          failureReasonCode: 'C88_MISSING',
+          extractedData: { summary: 'Not matched to a C88/PO pair for this email.' },
+        },
+        {
+          filename: 'declaration.pdf',
+          type: 'C88',
+          failureReasonCode: 'PO_MISSING',
+          extractedData: { summary: 'Not matched to a C88/PO pair for this email.' },
+        },
+      ]),
+    )
+
+    expect(email.unprocessedShipments[0].status).toBe('C88 missing')
+    expect(email.unprocessedShipments[1].status).toBe('CI missing')
+  })
+
   it('returns an empty list when there is nothing unprocessable', () => {
     const email = mapRecoveryDocumentToInboxEmail(baseRecord(undefined))
     expect(email.unprocessedShipments).toEqual([])
