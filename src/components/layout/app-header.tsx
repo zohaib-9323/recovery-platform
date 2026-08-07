@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import { setSideBarExpanded } from '@/app/features/ui/sideBarSlice'
 import { useAppDispatch, useAppSelector } from '@/app/redux-hooks'
@@ -7,20 +7,45 @@ import { useMediaQuery } from '@/app/hooks/useMediaQuery'
 import { getHrefLink, getSideBarTitle } from '@/lib/tradeHarmonizerNav'
 import { useAuth } from '@/app/hooks/useAuth'
 import { useI18n } from '@/i18n/useI18n'
+import {
+  useGetRecoveryNotificationCountsQuery,
+  useGetRecoveryNotificationsQuery,
+  useMarkAllRecoveryNotificationsAsReadMutation,
+  useMarkRecoveryNotificationAsReadMutation,
+} from '@/app/services/recoveryNotificationsApi'
+import { resolveRecoveryNotificationPath } from '@/lib/notificationNavigation'
+import type { RecoveryNotificationRecord } from '@/types/recovery-notifications-api'
 
 import { ProfileMenuTh } from '@/components/layout/profile-menu-th'
+
+const NOTIFICATION_COUNTS_POLL_MS = 30_000
 
 export function AppHeader() {
   const { t } = useI18n()
   const pathName = useLocation().pathname
+  const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const expanded = useAppSelector((s) => s.sideBar.sideBarExpanded)
   const [notificationPopup, setNotificationPopup] = useState(false)
   const popupRef = useRef<HTMLDivElement>(null)
   const { user } = useAuth()
   const isMobile = useMediaQuery('(max-width: 900px)')
-  const unreadCount = 0
-  const isFetching = false
+
+  const { data: countsData, isFetching: isCountsFetching } = useGetRecoveryNotificationCountsQuery(
+    undefined,
+    { pollingInterval: NOTIFICATION_COUNTS_POLL_MS },
+  )
+  const unreadCount = countsData?.content?.unread ?? 0
+
+  const { data: listData, isFetching: isListFetching } = useGetRecoveryNotificationsQuery(
+    { limit: 5 },
+    { skip: !notificationPopup },
+  )
+  const notifications = listData?.content?.data ?? []
+
+  const [markAsRead] = useMarkRecoveryNotificationAsReadMutation()
+  const [markAllAsRead, { isLoading: isMarkingAllRead }] =
+    useMarkAllRecoveryNotificationsAsReadMutation()
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -35,6 +60,15 @@ export function AppHeader() {
   const toggleMenu = (e: React.MouseEvent) => {
     e.stopPropagation()
     setNotificationPopup((prev) => !prev)
+  }
+
+  const handleNotificationClick = (item: RecoveryNotificationRecord) => {
+    if (!item.isRead) {
+      void markAsRead(item._id)
+    }
+    setNotificationPopup(false)
+    const path = resolveRecoveryNotificationPath(item)
+    if (path) navigate(path)
   }
 
   const prefix = getSideBarTitle(pathName)
@@ -71,7 +105,7 @@ export function AppHeader() {
               </div>
 
               <div className="relative ml-2 flex flex-shrink-0 items-center">
-                {isFetching ? (
+                {isCountsFetching ? (
                   <div className="absolute -left-1 -top-1 flex h-4 w-4 animate-spin items-center justify-center rounded-full border-4 border-white border-t-yellow bg-white drop-shadow" />
                 ) : unreadCount > 0 ? (
                   <div className="absolute -left-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-white text-xxtiny drop-shadow">
@@ -91,16 +125,54 @@ export function AppHeader() {
                 {notificationPopup ? (
                   <div
                     ref={popupRef}
-                    className="absolute right-0 top-full z-50 mt-2 w-80 rounded-lg border border-bottomBorder bg-white p-4 shadow-lg"
+                    className="absolute right-0 top-full z-50 mt-2 w-80 rounded-lg border border-bottomBorder bg-white shadow-lg"
                   >
-                    <p className="text-sm text-rp-fg">{t('layout.appHeader.noNotifications')}</p>
-                    <button
-                      type="button"
-                      className="mt-2 text-sm font-semibold text-yellow"
-                      onClick={() => setNotificationPopup(false)}
-                    >
-                      {t('common.close')}
-                    </button>
+                    <div className="flex items-center justify-between border-b border-bottomBorder px-4 py-3">
+                      <p className="text-sm font-semibold text-black">
+                        {t('layout.appHeader.notifications')}
+                      </p>
+                      {unreadCount > 0 ? (
+                        <button
+                          type="button"
+                          disabled={isMarkingAllRead}
+                          className="text-xs font-semibold text-yellow disabled:opacity-50"
+                          onClick={() => void markAllAsRead()}
+                        >
+                          {t('layout.appHeader.markAllRead')}
+                        </button>
+                      ) : null}
+                    </div>
+
+                    <div className="max-h-80 overflow-y-auto">
+                      {isListFetching ? (
+                        <p className="px-4 py-4 text-sm text-lightBlackOne">
+                          {t('layout.appHeader.loadingNotifications')}
+                        </p>
+                      ) : notifications.length === 0 ? (
+                        <p className="px-4 py-4 text-sm text-lightBlackOne">
+                          {t('layout.appHeader.noNotifications')}
+                        </p>
+                      ) : (
+                        notifications.map((item) => (
+                          <button
+                            key={item._id}
+                            type="button"
+                            onClick={() => handleNotificationClick(item)}
+                            className={`flex w-full flex-col gap-1 border-b border-bottomBorder px-4 py-3 text-left last:border-b-0 hover:bg-greyFour ${
+                              item.isRead ? '' : 'bg-[#FEF9E7]'
+                            }`}
+                          >
+                            <span className="text-sm font-medium text-black">{item.title}</span>
+                            <span className="text-xs text-lightBlackOne">{item.description}</span>
+                            {item.createdAt ? (
+                              <span className="text-xxtiny text-lightBlackOne">
+                                {new Date(item.createdAt).toLocaleString()}
+                              </span>
+                            ) : null}
+                          </button>
+                        ))
+                      )}
+                    </div>
                   </div>
                 ) : null}
                 <div className="relative ml-2 h-10 min-w-10 smallScreen:ml-5">
