@@ -146,7 +146,6 @@ export function DashboardHomePage() {
       trend: mapTrendDirection(filesTrend),
     },
   ]
-
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-8 p-4 md:p-6">
       <section>
@@ -157,7 +156,6 @@ export function DashboardHomePage() {
           ))}
         </div>
       </section>
-
       <section>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-base font-semibold text-rp-fg">
@@ -181,7 +179,6 @@ export function DashboardHomePage() {
           showDateSplit={true}
         />
       </section>
-
       <section>
         <h2 className="mb-4 text-base font-semibold text-rp-fg">
           {t('dashboard.home.quickActions')}
