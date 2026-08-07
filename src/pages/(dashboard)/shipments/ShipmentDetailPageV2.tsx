@@ -45,6 +45,10 @@ import {
 import { SanctionResultModal } from '@/pages/(dashboard)/shipments/components/sanction-result-modal'
 import { ShipmentItemsTable } from '@/pages/(dashboard)/shipments/components/shipment-items-table'
 import { ChallengeHsCodeModal } from '@/pages/(dashboard)/shipments/components/challenge-hs-code-modal'
+import {
+  TradeAgreementItemModal,
+  type TradeAgreementModalItem,
+} from '@/pages/(dashboard)/shipments/components/trade-agreement-item-modal'
 import { UploadC88DocumentModal } from '@/pages/(dashboard)/shipments/components/upload-c88-document-modal'
 import type { RecoveryShipmentDetail, RecoveryShipmentItem } from '@/types/recovery-shipments-api'
 
@@ -89,6 +93,9 @@ function normalizeShipmentItem(item: RecoveryShipmentItem, index: number): Recov
     duty: getItemDutyAmount(item),
     landedCost: getItemLandedCostAmount(item),
     Total: item.Total ?? item.totalPrice,
+    // Position in the raw poItems[]/items[] array — the `preferential-duty` endpoint
+    // addresses items by this index, so it must survive later filtering of the list.
+    poItemIndex: index,
   }
 }
 
@@ -140,6 +147,9 @@ export function ShipmentDetailPageV2() {
   const [showFileUploads, setShowFileUploads] = useState(false)
   const [isSanctionModalOpen, setIsSanctionModalOpen] = useState(false)
   const [challengeItem, setChallengeItem] = useState<RecoveryShipmentItem | null>(null)
+  const [preferentialDutyItem, setPreferentialDutyItem] = useState<TradeAgreementModalItem | null>(
+    null,
+  )
   const [isPdfDownloading, setIsPdfDownloading] = useState(false)
   const [csvData, setCsvData] = useState<Record<string, unknown>[]>([])
 
@@ -605,6 +615,15 @@ export function ShipmentDetailPageV2() {
             shipmentStatus={legacyStatus}
             onChallenge={(item) => setChallengeItem(item)}
             disableChallenge={detail.status === 'rejected'}
+            onViewPreferentialDuty={(item) =>
+              setPreferentialDutyItem({
+                poItemIndex: item.poItemIndex ?? 0,
+                itemNumber: item.itemNumber,
+                description: item.description,
+                hsCode: item.hsCode,
+                tradeAgreement: item.tradeAgreement,
+              })
+            }
           />
           <div data-pdf-exclude className="mb-2 mt-5 w-full">
             <div id="landed-cost-btn" className="float-right">
@@ -659,6 +678,12 @@ export function ShipmentDetailPageV2() {
           isLoading={isChallengingHsCode}
         />
       ) : null}
+
+      <TradeAgreementItemModal
+        shipmentId={id}
+        item={preferentialDutyItem}
+        onClose={() => setPreferentialDutyItem(null)}
+      />
 
       {hasSanctionMatch(detail) ? (
         <SanctionResultModal

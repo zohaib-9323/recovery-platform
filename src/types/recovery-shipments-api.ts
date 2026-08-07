@@ -90,6 +90,39 @@ export type RecoveryShipmentParty = {
   fax?: string
 }
 
+/** Required-document entry for a preferential trade agreement (rules-of-origin proof). */
+export type RecoveryTradeLookupDocument = {
+  document_code?: string
+  certificate_description?: string
+  guidance_cds?: string
+}
+
+/** A single duty measure (standard/MFN or a preferential agreement) from the live
+ *  UK Trade Tariff lookup, as returned by `GET /recovery/shipments/:id/preferential-duty`. */
+export type RecoveryTradeLookupAgreement = {
+  agreement_name?: string
+  duty?: string
+  duty_is_compound?: boolean
+  measure_id?: string
+  measure_type?: string
+  geographical_area?: string
+  documents_required?: RecoveryTradeLookupDocument[]
+  documents_loading?: boolean
+}
+
+/** Trade-lookup snapshot for one HS code + origin country pair. Mirrors trade-harmonizer's
+ *  `TradeLookupResponse` (see `trade-harmony.ts`) — either fetched live via the preferential-duty
+ *  endpoint, or persisted onto a poItems[] entry once an HS code challenge is approved. */
+export type RecoveryTradeLookupResponse = {
+  hs_code?: string
+  commodity_code?: string
+  description?: string
+  origin?: string
+  standard_duty?: RecoveryTradeLookupAgreement
+  agreements?: RecoveryTradeLookupAgreement[]
+  lowest_duty?: RecoveryTradeLookupAgreement
+}
+
 export type RecoveryShipmentItem = {
   _id?: string
   id?: string
@@ -122,7 +155,37 @@ export type RecoveryShipmentItem = {
     description?: string
     status?: string
   }
+  /** Persisted trade-lookup snapshot — only populated once a challenge on this item has been
+   *  approved. Most items won't carry this; use `getRecoveryPreferentialDuty` for a live lookup. */
+  tradeAgreement?: RecoveryTradeLookupResponse | null
+  /** This item's position in the shipment's `poItems[]` array — the id `getRecoveryPreferentialDuty`
+   *  needs. Set by `ShipmentDetailPageV2` when normalizing items; not part of the API response. */
+  poItemIndex?: number
 }
+
+/** Single-item shape of `GET /recovery/shipments/:id/preferential-duty?itemIndex=N`. */
+export type RecoveryPreferentialDutyItem = {
+  itemIndex: number
+  itemNumber?: string | null
+  description?: string | null
+  hsCode?: string | null
+  dutyRate?: number | null
+  dutyAmount?: number | null
+  landedCost?: number | null
+  tradeLookup?: RecoveryTradeLookupResponse | null
+  existingTradeAgreement?: RecoveryTradeLookupResponse | null
+}
+
+/** Response of `GET /recovery/shipments/:id/preferential-duty`. When called with an
+ *  `itemIndex` query param, the single-item fields are populated; without it, `items[]`
+ *  carries the same shape for every poItems[] entry. */
+export type RecoveryPreferentialDutyContent = RecoveryPreferentialDutyItem & {
+  shipmentId: string
+  originCountryCode?: string
+  items?: RecoveryPreferentialDutyItem[]
+}
+
+export type RecoveryPreferentialDutyEnvelope = RecoveryApiEnvelope<RecoveryPreferentialDutyContent>
 
 export type RecoveryShipmentDetail = RecoveryShipmentRecord & {
   requisitioner?: string

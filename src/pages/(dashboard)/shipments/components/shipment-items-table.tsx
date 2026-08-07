@@ -15,6 +15,7 @@ export type ShipmentItemsTableProps = {
   shipmentStatus?: number
   onChallenge?: (item: RecoveryShipmentItem) => void
   disableChallenge?: boolean
+  onViewPreferentialDuty?: (item: RecoveryShipmentItem) => void
 }
 
 export function ShipmentItemsTable({
@@ -23,6 +24,7 @@ export function ShipmentItemsTable({
   shipmentStatus,
   onChallenge,
   disableChallenge = false,
+  onViewPreferentialDuty,
 }: ShipmentItemsTableProps) {
   const { t } = useI18n()
 
@@ -157,18 +159,30 @@ export function ShipmentItemsTable({
                   {formatCurrency(item.landedCost ?? 0)}
                 </td>
                 <td data-pdf-exclude className="px-4 py-2 text-center sm:text-left">
-                  {onChallenge ? (
-                    <button
-                      type="button"
-                      onClick={() => onChallenge(item)}
-                      disabled={disableChallenge || Boolean(item.is_challenged)}
-                      className="whitespace-nowrap text-xs font-medium text-primary disabled:cursor-not-allowed disabled:text-greySix"
-                    >
-                      {item.is_challenged
-                        ? t('shipments.detail.challenged')
-                        : t('shipments.detail.challengeHsCode')}
-                    </button>
-                  ) : null}
+                  <div className="flex flex-col items-center gap-1 sm:items-start">
+                    {onChallenge ? (
+                      <button
+                        type="button"
+                        onClick={() => onChallenge(item)}
+                        disabled={disableChallenge || Boolean(item.is_challenged)}
+                        className="whitespace-nowrap text-xs font-medium text-primary disabled:cursor-not-allowed disabled:text-greySix"
+                      >
+                        {item.is_challenged
+                          ? t('shipments.detail.challenged')
+                          : t('shipments.detail.challengeHsCode')}
+                      </button>
+                    ) : null}
+                    {onViewPreferentialDuty ? (
+                      <button
+                        type="button"
+                        onClick={() => onViewPreferentialDuty(item)}
+                        disabled={!item.hsCode}
+                        className="whitespace-nowrap text-xs font-medium text-primary disabled:cursor-not-allowed disabled:text-greySix"
+                      >
+                        {t('shipments.detail.preferentialDuty')}
+                      </button>
+                    ) : null}
+                  </div>
                 </td>
               </tr>
             ))}
