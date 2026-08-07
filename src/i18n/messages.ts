@@ -269,6 +269,7 @@ export const messages: Record<string, string> = {
   'inbox.audit.metadataSaved': 'Mongo metadata record created',
   'dashboard.home.overview': 'Overview',
   'dashboard.home.latestShipments': 'Latest Shipments',
+  'dashboard.home.viewAll': 'View All',
   'dashboard.home.quickActions': 'Quick actions',
   'dashboard.home.viewShipments': 'View Shipments',
   'dashboard.home.openInbox': 'Open Inbox',
