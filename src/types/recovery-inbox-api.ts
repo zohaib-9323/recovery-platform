@@ -26,6 +26,13 @@ export type RecoveryDocumentUnprocessable = {
   s3Key?: string
   fileUrl?: string
   bucket?: string
+  /** Machine-readable reason the file couldn't be processed, e.g. `UNSUPPORTED_BINARY_FORMAT`. Absent on older documents predating this field. */
+  failureReasonCode?: string
+  extractionMethod?: string
+  extractedData?: {
+    summary?: string
+    [key: string]: unknown
+  }
 }
 
 export type RecoveryCombinedDocument = {

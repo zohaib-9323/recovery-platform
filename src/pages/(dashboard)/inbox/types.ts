@@ -25,7 +25,10 @@ export type InboxUnprocessedShipmentRow = {
   sourceIndex: number
   fileName: string
   type: string
-  status: 'Failed'
+  /** Human-readable status label — derived from the backend's failureReasonCode when available, otherwise the generic fallback. */
+  status: string
+  /** Longer explanation shown as a tooltip on the status cell; undefined when there's nothing more specific than `status` itself. */
+  statusDetail?: string
 }
 
 export type InboxEmail = {

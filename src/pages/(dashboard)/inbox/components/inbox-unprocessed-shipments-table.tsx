@@ -47,7 +47,10 @@ export function InboxUnprocessedShipmentsTable({
                   {row.type}
                 </td>
                 <td className="px-3 py-3">
-                  <span className="rounded-md bg-[#C628281A] px-2 py-1 text-[14px] font-normal leading-[100%] tracking-[0] text-[#C62828]">
+                  <span
+                    className="rounded-md bg-[#C628281A] px-2 py-1 text-[14px] font-normal leading-[100%] tracking-[0] text-[#C62828]"
+                    title={row.statusDetail}
+                  >
                     {row.status}
                   </span>
                 </td>

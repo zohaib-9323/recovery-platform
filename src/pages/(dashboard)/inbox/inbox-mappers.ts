@@ -1,6 +1,7 @@
 import type {
   RecoveryCombinedDocument,
   RecoveryDocumentAttachment,
+  RecoveryDocumentUnprocessable,
 } from '@/types/recovery-inbox-api'
 
 import type {
@@ -58,6 +59,28 @@ function resolveDownloadFileUrl(
     return `https://${bucket}.s3.amazonaws.com/${encodeS3KeyForUrl(s3Key)}`
   }
   return undefined
+}
+
+/**
+ * Maps the backend's machine-readable `failureReasonCode` to a short label
+ * for the unprocessed-shipments table. Falls back to the generic 'Failed'
+ * for documents ingested before this field existed, or any code not yet
+ * mapped here — never throws, never shows a raw enum string to the user.
+ */
+const FAILURE_REASON_LABELS: Record<string, string> = {
+  UNSUPPORTED_BINARY_FORMAT: 'Unsupported format',
+  GEMINI_ERROR: 'AI processing error',
+  PARSING_FAILURE: 'Parsing failed',
+}
+
+function getUnprocessableStatus(shipment: RecoveryDocumentUnprocessable): {
+  status: string
+  statusDetail?: string
+} {
+  const code = shipment.failureReasonCode
+  const status = (code && FAILURE_REASON_LABELS[code]) || 'Failed'
+  const statusDetail = shipment.extractedData?.summary || code || undefined
+  return { status, statusDetail }
 }
 
 function isAttachmentLike(value: unknown): value is RecoveryDocumentAttachment {
@@ -120,13 +143,17 @@ function mapUnprocessedRows(
   unprocessable: RecoveryCombinedDocument['unprocessable'],
 ): InboxUnprocessedShipmentRow[] {
   if (!unprocessable?.length) return []
-  return unprocessable.map((shipment, index) => ({
-    id: shipment.filename ?? `${index}`,
-    sourceIndex: index,
-    fileName: shipment.filename ?? `Unprocessable File #${index + 1}`,
-    type: shipment.type ?? 'UNKNOWN',
-    status: 'Failed',
-  }))
+  return unprocessable.map((shipment, index) => {
+    const { status, statusDetail } = getUnprocessableStatus(shipment)
+    return {
+      id: shipment.filename ?? `${index}`,
+      sourceIndex: index,
+      fileName: shipment.filename ?? `Unprocessable File #${index + 1}`,
+      type: shipment.type ?? 'UNKNOWN',
+      status,
+      statusDetail,
+    }
+  })
 }
 
 export function mapRecoveryDocumentToInboxEmail(record: RecoveryCombinedDocument): InboxEmail {
