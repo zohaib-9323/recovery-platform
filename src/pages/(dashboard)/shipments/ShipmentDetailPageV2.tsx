@@ -148,6 +148,9 @@ export function ShipmentDetailPageV2() {
 
   const { data, isLoading, isFetching, refetch } = useGetRecoveryShipmentByIdQuery(id, {
     skip: !id,
+    // Keeps the HS code challenge/item status in sync when an admin approves/rejects
+    // it while this page is already open — there's no push channel, so poll instead.
+    pollingInterval: 15_000,
   })
   const [fetchLandedCost, { isFetching: isLandedCostFetching }] =
     useLazyGetRecoveryShipmentLandedCostQuery()
@@ -193,7 +196,9 @@ export function ShipmentDetailPageV2() {
     )
   }
 
-  if (isLoading || isFetching) {
+  // Only the initial load (no cached data yet) blocks the page — background polling
+  // refetches (isFetching without isLoading) must not re-show this full-page loader.
+  if (isLoading || (isFetching && !data)) {
     return (
       <div
         id="report-content"

@@ -96,7 +96,13 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 export const recoveryApi = createApi({
   reducerPath: 'recoveryApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['RecoveryProfile', 'RecoveryPreferences', 'RecoveryShipments', 'RecoveryShipment'],
+  tagTypes: [
+    'RecoveryProfile',
+    'RecoveryPreferences',
+    'RecoveryShipments',
+    'RecoveryShipment',
+    'RecoveryNotifications',
+  ],
   endpoints: (builder) => ({
     login: builder.mutation<RecoveryAuthEnvelope, LoginRequestBody>({
       query: (body) => ({
