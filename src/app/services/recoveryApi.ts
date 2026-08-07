@@ -37,6 +37,7 @@ import type {
   RecoveryDocumentRecordType,
 } from '@/types/recovery-inbox-api'
 import type {
+  RecoveryPreferentialDutyEnvelope,
   RecoveryShipmentDetailEnvelope,
   RecoveryShipmentDownloadEnvelope,
   RecoveryShipmentDownloadFileType,
@@ -423,6 +424,23 @@ export const recoveryApi = createApi({
         { type: 'RecoveryShipment', id: arg.recoveryShipmentId },
       ],
     }),
+    /**
+     * Live duty-rate + preferential trade agreement lookup for a poItems[] entry (or, without
+     * `itemIndex`, for every item on the shipment). Twin of trade-harmonizer's server-side
+     * `attachTradeAgreement`/`TradeLookupService.lookupTrade`, exposed here as a read endpoint
+     * because recovery items — unlike main-flow items — only get a `tradeAgreement` snapshot
+     * persisted once a challenge on them is approved.
+     */
+    getRecoveryPreferentialDuty: builder.query<
+      RecoveryPreferentialDutyEnvelope,
+      { shipmentId: string; itemIndex?: number }
+    >({
+      query: ({ shipmentId, itemIndex }) => ({
+        url: `/recovery/shipments/${shipmentId}/preferential-duty`,
+        method: 'GET',
+        params: itemIndex !== undefined ? { itemIndex } : undefined,
+      }),
+    }),
     moveUnprocessableToProcessable: builder.mutation<
       RecoveryApiEnvelope<unknown>,
       { id: string; unprocessableIndex: number }
@@ -505,4 +523,5 @@ export const {
   useUploadRecoveryShipmentC88DocumentMutation,
   useUpdateRecoveryShipmentSanctionDecisionMutation,
   useChallengeRecoveryHsCodeMutation,
+  useGetRecoveryPreferentialDutyQuery,
 } = recoveryApi
