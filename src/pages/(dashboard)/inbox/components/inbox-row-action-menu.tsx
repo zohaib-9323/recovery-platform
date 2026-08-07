@@ -4,19 +4,20 @@ import { MoreVertical } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
-type InboxRowActionMenuProps = {
-  optionLabel: string
-  optionTextClassName: string
+export type InboxRowActionMenuOption = {
+  label: string
+  textClassName: string
   onSelect: () => Promise<void> | void
   disabled?: boolean
 }
 
-export function InboxRowActionMenu({
-  optionLabel,
-  optionTextClassName,
-  onSelect,
-  disabled = false,
-}: InboxRowActionMenuProps) {
+type InboxRowActionMenuProps = {
+  options: InboxRowActionMenuOption[]
+  /** Disables the trigger button itself (e.g. while any option's action is in flight). */
+  disabled?: boolean
+}
+
+export function InboxRowActionMenu({ options, disabled = false }: InboxRowActionMenuProps) {
   const buttonRef = useRef<HTMLButtonElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
@@ -83,17 +84,20 @@ export function InboxRowActionMenu({
             className="fixed z-[9999] w-52 rounded-md bg-white shadow-[0px_1px_10px_0px_#00000024]"
             style={{ top: position.top, left: position.left }}
           >
-            <button
-              type="button"
-              className={`w-full rounded-md px-4 py-3 text-left text-xs font-light hover:bg-[#F8F8F8] ${optionTextClassName}`}
-              onClick={async () => {
-                setOpen(false)
-                await onSelect()
-              }}
-              disabled={disabled}
-            >
-              {optionLabel}
-            </button>
+            {options.map((option) => (
+              <button
+                key={option.label}
+                type="button"
+                className={`w-full rounded-md px-4 py-3 text-left text-xs font-light hover:bg-[#F8F8F8] ${option.textClassName}`}
+                onClick={async () => {
+                  setOpen(false)
+                  await option.onSelect()
+                }}
+                disabled={disabled || option.disabled}
+              >
+                {option.label}
+              </button>
+            ))}
           </div>,
           document.body,
         )}

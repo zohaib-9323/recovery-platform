@@ -152,6 +152,7 @@ function mapUnprocessedRows(
       type: shipment.type ?? 'UNKNOWN',
       status,
       statusDetail,
+      s3Key: shipment.s3Key,
     }
   })
 }

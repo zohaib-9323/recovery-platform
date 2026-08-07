@@ -76,13 +76,16 @@ export function InboxProcessedShipmentsTable({
                 <td className="px-3 py-3">
                   <InboxRowActionMenu
                     disabled={convertingIndex === row.sourceIndex}
-                    optionLabel={
-                      convertingIndex === row.sourceIndex
-                        ? t('inbox.actions.converting')
-                        : t('inbox.actions.convertToUnprocessed')
-                    }
-                    optionTextClassName="text-redOne"
-                    onSelect={() => onConvertToUnprocessed?.(row.sourceIndex)}
+                    options={[
+                      {
+                        label:
+                          convertingIndex === row.sourceIndex
+                            ? t('inbox.actions.converting')
+                            : t('inbox.actions.convertToUnprocessed'),
+                        textClassName: 'text-redOne',
+                        onSelect: () => onConvertToUnprocessed?.(row.sourceIndex),
+                      },
+                    ]}
                   />
                 </td>
               </tr>
