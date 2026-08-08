@@ -1,5 +1,5 @@
 import { Inbox, Package } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import {
@@ -92,13 +92,12 @@ function toManageShipmentsTableRow(shipment: RecoveryShipmentRecord): ManageShip
 export function DashboardHomePage() {
   const { t } = useI18n()
   const navigate = useNavigate()
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
   const { data: dashboardData } = useGetRecoveryDashboardQuery()
   const { data: prefs } = useGetRecoveryPreferencesQuery()
   const { data: shipmentsData } = useGetRecoveryShipmentsListQuery({
     page: 1,
-    limit: 10,
-    pageSize: 10,
+    limit: 5,
+    pageSize: 5,
   })
   const dashboardStats = dashboardData?.content?.data
   const timeZone = prefs?.content?.timezone ?? null
@@ -113,10 +112,6 @@ export function DashboardHomePage() {
       ),
     [shipmentsData?.content?.data, shipmentsData?.content?.shipments],
   )
-  const handleSelect = useCallback((id: string) => {
-    setSelectedUserIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
-  }, [])
-
   const overviewKpis: KpiStat[] = [
     {
       id: 'emails',
@@ -151,7 +146,6 @@ export function DashboardHomePage() {
       trend: mapTrendDirection(filesTrend),
     },
   ]
-
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-8 p-4 md:p-6">
       <section>
@@ -162,21 +156,29 @@ export function DashboardHomePage() {
           ))}
         </div>
       </section>
-
       <section>
-        <h2 className="mb-4 text-base font-semibold text-rp-fg">
-          {t('dashboard.home.latestShipments')}
-        </h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-rp-fg">
+            {t('dashboard.home.latestShipments')}
+          </h2>
+          <button
+            type="button"
+            onClick={() => navigate('/shipments')}
+            className="text-sm font-semibold text-rp-accent underline underline-offset-2 hover:opacity-80"
+          >
+            {t('dashboard.home.viewAll')}
+          </button>
+        </div>
         <AllShipmentsDataTable
           data={latestShipmentRows}
-          selectedUserIds={selectedUserIds}
-          onCheckChange={handleSelect}
+          selectedUserIds={[]}
+          onCheckChange={() => {}}
+          showCheckboxColumn={false}
           onSanctionWarning={() => {}}
           timeZone={timeZone}
           showDateSplit={true}
         />
       </section>
-
       <section>
         <h2 className="mb-4 text-base font-semibold text-rp-fg">
           {t('dashboard.home.quickActions')}

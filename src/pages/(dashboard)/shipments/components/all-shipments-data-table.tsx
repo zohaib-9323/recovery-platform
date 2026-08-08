@@ -59,6 +59,8 @@ export type AllShipmentsDataTableProps = {
   className?: string
   /** Show separate Upload Date / Shipment Date columns instead of a single Date column. */
   showDateSplit?: boolean
+  /** Show the row-selection checkbox column. Defaults to true. */
+  showCheckboxColumn?: boolean
 }
 
 export function AllShipmentsDataTable({
@@ -69,9 +71,11 @@ export function AllShipmentsDataTable({
   uploadC88Document,
   timeZone,
   showDateSplit = true,
+  showCheckboxColumn = true,
 }: AllShipmentsDataTableProps) {
   const navigate = useNavigate()
   const { t } = useI18n()
+  const columnCount = (showCheckboxColumn ? 1 : 0) + (showDateSplit ? 2 : 1) + 5
 
   return (
     <div className="mx-auto w-full overflow-hidden rounded-lg border border-bottomBorder">
@@ -79,7 +83,7 @@ export function AllShipmentsDataTable({
         <table className="w-[350%] rounded-lg bg-white sm:w-[250%] md:w-[200%] lg:w-[150%] ipadLarge:w-full">
           <thead className="bg-greyFour text-black">
             <tr className="text-left text-sm font-medium">
-              <th className="p-3" />
+              {showCheckboxColumn && <th className="p-3" />}
               <th className="p-3 text-left text-xs font-normal capitalize sm:text-sm">
                 {MS.shipmentTitle}
               </th>
@@ -124,12 +128,14 @@ export function AllShipmentsDataTable({
                       shipment?.is_flagged ? 'bg-lightRedOne' : ''
                     }`}
                   >
-                    <td className="p-3">
-                      <CustomCheckboxShipment
-                        onChange={() => onCheckChange(shipment._id)}
-                        isChecked={selectedUserIds.includes(shipment._id)}
-                      />
-                    </td>
+                    {showCheckboxColumn && (
+                      <td className="p-3">
+                        <CustomCheckboxShipment
+                          onChange={() => onCheckChange(shipment._id)}
+                          isChecked={selectedUserIds.includes(shipment._id)}
+                        />
+                      </td>
+                    )}
                     <td className="max-w-24 truncate break-all p-3 text-xs font-medium capitalize text-black sm:max-w-36 sm:text-sm md:max-w-80 2xl:max-w-full">
                       <span title={shipment.shipmentTitle}>{shipment.shipmentTitle}</span>
                       {hasSanctionMatch(shipment) &&
@@ -298,7 +304,7 @@ export function AllShipmentsDataTable({
               })
             ) : (
               <tr className="h-[40svh]">
-                <td colSpan={8} className="p-4 text-center text-black">
+                <td colSpan={columnCount} className="p-4 text-center text-black">
                   {MS.noshipmentsAvailable}
                 </td>
               </tr>
