@@ -17,8 +17,32 @@ import { resolveRecoveryNotificationPath } from '@/lib/notificationNavigation'
 import type { RecoveryNotificationRecord } from '@/types/recovery-notifications-api'
 
 import { ProfileMenuTh } from '@/components/layout/profile-menu-th'
+import { CustomLoader } from '@/components/feedback/custom-loader'
 
 const NOTIFICATION_COUNTS_POLL_MS = 30_000
+
+function parseBoldMessage(message: string) {
+  const parts = message.split(/(\[bold\]|\[\/bold\])/g)
+  let bold = false
+
+  return parts.map((part, index) => {
+    if (part === '[bold]') {
+      bold = true
+      return null
+    }
+    if (part === '[/bold]') {
+      bold = false
+      return null
+    }
+    return bold ? (
+      <strong key={index} className="font-semibold">
+        {part}
+      </strong>
+    ) : (
+      <span key={index}>{part}</span>
+    )
+  })
+}
 
 export function AppHeader() {
   const { t } = useI18n()
@@ -145,9 +169,9 @@ export function AppHeader() {
 
                     <div className="max-h-80 overflow-y-auto">
                       {isListFetching ? (
-                        <p className="px-4 py-4 text-sm text-lightBlackOne">
-                          {t('layout.appHeader.loadingNotifications')}
-                        </p>
+                        <div className="p-2">
+                          <CustomLoader />
+                        </div>
                       ) : notifications.length === 0 ? (
                         <p className="px-4 py-4 text-sm text-lightBlackOne">
                           {t('layout.appHeader.noNotifications')}
@@ -163,7 +187,9 @@ export function AppHeader() {
                             }`}
                           >
                             <span className="text-sm font-medium text-black">{item.title}</span>
-                            <span className="text-xs text-lightBlackOne">{item.description}</span>
+                            <span className="text-xs text-lightBlackOne">
+                              {parseBoldMessage(item.description)}
+                            </span>
                             {item.createdAt ? (
                               <span className="text-xxtiny text-lightBlackOne">
                                 {new Date(item.createdAt).toLocaleString()}
