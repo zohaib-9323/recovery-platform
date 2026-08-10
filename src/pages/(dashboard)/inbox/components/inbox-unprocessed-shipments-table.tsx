@@ -20,7 +20,6 @@ export type InboxUnprocessedShipmentsTableProps = {
 
 export function InboxUnprocessedShipmentsTable({
   rows,
-  onConvertToProcessable,
   convertingIndex = null,
   onRetry,
   retryingIndex = null,
@@ -89,13 +88,6 @@ export function InboxUnprocessedShipmentsTable({
                               : t('inbox.actions.retry'),
                             textClassName: 'text-black',
                             onSelect: () => onRetry?.(row),
-                          },
-                          {
-                            label: isConverting
-                              ? t('inbox.actions.converting')
-                              : t('inbox.actions.convertToProcessable'),
-                            textClassName: 'text-green',
-                            onSelect: () => onConvertToProcessable?.(row.sourceIndex),
                           },
                         ]}
                       />

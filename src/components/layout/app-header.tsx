@@ -17,6 +17,7 @@ import { resolveRecoveryNotificationPath } from '@/lib/notificationNavigation'
 import type { RecoveryNotificationRecord } from '@/types/recovery-notifications-api'
 
 import { ProfileMenuTh } from '@/components/layout/profile-menu-th'
+import { CustomLoader } from '@/components/feedback/custom-loader'
 
 const NOTIFICATION_COUNTS_POLL_MS = 30_000
 
@@ -145,9 +146,9 @@ export function AppHeader() {
 
                     <div className="max-h-80 overflow-y-auto">
                       {isListFetching ? (
-                        <p className="px-4 py-4 text-sm text-lightBlackOne">
-                          {t('layout.appHeader.loadingNotifications')}
-                        </p>
+                        <div className="p-2">
+                          <CustomLoader />
+                        </div>
                       ) : notifications.length === 0 ? (
                         <p className="px-4 py-4 text-sm text-lightBlackOne">
                           {t('layout.appHeader.noNotifications')}

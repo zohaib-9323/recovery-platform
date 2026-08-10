@@ -17,7 +17,6 @@ export const messages: Record<string, string> = {
   'layout.appHeader.notifications': 'Notifications',
   'layout.appHeader.noNotifications': "You're all caught up — no notifications yet.",
   'layout.appHeader.markAllRead': 'Mark all as read',
-  'layout.appHeader.loadingNotifications': 'Loading notifications…',
   'layout.appHeader.profileFallbackName': 'User',
   'layout.profileMenu.avatarAlt': 'Profile',
   'layout.profileMenu.settings': 'Settings',
