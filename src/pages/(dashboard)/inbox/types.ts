@@ -37,6 +37,23 @@ export type InboxUnprocessedShipmentRow = {
   s3Key?: string
 }
 
+/**
+ * A manual Create Shipment request that has been submitted to the backend but hasn't
+ * resolved yet. Purely a client-side, in-memory concept — the backend has no "in
+ * processing" state of its own. While an entry exists here, its `ciRow`/`c88Row` are
+ * hidden from the Unprocessable Shipments table so the same files can't be submitted
+ * twice; on success they're gone for good (refetch picks up the new Processable row),
+ * on failure the entry is removed and the rows simply reappear as unprocessable.
+ */
+export type InboxInProcessingShipmentRow = {
+  /** Client-generated id — this row doesn't exist on the backend yet, so there's no server id. */
+  id: string
+  documentId: string
+  title: string
+  ciFileName: string
+  c88FileName: string
+}
+
 export type InboxEmail = {
   id: string
   messageId: string

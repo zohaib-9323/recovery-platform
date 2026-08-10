@@ -1,27 +1,31 @@
 import { useEffect, useId, useMemo, useState } from 'react'
 
-import { useCreateManualShipmentMutation } from '@/app/services/recoveryDocumentActionsApi'
 import { useI18n } from '@/i18n/useI18n'
-import { getRtkErrorMessage } from '@/lib/api-errors'
-import { showCustomToast } from '@/lib/showCustomToast'
 import type { InboxUnprocessedShipmentRow } from '@/pages/(dashboard)/inbox/types'
 
+export type CreateShipmentSubmitPayload = {
+  title: string
+  ciRow: InboxUnprocessedShipmentRow
+  c88Row: InboxUnprocessedShipmentRow
+}
+
 export type CreateShipmentModalProps = {
-  documentId: string
   rows: InboxUnprocessedShipmentRow[]
   onClose: () => void
-  onCreated?: () => Promise<unknown> | unknown
+  /**
+   * Called once client-side validation passes. The actual mutation runs in the
+   * background from the parent (`InboxDetailPanel`) so it survives this modal
+   * closing — see docs/retry-and-manual-shipment-creation.md. This callback is
+   * fire-and-forget from the modal's point of view: it never awaits it, and
+   * closes immediately after calling it.
+   */
+  onSubmit: (payload: CreateShipmentSubmitPayload) => void
 }
 
 const inputClassName =
   'h-10 w-full rounded-md border border-bottomBorder bg-white px-3 text-sm text-black outline-none focus:ring-2 focus:ring-yellow/35'
 
-export function CreateShipmentModal({
-  documentId,
-  rows,
-  onClose,
-  onCreated,
-}: CreateShipmentModalProps) {
+export function CreateShipmentModal({ rows, onClose, onSubmit }: CreateShipmentModalProps) {
   const { t } = useI18n()
   const titleInputId = useId()
   const ciSelectId = useId()
@@ -31,7 +35,6 @@ export function CreateShipmentModal({
   const [ciIndex, setCiIndex] = useState<string>('')
   const [c88Index, setC88Index] = useState<string>('')
   const [formError, setFormError] = useState<string | null>(null)
-  const [createManualShipment, { isLoading }] = useCreateManualShipmentMutation()
 
   // Only files with a current s3Key can be safely selected — the backend re-validates it
   // against the document's current state and rejects anything else. Older documents
@@ -47,7 +50,7 @@ export function CreateShipmentModal({
     }
   }, [])
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     setFormError(null)
     const trimmedTitle = title.trim()
     if (!trimmedTitle) {
@@ -69,25 +72,11 @@ export function CreateShipmentModal({
       return
     }
 
-    try {
-      await createManualShipment({
-        id: documentId,
-        title: trimmedTitle,
-        ciIndex: ciRow.sourceIndex,
-        ciS3Key: ciRow.s3Key,
-        c88Index: c88Row.sourceIndex,
-        c88S3Key: c88Row.s3Key,
-      }).unwrap()
-      showCustomToast({
-        type: 'success',
-        title: 'Success',
-        message: t('inbox.createShipment.success'),
-      })
-      await onCreated?.()
-      onClose()
-    } catch (error) {
-      setFormError(getRtkErrorMessage(error))
-    }
+    // Hand off to the parent and close right away — the request itself keeps running
+    // in the background (tracked as an "in processing" row) even though this modal
+    // is about to unmount.
+    onSubmit({ title: trimmedTitle, ciRow, c88Row })
+    onClose()
   }
 
   return (
@@ -99,12 +88,7 @@ export function CreateShipmentModal({
               <h1 className="text-md text-nowrap font-bold text-black md:text-xl">
                 {t('inbox.createShipment.title')}
               </h1>
-              <button
-                type="button"
-                disabled={isLoading}
-                onClick={onClose}
-                aria-label={t('common.close')}
-              >
+              <button type="button" onClick={onClose} aria-label={t('common.close')}>
                 <span className="icon-close text-large text-black" />
               </button>
             </div>
@@ -134,7 +118,6 @@ export function CreateShipmentModal({
                   type="text"
                   value={title}
                   maxLength={200}
-                  disabled={isLoading}
                   placeholder={t('inbox.createShipment.titlePlaceholder')}
                   onChange={(e) => {
                     setTitle(e.target.value)
@@ -155,7 +138,7 @@ export function CreateShipmentModal({
                 <select
                   id={ciSelectId}
                   value={ciIndex}
-                  disabled={isLoading || selectableRows.length === 0}
+                  disabled={selectableRows.length === 0}
                   onChange={(e) => {
                     setCiIndex(e.target.value)
                     setFormError(null)
@@ -186,7 +169,7 @@ export function CreateShipmentModal({
                 <select
                   id={c88SelectId}
                   value={c88Index}
-                  disabled={isLoading || selectableRows.length === 0}
+                  disabled={selectableRows.length === 0}
                   onChange={(e) => {
                     setC88Index(e.target.value)
                     setFormError(null)
@@ -216,7 +199,6 @@ export function CreateShipmentModal({
               <button
                 type="button"
                 onClick={onClose}
-                disabled={isLoading}
                 className="rounded-lg border border-bottomBorder px-4 py-2 !font-light text-black disabled:opacity-70"
               >
                 {t('common.cancel')}
@@ -224,12 +206,10 @@ export function CreateShipmentModal({
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={isLoading || selectableRows.length === 0}
+                disabled={selectableRows.length === 0}
                 className="rounded-lg bg-yellow px-4 py-2 !font-light text-white disabled:bg-disableColor disabled:opacity-70"
               >
-                {isLoading
-                  ? t('inbox.createShipment.submitting')
-                  : t('inbox.createShipment.submit')}
+                {t('inbox.createShipment.submit')}
               </button>
             </div>
           </div>
