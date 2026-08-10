@@ -21,6 +21,29 @@ import { CustomLoader } from '@/components/feedback/custom-loader'
 
 const NOTIFICATION_COUNTS_POLL_MS = 30_000
 
+function parseBoldMessage(message: string) {
+  const parts = message.split(/(\[bold\]|\[\/bold\])/g)
+  let bold = false
+
+  return parts.map((part, index) => {
+    if (part === '[bold]') {
+      bold = true
+      return null
+    }
+    if (part === '[/bold]') {
+      bold = false
+      return null
+    }
+    return bold ? (
+      <strong key={index} className="font-semibold">
+        {part}
+      </strong>
+    ) : (
+      <span key={index}>{part}</span>
+    )
+  })
+}
+
 export function AppHeader() {
   const { t } = useI18n()
   const pathName = useLocation().pathname
@@ -164,7 +187,9 @@ export function AppHeader() {
                             }`}
                           >
                             <span className="text-sm font-medium text-black">{item.title}</span>
-                            <span className="text-xs text-lightBlackOne">{item.description}</span>
+                            <span className="text-xs text-lightBlackOne">
+                              {parseBoldMessage(item.description)}
+                            </span>
                             {item.createdAt ? (
                               <span className="text-xxtiny text-lightBlackOne">
                                 {new Date(item.createdAt).toLocaleString()}
