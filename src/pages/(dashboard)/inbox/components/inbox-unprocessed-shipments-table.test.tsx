@@ -4,9 +4,11 @@ import type { InboxUnprocessedShipmentRow } from '@/pages/(dashboard)/inbox/type
 import { InboxUnprocessedShipmentsTable } from './inbox-unprocessed-shipments-table'
 
 /**
- * Covers Phase 4's Retry UI: the per-row "Retry" action menu item and the
- * bulk "Retry All" button, including their busy/disabled interplay with the
- * pre-existing "Convert to processable" action on the same row.
+ * Covers Phase 4's Retry UI: the per-row "Retry" action menu item, including
+ * its busy/disabled interplay with the pre-existing "Convert to processable"
+ * action on the same row. Bulk "Retry All" was removed from this
+ * self-service table — that capability now lives only in the admin panel
+ * (trade-harmonizer's admin-recovery-inbox detail page).
  */
 
 const ROW_A: InboxUnprocessedShipmentRow = {
@@ -34,49 +36,17 @@ function openRowMenu(rowFileName: string) {
 }
 
 describe('InboxUnprocessedShipmentsTable', () => {
-  it('renders the empty state and no Retry All button when there are no rows', () => {
-    render(<InboxUnprocessedShipmentsTable rows={[]} onRetryAll={jest.fn()} />)
+  it('renders the empty state when there are no rows', () => {
+    render(<InboxUnprocessedShipmentsTable rows={[]} />)
 
     expect(
       screen.getByText('No unprocessable shipments available for this message.'),
     ).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Retry All' })).not.toBeInTheDocument()
-  })
-
-  it('does not render the Retry All button when onRetryAll is not provided', () => {
-    render(<InboxUnprocessedShipmentsTable rows={[ROW_A]} />)
-
-    expect(screen.queryByRole('button', { name: 'Retry All' })).not.toBeInTheDocument()
-  })
-
-  it('calls onRetryAll when the bulk button is clicked, and shows the in-flight label', () => {
-    const onRetryAll = jest.fn()
-    const { rerender } = render(
-      <InboxUnprocessedShipmentsTable rows={[ROW_A, ROW_B]} onRetryAll={onRetryAll} />,
-    )
-
-    fireEvent.click(screen.getByRole('button', { name: 'Retry All' }))
-    expect(onRetryAll).toHaveBeenCalledTimes(1)
-
-    rerender(
-      <InboxUnprocessedShipmentsTable
-        rows={[ROW_A, ROW_B]}
-        onRetryAll={onRetryAll}
-        isRetryingAll
-      />,
-    )
-    expect(screen.getByRole('button', { name: 'Retrying All...' })).toBeDisabled()
   })
 
   it('calls onRetry with the clicked row from its action menu', () => {
     const onRetry = jest.fn()
-    render(
-      <InboxUnprocessedShipmentsTable
-        rows={[ROW_A, ROW_B]}
-        onRetry={onRetry}
-        onRetryAll={jest.fn()}
-      />,
-    )
+    render(<InboxUnprocessedShipmentsTable rows={[ROW_A, ROW_B]} onRetry={onRetry} />)
 
     openRowMenu('a.pdf')
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
@@ -101,23 +71,5 @@ describe('InboxUnprocessedShipmentsTable', () => {
     const rowB = screen.getByText('b.pdf').closest('tr')!
     const rowBTrigger = rowB.querySelector('button')!
     expect(rowBTrigger).not.toBeDisabled()
-  })
-
-  it('disables every row action while a bulk Retry All is in flight', () => {
-    render(
-      <InboxUnprocessedShipmentsTable
-        rows={[ROW_A, ROW_B]}
-        onRetry={jest.fn()}
-        onRetryAll={jest.fn()}
-        isRetryingAll
-      />,
-    )
-
-    const rowA = screen.getByText('a.pdf').closest('tr')!
-    expect(rowA.querySelector('button')).toBeDisabled()
-    const rowB = screen.getByText('b.pdf').closest('tr')!
-    expect(rowB.querySelector('button')).toBeDisabled()
-
-    expect(screen.getByRole('button', { name: 'Retrying All...' })).toBeDisabled()
   })
 })
