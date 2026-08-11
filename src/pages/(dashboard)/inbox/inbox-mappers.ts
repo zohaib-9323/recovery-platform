@@ -136,7 +136,10 @@ function mapProcessableRows(
   return processable.map((shipment, index) => ({
     id: shipment.shipmentId ?? `${index}`,
     sourceIndex: index,
-    title: shipment.shipmentId ?? '-',
+    // Prefer the backend-derived shipment title (email subject > PO-extracted
+    // title); only fall back to the raw shipmentId for older records or rows
+    // where neither source produced a title.
+    title: shipment.shipmentTitle || shipment.shipmentId || '-',
     date: formatDateTime(createdAt),
     c88: mapProcessableAttachment(shipment.c88, 'c88', shipment.shipmentId ?? '', index),
     po: mapProcessableAttachment(shipment.po, 'po', shipment.shipmentId ?? '', index),
