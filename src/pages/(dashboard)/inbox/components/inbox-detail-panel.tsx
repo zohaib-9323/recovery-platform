@@ -53,7 +53,6 @@ export function InboxDetailPanel({
     null,
   )
   const [retryingUnprocessableIndex, setRetryingUnprocessableIndex] = useState<number | null>(null)
-  const [isRetryingAll, setIsRetryingAll] = useState(false)
   const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false)
   const [downloadingAttachmentId, setDownloadingAttachmentId] = useState<string | null>(null)
   // Manual "Create Shipment" requests that were submitted but haven't resolved yet.
@@ -140,28 +139,6 @@ export function InboxDetailPanel({
       })
     } finally {
       setRetryingUnprocessableIndex(null)
-    }
-  }
-
-  const handleRetryAllUnprocessable = async () => {
-    if (!email) return
-    try {
-      setIsRetryingAll(true)
-      await retryUnprocessable({ id: email.id, targets: [] }).unwrap()
-      showCustomToast({
-        type: 'success',
-        title: 'Success',
-        message: t('inbox.actions.retryAllSuccess'),
-      })
-      await onInboxUpdated?.()
-    } catch (error) {
-      showCustomToast({
-        type: 'error',
-        title: 'Error',
-        message: getRtkErrorMessage(error),
-      })
-    } finally {
-      setIsRetryingAll(false)
     }
   }
 
@@ -460,8 +437,6 @@ export function InboxDetailPanel({
             convertingIndex={convertingUnprocessableIndex}
             onRetry={handleRetryUnprocessable}
             retryingIndex={retryingUnprocessableIndex}
-            onRetryAll={handleRetryAllUnprocessable}
-            isRetryingAll={isRetryingAll}
           />
         </>
       )}
