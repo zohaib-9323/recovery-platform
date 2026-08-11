@@ -14,6 +14,13 @@ export type RecoveryDocumentAttachment = {
 export type RecoveryDocumentProcessable = {
   shipmentId?: string
   matchedShipmentRefs?: string[]
+  /**
+   * Derived server-side (email subject > PO-extracted title > null) — this
+   * entry has no shipment yet, so there's no persisted `shipmentTitle` to
+   * read; the backend computes a preview using the same priority order
+   * `RecoveryShipmentPersistenceService` uses when a shipment IS created.
+   */
+  shipmentTitle?: string | null
   [key: string]: unknown
 }
 
