@@ -1,7 +1,6 @@
 import { useI18n } from '@/i18n/useI18n'
 import { cn } from '@/lib/utils'
 import type { InboxAttachment, InboxShipmentRow } from '@/pages/(dashboard)/inbox/types'
-import { InboxRowActionMenu } from './inbox-row-action-menu'
 
 const thCell =
   'px-3 py-3 text-left text-[13px] font-normal leading-[100%] tracking-[0] text-[#000000]'
@@ -17,9 +16,7 @@ export type InboxProcessedShipmentsTableProps = {
 
 export function InboxProcessedShipmentsTable({
   rows,
-  onConvertToUnprocessed,
   onDownloadAttachment,
-  convertingIndex = null,
   className,
 }: InboxProcessedShipmentsTableProps) {
   const { t } = useI18n()
@@ -37,7 +34,6 @@ export function InboxProcessedShipmentsTable({
               <th className={thCell}>{t('inbox.processed.col.date')}</th>
               <th className={thCell}>{t('inbox.processed.col.c88')}</th>
               <th className={thCell}>{t('inbox.processed.col.po')}</th>
-              <th className={thCell}>{t('inbox.processed.col.actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -72,18 +68,6 @@ export function InboxProcessedShipmentsTable({
                   ) : (
                     '-'
                   )}
-                </td>
-                <td className="px-3 py-3">
-                  <InboxRowActionMenu
-                    disabled={convertingIndex === row.sourceIndex}
-                    optionLabel={
-                      convertingIndex === row.sourceIndex
-                        ? t('inbox.actions.converting')
-                        : t('inbox.actions.convertToUnprocessed')
-                    }
-                    optionTextClassName="text-redOne"
-                    onSelect={() => onConvertToUnprocessed?.(row.sourceIndex)}
-                  />
                 </td>
               </tr>
             ))}

@@ -9,6 +9,7 @@ export type RecoveryShipmentRecord = {
   shipmentReference?: string
   purchaseOrderNumber?: string
   date?: string
+  createdAt?: string
   shipVia?: string
   status?: RecoveryShipmentStatusCode
   refund_status?: RecoveryRefundStatusCode
@@ -89,6 +90,39 @@ export type RecoveryShipmentParty = {
   fax?: string
 }
 
+/** Required-document entry for a preferential trade agreement (rules-of-origin proof). */
+export type RecoveryTradeLookupDocument = {
+  document_code?: string
+  certificate_description?: string
+  guidance_cds?: string
+}
+
+/** A single duty measure (standard/MFN or a preferential agreement) from the live
+ *  UK Trade Tariff lookup, as returned by `GET /recovery/shipments/:id/preferential-duty`. */
+export type RecoveryTradeLookupAgreement = {
+  agreement_name?: string
+  duty?: string
+  duty_is_compound?: boolean
+  measure_id?: string
+  measure_type?: string
+  geographical_area?: string
+  documents_required?: RecoveryTradeLookupDocument[]
+  documents_loading?: boolean
+}
+
+/** Trade-lookup snapshot for one HS code + origin country pair. Mirrors trade-harmonizer's
+ *  `TradeLookupResponse` (see `trade-harmony.ts`) — either fetched live via the preferential-duty
+ *  endpoint, or persisted onto a poItems[] entry once an HS code challenge is approved. */
+export type RecoveryTradeLookupResponse = {
+  hs_code?: string
+  commodity_code?: string
+  description?: string
+  origin?: string
+  standard_duty?: RecoveryTradeLookupAgreement
+  agreements?: RecoveryTradeLookupAgreement[]
+  lowest_duty?: RecoveryTradeLookupAgreement
+}
+
 export type RecoveryShipmentItem = {
   _id?: string
   id?: string
@@ -112,7 +146,46 @@ export type RecoveryShipmentItem = {
   source?: string
   shipment?: string
   shipment_id?: string
+  /** Set when this poItems[] entry has a pending HS code challenge. */
+  is_challenged?: boolean
+  challengeData?: {
+    _id?: string
+    proposedHsCode?: string
+    reason?: string
+    description?: string
+    status?: string
+  }
+  /** Persisted trade-lookup snapshot — only populated once a challenge on this item has been
+   *  approved. Most items won't carry this; use `getRecoveryPreferentialDuty` for a live lookup. */
+  tradeAgreement?: RecoveryTradeLookupResponse | null
+  /** This item's position in the shipment's `poItems[]` array — the id `getRecoveryPreferentialDuty`
+   *  needs. Set by `ShipmentDetailPageV2` when normalizing items; not part of the API response. */
+  poItemIndex?: number
 }
+
+/** Single-item shape of `GET /recovery/shipments/:id/preferential-duty?itemIndex=N`. */
+export type RecoveryPreferentialDutyItem = {
+  itemIndex: number
+  itemNumber?: string | null
+  description?: string | null
+  hsCode?: string | null
+  dutyRate?: number | null
+  dutyAmount?: number | null
+  landedCost?: number | null
+  tradeLookup?: RecoveryTradeLookupResponse | null
+  existingTradeAgreement?: RecoveryTradeLookupResponse | null
+}
+
+/** Response of `GET /recovery/shipments/:id/preferential-duty`. When called with an
+ *  `itemIndex` query param, the single-item fields are populated; without it, `items[]`
+ *  carries the same shape for every poItems[] entry. */
+export type RecoveryPreferentialDutyContent = RecoveryPreferentialDutyItem & {
+  shipmentId: string
+  originCountryCode?: string
+  items?: RecoveryPreferentialDutyItem[]
+}
+
+export type RecoveryPreferentialDutyEnvelope = RecoveryApiEnvelope<RecoveryPreferentialDutyContent>
 
 export type RecoveryShipmentDetail = RecoveryShipmentRecord & {
   requisitioner?: string
@@ -121,6 +194,10 @@ export type RecoveryShipmentDetail = RecoveryShipmentRecord & {
   unit?: string
   refundStatus?: RecoveryRefundStatusCode
   poDocumentUrl?: string
+  /** Recovery detail: PO stored in S3 — presence means a PO document exists. */
+  poS3Key?: string | null
+  poFilename?: string | null
+  poBucket?: string | null
   additionalDocuments?: string[]
   company?: RecoveryShipmentParty
   vendor?: RecoveryShipmentParty
@@ -184,3 +261,27 @@ export type RecoveryShipmentLogsQuery = {
 }
 
 export type RecoveryShipmentLogsEnvelope = RecoveryApiEnvelope<RecoveryShipmentLogsContent>
+
+export type RecoveryShipmentDownloadFileType = 'c88' | 'po' | 'both'
+
+export type RecoveryShipmentDownloadFile = {
+  type: RecoveryShipmentDownloadFileType
+  downloadUrl?: string
+  bucket?: string
+  key?: string
+  fileName?: string
+  expiresIn?: number
+}
+
+export type RecoveryShipmentDownloadContent = {
+  shipmentId: string
+  files: RecoveryShipmentDownloadFile[]
+}
+
+export type RecoveryShipmentDownloadEnvelope = RecoveryApiEnvelope<RecoveryShipmentDownloadContent>
+
+export type RecoveryShipmentDownloadRequest = {
+  id: string
+  fileType?: RecoveryShipmentDownloadFileType
+  expiresIn?: number
+}

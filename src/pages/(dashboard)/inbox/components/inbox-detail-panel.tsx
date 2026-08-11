@@ -5,12 +5,25 @@ import {
   useMoveProcessableToUnprocessableMutation,
   useMoveUnprocessableToProcessableMutation,
 } from '@/app/services/recoveryApi'
+import {
+  useCreateManualShipmentMutation,
+  useRetryUnprocessableMutation,
+} from '@/app/services/recoveryDocumentActionsApi'
 import { useI18n } from '@/i18n/useI18n'
+import { getRtkErrorMessage } from '@/lib/api-errors'
 import { showCustomToast } from '@/lib/showCustomToast'
 import { cn } from '@/lib/utils'
-import type { InboxAttachment, InboxEmail } from '@/pages/(dashboard)/inbox/types'
+import type {
+  InboxAttachment,
+  InboxEmail,
+  InboxInProcessingShipmentRow,
+  InboxUnprocessedShipmentRow,
+} from '@/pages/(dashboard)/inbox/types'
 
+import { CreateShipmentModal } from './create-shipment-modal'
+import type { CreateShipmentSubmitPayload } from './create-shipment-modal'
 import { InboxAttachmentsTable } from './inbox-attachments-table'
+import { InboxInProcessingShipmentsTable } from './inbox-in-processing-shipments-table'
 import { InboxProcessedShipmentsTable } from './inbox-processed-shipments-table'
 import { InboxUnprocessedShipmentsTable } from './inbox-unprocessed-shipments-table'
 
@@ -33,11 +46,23 @@ export function InboxDetailPanel({
   const [getRecoveryDownloadUrl] = useGetRecoveryDownloadUrlMutation()
   const [moveUnprocessableToProcessable] = useMoveUnprocessableToProcessableMutation()
   const [moveProcessableToUnprocessable] = useMoveProcessableToUnprocessableMutation()
+  const [retryUnprocessable] = useRetryUnprocessableMutation()
+  const [createManualShipment] = useCreateManualShipmentMutation()
   const [convertingProcessableIndex, setConvertingProcessableIndex] = useState<number | null>(null)
   const [convertingUnprocessableIndex, setConvertingUnprocessableIndex] = useState<number | null>(
     null,
   )
+  const [retryingUnprocessableIndex, setRetryingUnprocessableIndex] = useState<number | null>(null)
+  const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false)
   const [downloadingAttachmentId, setDownloadingAttachmentId] = useState<string | null>(null)
+  // Manual "Create Shipment" requests that were submitted but haven't resolved yet.
+  // Kept here (not in the modal) so the request survives the modal closing — see
+  // handleCreateShipmentSubmit below and docs/retry-and-manual-shipment-creation.md.
+  // Not scoped to the currently-selected email: switching emails must not abandon an
+  // in-flight request started against a different one.
+  const [inProcessingShipments, setInProcessingShipments] = useState<
+    (InboxInProcessingShipmentRow & { ciSourceIndex: number; c88SourceIndex: number })[]
+  >([])
   const statusValue = String(email?.status ?? '')
     .toLowerCase()
     .trim()
@@ -82,6 +107,97 @@ export function InboxDetailPanel({
     } finally {
       setConvertingProcessableIndex(null)
     }
+  }
+
+  const handleRetryUnprocessable = async (row: InboxUnprocessedShipmentRow) => {
+    if (!email) return
+    if (!row.s3Key) {
+      showCustomToast({
+        type: 'error',
+        title: 'Error',
+        message: 'Missing file reference for this item. Please refresh and try again.',
+      })
+      return
+    }
+    try {
+      setRetryingUnprocessableIndex(row.sourceIndex)
+      await retryUnprocessable({
+        id: email.id,
+        targets: [{ index: row.sourceIndex, s3Key: row.s3Key }],
+      }).unwrap()
+      showCustomToast({
+        type: 'success',
+        title: 'Success',
+        message: t('inbox.actions.retrySuccess'),
+      })
+      await onInboxUpdated?.()
+    } catch (error) {
+      showCustomToast({
+        type: 'error',
+        title: 'Error',
+        message: getRtkErrorMessage(error),
+      })
+    } finally {
+      setRetryingUnprocessableIndex(null)
+    }
+  }
+
+  /**
+   * Fires the Create Shipment mutation in the background and returns immediately —
+   * the modal has already validated the input and closed itself by the time this
+   * runs. The request's lifecycle is tracked entirely through `inProcessingShipments`
+   * rather than a mutation-hook loading flag, since no component stays mounted for
+   * the mutation's whole lifetime otherwise.
+   */
+  const handleCreateShipmentSubmit = ({ title, ciRow, c88Row }: CreateShipmentSubmitPayload) => {
+    if (!email || !ciRow.s3Key || !c88Row.s3Key) return
+    const documentId = email.id
+    const key = `${documentId}-${Date.now()}-${Math.random().toString(36).slice(2)}`
+
+    setInProcessingShipments((prev) => [
+      ...prev,
+      {
+        id: key,
+        documentId,
+        title,
+        ciFileName: ciRow.fileName,
+        c88FileName: c88Row.fileName,
+        ciSourceIndex: ciRow.sourceIndex,
+        c88SourceIndex: c88Row.sourceIndex,
+      },
+    ])
+
+    createManualShipment({
+      id: documentId,
+      title,
+      ciIndex: ciRow.sourceIndex,
+      ciS3Key: ciRow.s3Key,
+      c88Index: c88Row.sourceIndex,
+      c88S3Key: c88Row.s3Key,
+    })
+      .unwrap()
+      .then(async () => {
+        showCustomToast({
+          type: 'success',
+          title: 'Success',
+          message: t('inbox.createShipment.success'),
+        })
+        // Backend has already moved these files into the new shipment — refetching
+        // is what actually surfaces it under Processable Shipments.
+        await onInboxUpdated?.()
+      })
+      .catch((error) => {
+        // Nothing changed server-side on failure — once the entry below is removed,
+        // these rows just reappear under Unprocessable Shipments on their own.
+        showCustomToast({
+          type: 'error',
+          title: 'Error',
+          message: getRtkErrorMessage(error),
+        })
+      })
+      .finally(() => {
+        setInProcessingShipments((prev) => prev.filter((item) => item.id !== key))
+      })
   }
 
   const handleDownloadAttachment = async (attachment: InboxAttachment) => {
@@ -174,6 +290,21 @@ export function InboxDetailPanel({
 
   const contextAttachments = email.attachments
   const messageContextCardClass = cn('rounded-lg border p-3 border-[#E4E4E4] bg-[#F8F8F8]')
+
+  // Scope in-processing entries to the email currently on screen — entries for other
+  // emails keep running in the background (the mutation isn't tied to this render),
+  // they just aren't shown until that email is selected again.
+  const activeInProcessing = inProcessingShipments.filter((item) => item.documentId === email.id)
+  const inProcessingSourceIndexes = new Set(
+    activeInProcessing.flatMap((item) => [item.ciSourceIndex, item.c88SourceIndex]),
+  )
+  // Hide rows already claimed by an in-flight Create Shipment request — from both the
+  // table and the modal's own dropdowns — so the same file can't be submitted twice.
+  // If that request fails, it's removed from inProcessingShipments and these rows
+  // reappear here on their own; nothing else needs to move them back.
+  const visibleUnprocessedShipments = email.unprocessedShipments.filter(
+    (row) => !inProcessingSourceIndexes.has(row.sourceIndex),
+  )
 
   return (
     <section
@@ -277,16 +408,46 @@ export function InboxDetailPanel({
             convertingIndex={convertingProcessableIndex}
           />
 
-          <h2 className="mb-2 mt-2 text-[18px] font-semibold leading-[100%] tracking-[0] text-black">
-            {t('inbox.detail.unprocessedShipments')}
-          </h2>
+          {activeInProcessing.length > 0 ? (
+            <>
+              <h2 className="mb-2 mt-2 text-[18px] font-semibold leading-[100%] tracking-[0] text-black">
+                {t('inbox.detail.inProcessingShipments')}
+              </h2>
+              <InboxInProcessingShipmentsTable rows={activeInProcessing} />
+            </>
+          ) : null}
+
+          <div className="mb-2 mt-2 flex items-center justify-between">
+            <h2 className="text-[18px] font-semibold leading-[100%] tracking-[0] text-black">
+              {t('inbox.detail.unprocessedShipments')}
+            </h2>
+            {visibleUnprocessedShipments.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setIsCreateShipmentOpen(true)}
+                className="rounded-md bg-yellow px-3 py-1.5 text-sm font-medium text-white transition-colors hover:opacity-90"
+              >
+                {t('inbox.createShipment.button')}
+              </button>
+            ) : null}
+          </div>
           <InboxUnprocessedShipmentsTable
-            rows={email.unprocessedShipments}
+            rows={visibleUnprocessedShipments}
             onConvertToProcessable={handleConvertToProcessable}
             convertingIndex={convertingUnprocessableIndex}
+            onRetry={handleRetryUnprocessable}
+            retryingIndex={retryingUnprocessableIndex}
           />
         </>
       )}
+
+      {isCreateShipmentOpen && email ? (
+        <CreateShipmentModal
+          rows={visibleUnprocessedShipments}
+          onClose={() => setIsCreateShipmentOpen(false)}
+          onSubmit={handleCreateShipmentSubmit}
+        />
+      ) : null}
     </section>
   )
 }

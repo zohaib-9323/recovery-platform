@@ -1,6 +1,7 @@
 import type {
   RecoveryCombinedDocument,
   RecoveryDocumentAttachment,
+  RecoveryDocumentUnprocessable,
 } from '@/types/recovery-inbox-api'
 
 import type {
@@ -60,6 +61,32 @@ function resolveDownloadFileUrl(
   return undefined
 }
 
+/**
+ * Maps the backend's machine-readable `failureReasonCode` to a short label
+ * for the unprocessed-shipments table. Falls back to the generic 'Failed'
+ * for documents ingested before this field existed, or any code not yet
+ * mapped here — never throws, never shows a raw enum string to the user.
+ */
+const FAILURE_REASON_LABELS: Record<string, string> = {
+  UNSUPPORTED_BINARY_FORMAT: 'Unsupported format',
+  GEMINI_ERROR: 'AI processing error',
+  PARSING_FAILURE: 'Parsing failed',
+  // Document classified fine (it IS a C88 or a commercial invoice/PO) but its
+  // pairing counterpart was never found anywhere else in the same email.
+  C88_MISSING: 'C88 missing',
+  PO_MISSING: 'CI missing',
+}
+
+function getUnprocessableStatus(shipment: RecoveryDocumentUnprocessable): {
+  status: string
+  statusDetail?: string
+} {
+  const code = shipment.failureReasonCode
+  const status = (code && FAILURE_REASON_LABELS[code]) || 'Failed'
+  const statusDetail = shipment.extractedData?.summary || code || undefined
+  return { status, statusDetail }
+}
+
 function isAttachmentLike(value: unknown): value is RecoveryDocumentAttachment {
   if (!value || typeof value !== 'object') return false
   const candidate = value as RecoveryDocumentAttachment
@@ -109,7 +136,10 @@ function mapProcessableRows(
   return processable.map((shipment, index) => ({
     id: shipment.shipmentId ?? `${index}`,
     sourceIndex: index,
-    title: shipment.shipmentId ?? '-',
+    // Prefer the backend-derived shipment title (email subject > PO-extracted
+    // title); only fall back to the raw shipmentId for older records or rows
+    // where neither source produced a title.
+    title: shipment.shipmentTitle || shipment.shipmentId || '-',
     date: formatDateTime(createdAt),
     c88: mapProcessableAttachment(shipment.c88, 'c88', shipment.shipmentId ?? '', index),
     po: mapProcessableAttachment(shipment.po, 'po', shipment.shipmentId ?? '', index),
@@ -120,13 +150,18 @@ function mapUnprocessedRows(
   unprocessable: RecoveryCombinedDocument['unprocessable'],
 ): InboxUnprocessedShipmentRow[] {
   if (!unprocessable?.length) return []
-  return unprocessable.map((shipment, index) => ({
-    id: shipment.filename ?? `${index}`,
-    sourceIndex: index,
-    fileName: shipment.filename ?? `Unprocessable File #${index + 1}`,
-    type: shipment.type ?? 'UNKNOWN',
-    status: 'Failed',
-  }))
+  return unprocessable.map((shipment, index) => {
+    const { status, statusDetail } = getUnprocessableStatus(shipment)
+    return {
+      id: shipment.filename ?? `${index}`,
+      sourceIndex: index,
+      fileName: shipment.filename ?? `Unprocessable File #${index + 1}`,
+      type: shipment.type ?? 'UNKNOWN',
+      status,
+      statusDetail,
+      s3Key: shipment.s3Key,
+    }
+  })
 }
 
 export function mapRecoveryDocumentToInboxEmail(record: RecoveryCombinedDocument): InboxEmail {
@@ -151,6 +186,13 @@ export function mapRecoveryDocumentToInboxEmail(record: RecoveryCombinedDocument
     })
   })
 
+  // `unprocessable[]` is embedded inside a normal PROCESSED RecoveryDocument
+  // (a file that failed auto-classification/pairing, not an actual quarantine
+  // email) — it must NOT be tagged 'quarantined' here, or the download call
+  // sends recordType=quarantined for a real RecoveryDocument id, which makes
+  // the backend look it up in the quarantine collection instead and 404.
+  // Leave recordType unset so it falls back to `normalizedRecordType` below,
+  // which reflects the actual parent record's type.
   const unprocessableAttachments: InboxAttachment[] = (record.unprocessable || []).map(
     (shipment, index) => ({
       id: `unprocessable-${shipment.filename ?? index}`,
@@ -160,7 +202,6 @@ export function mapRecoveryDocumentToInboxEmail(record: RecoveryCombinedDocument
       fileUrl: resolveDownloadFileUrl(shipment.fileUrl, shipment.s3Key, shipment.bucket),
       s3Key: shipment.s3Key,
       bucket: shipment.bucket,
-      recordType: 'quarantined',
     }),
   )
 

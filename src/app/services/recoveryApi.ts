@@ -4,6 +4,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { applyTokens, logout, type AuthState } from '@/app/features/auth/authSlice'
 import { reportRuntimeError } from '@/lib/error-reporting'
 import { refreshSession } from '@/services/authSession'
+import { isAuthUrl } from '@/app/services/auth-urls'
 import { runBaseQueryWithReauth } from '@/app/services/reauth'
 import type {
   ApiMessageEnvelope,
@@ -36,7 +37,11 @@ import type {
   RecoveryDocumentRecordType,
 } from '@/types/recovery-inbox-api'
 import type {
+  RecoveryPreferentialDutyEnvelope,
   RecoveryShipmentDetailEnvelope,
+  RecoveryShipmentDownloadEnvelope,
+  RecoveryShipmentDownloadFileType,
+  RecoveryShipmentDownloadRequest,
   RecoveryShipmentLandedCostEnvelope,
   RecoveryShipmentLogsEnvelope,
   RecoveryShipmentLogsQuery,
@@ -48,19 +53,6 @@ import { env } from '@/utils/env'
 type StateWithAuth = { auth: AuthState }
 
 const baseUrl = env.apiBaseUrl.replace(/\/$/, '')
-
-function isAuthUrl(url: string | undefined): boolean {
-  if (!url) return false
-  return (
-    url.includes('/recovery/auth/login') ||
-    url.includes('/recovery/auth/refresh') ||
-    url.includes('/recovery/auth/request-password-reset') ||
-    url.includes('/recovery/auth/reset-password') ||
-    url.includes('/recovery/auth/first-login/verify-otp') ||
-    url.includes('/recovery/auth/first-login/request-otp') ||
-    url.includes('/recovery/auth/first-login/setup-password')
-  )
-}
 
 function isFetchBaseQueryErrorLike(error: unknown): error is FetchBaseQueryError {
   return Boolean(error && typeof error === 'object' && 'status' in error)
@@ -105,7 +97,13 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 export const recoveryApi = createApi({
   reducerPath: 'recoveryApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['RecoveryProfile', 'RecoveryPreferences', 'RecoveryShipments', 'RecoveryShipment'],
+  tagTypes: [
+    'RecoveryProfile',
+    'RecoveryPreferences',
+    'RecoveryShipments',
+    'RecoveryShipment',
+    'RecoveryNotifications',
+  ],
   endpoints: (builder) => ({
     login: builder.mutation<RecoveryAuthEnvelope, LoginRequestBody>({
       query: (body) => ({
@@ -313,6 +311,32 @@ export const recoveryApi = createApi({
       }),
       providesTags: (_result, _error, id) => [{ type: 'RecoveryShipment', id }],
     }),
+    getRecoveryShipmentDownloadUrls: builder.mutation<
+      RecoveryShipmentDownloadEnvelope,
+      RecoveryShipmentDownloadRequest
+    >({
+      query: ({ id, fileType = 'both', expiresIn = 300 }) => ({
+        url: `/recovery/shipments/${id}/download`,
+        method: 'GET',
+        params: {
+          fileType,
+          expiresIn,
+        },
+      }),
+    }),
+    // Streams the file through our own API (not a presigned S3 URL) so the
+    // download works regardless of the source bucket's CORS config.
+    downloadRecoveryShipmentFileBlob: builder.mutation<
+      Blob,
+      { id: string; fileType: Exclude<RecoveryShipmentDownloadFileType, 'both'> }
+    >({
+      query: ({ id, fileType }) => ({
+        url: `/recovery/shipments/${id}/download-file`,
+        method: 'GET',
+        params: { fileType },
+        responseHandler: (response) => response.blob(),
+      }),
+    }),
     getRecoveryShipmentLandedCost: builder.query<RecoveryShipmentLandedCostEnvelope, string>({
       query: (id) => ({
         url: `/recovery/shipments/landedcost/${id}`,
@@ -332,7 +356,14 @@ export const recoveryApi = createApi({
         }),
       },
     ),
-    /** Same contract as trade-harmonizer `POST /shipments/upload-c88-document` (FormData: file, shipmentId). */
+    /**
+     * Recovery-guarded twin of trade-harmonizer `POST /shipments/upload-c88-document`.
+     * Same multipart contract (FormData: file), but the shipment id is a route param and
+     * the route is validated by `RecoveryJwtAuthGuard` against the `recoveryusers`
+     * collection. The main-app route is guarded by the global `JwtAuthGuard`, which
+     * rejected recovery bearer tokens with a misleading
+     * "Your account has been deleted or does not exist" 401.
+     */
     uploadRecoveryShipmentC88Document: builder.mutation<
       RecoveryApiEnvelope<unknown>,
       { shipmentId: string; file: File }
@@ -340,9 +371,8 @@ export const recoveryApi = createApi({
       query: ({ shipmentId, file }) => {
         const body = new FormData()
         body.append('file', file)
-        body.append('shipmentId', shipmentId)
         return {
-          url: '/shipments/upload-c88-document',
+          url: `/recovery/shipments/${shipmentId}/upload-c88-document`,
           method: 'POST',
           body,
         }
@@ -352,12 +382,17 @@ export const recoveryApi = createApi({
         { type: 'RecoveryShipment', id: arg.shipmentId },
       ],
     }),
+    /**
+     * Recovery-guarded twin of trade-harmonizer `POST /sanctions/shipment-decision`.
+     * Same body contract ({ shipmentId, decision }); the shipment is resolved against
+     * `recoveryshipments` and scoped to the authenticated recovery user.
+     */
     updateRecoveryShipmentSanctionDecision: builder.mutation<
       RecoveryApiEnvelope<unknown>,
       { shipmentId: string; decision: 'stopped' | 'ignored' }
     >({
       query: (body) => ({
-        url: '/sanctions/shipment-decision',
+        url: '/recovery/shipments/sanction-decision',
         method: 'POST',
         body,
       }),
@@ -365,6 +400,46 @@ export const recoveryApi = createApi({
         { type: 'RecoveryShipments', id: 'LIST' },
         { type: 'RecoveryShipment', id: arg.shipmentId },
       ],
+    }),
+    /**
+     * Disputes a poItems[] entry's HS code. Creates a pending RecoveryHsCodeChallenge
+     * reviewed by an admin (approve/reject) in trade-harmonizer's admin console.
+     */
+    challengeRecoveryHsCode: builder.mutation<
+      RecoveryApiEnvelope<unknown>,
+      {
+        recoveryShipmentId: string
+        poItemId: string
+        proposedHsCode: string
+        reason: string
+        description?: string
+      }
+    >({
+      query: (body) => ({
+        url: '/recovery/shipments/challenge-hs-code',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: (_result, _error, arg) => [
+        { type: 'RecoveryShipment', id: arg.recoveryShipmentId },
+      ],
+    }),
+    /**
+     * Live duty-rate + preferential trade agreement lookup for a poItems[] entry (or, without
+     * `itemIndex`, for every item on the shipment). Twin of trade-harmonizer's server-side
+     * `attachTradeAgreement`/`TradeLookupService.lookupTrade`, exposed here as a read endpoint
+     * because recovery items — unlike main-flow items — only get a `tradeAgreement` snapshot
+     * persisted once a challenge on them is approved.
+     */
+    getRecoveryPreferentialDuty: builder.query<
+      RecoveryPreferentialDutyEnvelope,
+      { shipmentId: string; itemIndex?: number }
+    >({
+      query: ({ shipmentId, itemIndex }) => ({
+        url: `/recovery/shipments/${shipmentId}/preferential-duty`,
+        method: 'GET',
+        params: itemIndex !== undefined ? { itemIndex } : undefined,
+      }),
     }),
     moveUnprocessableToProcessable: builder.mutation<
       RecoveryApiEnvelope<unknown>,
@@ -438,6 +513,8 @@ export const {
   useGetRecoveryInboxDocumentByIdQuery,
   useGetRecoveryShipmentsListQuery,
   useGetRecoveryShipmentByIdQuery,
+  useGetRecoveryShipmentDownloadUrlsMutation,
+  useDownloadRecoveryShipmentFileBlobMutation,
   useGetRecoveryShipmentLogsQuery,
   useLazyGetRecoveryShipmentLandedCostQuery,
   useMoveUnprocessableToProcessableMutation,
@@ -445,4 +522,6 @@ export const {
   useGetRecoveryDownloadUrlMutation,
   useUploadRecoveryShipmentC88DocumentMutation,
   useUpdateRecoveryShipmentSanctionDecisionMutation,
+  useChallengeRecoveryHsCodeMutation,
+  useGetRecoveryPreferentialDutyQuery,
 } = recoveryApi
