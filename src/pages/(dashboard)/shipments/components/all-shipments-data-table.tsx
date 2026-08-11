@@ -80,7 +80,16 @@ export function AllShipmentsDataTable({
   return (
     <div className="mx-auto w-full overflow-hidden rounded-lg border border-bottomBorder">
       <div className="no-scrollbar w-full overflow-x-auto">
-        <table className="w-[350%] rounded-lg bg-white sm:w-[250%] md:w-[200%] lg:w-[150%] ipadLarge:w-full">
+        {/*
+          A fixed min-width instead of viewport-breakpoint percentages: the old
+          `w-[X%] ... ipadLarge:w-full` chain snapped to 100% width once the *viewport*
+          crossed 1100px, but the sidebar + padding mean the actual table container is
+          narrower than that — so between ~1024-1300px viewport width the table was
+          forced into a container too small for its columns and squeezed instead of
+          scrolling. A min-width lets the overflow-x-auto wrapper above scroll whenever
+          the container (not the viewport) is too narrow, at any screen size.
+        */}
+        <table className="w-full min-w-[1100px] rounded-lg bg-white">
           <thead className="bg-greyFour text-black">
             <tr className="text-left text-sm font-medium">
               {showCheckboxColumn && <th className="p-3" />}
@@ -172,13 +181,13 @@ export function AllShipmentsDataTable({
                       {formatShipmentListDate(shipment.dateRaw, timeZone)}
                     </td>
                     <td className="p-3 text-xs font-medium text-black sm:text-sm">
-                      {shipment.shipVia}
+                      {shipment.shipVia || 'N/A'}
                     </td>
                     <td className="max-w-[150px] p-3 text-xs font-medium text-black sm:text-sm">
                       <div className="flex flex-row items-center gap-2">
                         <p className="min-w-0 max-w-[150px] truncate">
                           <span title={shipment.purchaseOrderNumber || undefined}>
-                            {shipment.purchaseOrderNumber}
+                            {shipment.purchaseOrderNumber || 'N/A'}
                           </span>
                         </p>
                         {shipment.is_flagged ? (

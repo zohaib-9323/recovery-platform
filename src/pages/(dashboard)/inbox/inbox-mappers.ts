@@ -183,6 +183,13 @@ export function mapRecoveryDocumentToInboxEmail(record: RecoveryCombinedDocument
     })
   })
 
+  // `unprocessable[]` is embedded inside a normal PROCESSED RecoveryDocument
+  // (a file that failed auto-classification/pairing, not an actual quarantine
+  // email) — it must NOT be tagged 'quarantined' here, or the download call
+  // sends recordType=quarantined for a real RecoveryDocument id, which makes
+  // the backend look it up in the quarantine collection instead and 404.
+  // Leave recordType unset so it falls back to `normalizedRecordType` below,
+  // which reflects the actual parent record's type.
   const unprocessableAttachments: InboxAttachment[] = (record.unprocessable || []).map(
     (shipment, index) => ({
       id: `unprocessable-${shipment.filename ?? index}`,
@@ -192,7 +199,6 @@ export function mapRecoveryDocumentToInboxEmail(record: RecoveryCombinedDocument
       fileUrl: resolveDownloadFileUrl(shipment.fileUrl, shipment.s3Key, shipment.bucket),
       s3Key: shipment.s3Key,
       bucket: shipment.bucket,
-      recordType: 'quarantined',
     }),
   )
 
