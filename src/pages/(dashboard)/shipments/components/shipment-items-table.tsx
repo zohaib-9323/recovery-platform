@@ -4,6 +4,17 @@ import { formatCurrency } from '@/lib/format-currency'
 import { getCurrencySymbol } from '@/lib/format-shipment-list-date'
 import { MS } from '@/lib/manage-shipments-copy'
 import type { RecoveryShipmentItem } from '@/types/recovery-shipments-api'
+import {
+  InboxRowActionMenu,
+  type InboxRowActionMenuOption,
+} from '@/pages/(dashboard)/inbox/components/inbox-row-action-menu'
+
+const NOT_AVAILABLE = 'N/A'
+
+function cellText(value: string | number | null | undefined): string {
+  if (value === null || value === undefined || value === '') return NOT_AVAILABLE
+  return String(value)
+}
 
 function isItemFlagged(item: RecoveryShipmentItem): boolean {
   return Boolean(item.flagged || item.isFlagged || item.is_flagged === 1)
@@ -48,8 +59,12 @@ export function ShipmentItemsTable({
   return (
     <div id="shipment-items" className="w-full overflow-hidden">
       <div className="no-scrollbar w-full overflow-x-auto">
+        {/* Fixed min-width instead of viewport-breakpoint percentages — see the same
+            fix/comment in all-shipments-data-table.tsx for why the old
+            `w-[X%] ... ipadLarge:w-full` chain squeezed columns instead of scrolling
+            between ~1024-1300px viewport width. */}
         <table
-          className={`w-[300%] overflow-x-scroll bg-white sm:w-[250%] md:w-[200%] lg:w-[150%] ipadLarge:w-full ${
+          className={`w-full min-w-[1100px] overflow-x-scroll bg-white ${
             items.length > 0 ? 'border-b border-bottomBorder' : ''
           }`}
         >
@@ -101,7 +116,7 @@ export function ShipmentItemsTable({
               >
                 <td className="px-4 py-2 text-xs font-medium text-black md:text-sm">
                   <div className="flex flex-row items-center gap-1">
-                    {item.itemNumber}
+                    {cellText(item.itemNumber)}
                     {isItemFlagged(item) ? (
                       <Tooltip
                         content={MS.flaggedContent}
@@ -117,7 +132,7 @@ export function ShipmentItemsTable({
                   className="max-w-32 truncate px-4 py-2 text-xs font-normal capitalize text-black md:max-w-80 md:text-sm"
                   title={item.description || undefined}
                 >
-                  {item.description}
+                  {cellText(item.description)}
                 </td>
                 <td
                   id="hs-code-reference"
@@ -138,14 +153,16 @@ export function ShipmentItemsTable({
                         />
                       </Tooltip>
                     ) : null}
-                    {item.hsCode}
+                    {cellText(item.hsCode)}
                   </div>
                 </td>
                 <td className="px-4 py-2 text-xs font-normal text-black md:text-sm">
                   {getCurrencySymbol(itemsUnit)}
                   {formatCurrency(item.unitPrice ?? 0)}
                 </td>
-                <td className="px-4 py-2 text-xs font-normal text-black md:text-sm">{item.qty}</td>
+                <td className="px-4 py-2 text-xs font-normal text-black md:text-sm">
+                  {cellText(item.qty)}
+                </td>
                 <td className="px-4 py-2 text-xs font-normal text-black md:text-sm">
                   {getCurrencySymbol(itemsUnit)}
                   {formatCurrency(item.Total ?? item.totalPrice ?? 0)}
@@ -159,30 +176,32 @@ export function ShipmentItemsTable({
                   {formatCurrency(item.landedCost ?? 0)}
                 </td>
                 <td data-pdf-exclude className="px-4 py-2 text-center sm:text-left">
-                  <div className="flex flex-col items-center gap-1 sm:items-start">
-                    {onChallenge ? (
-                      <button
-                        type="button"
-                        onClick={() => onChallenge(item)}
-                        disabled={disableChallenge || Boolean(item.is_challenged)}
-                        className="whitespace-nowrap text-xs font-medium text-primary disabled:cursor-not-allowed disabled:text-greySix"
-                      >
-                        {item.is_challenged
-                          ? t('shipments.detail.challenged')
-                          : t('shipments.detail.challengeHsCode')}
-                      </button>
-                    ) : null}
-                    {onViewPreferentialDuty ? (
-                      <button
-                        type="button"
-                        onClick={() => onViewPreferentialDuty(item)}
-                        disabled={!item.hsCode}
-                        className="whitespace-nowrap text-xs font-medium text-primary disabled:cursor-not-allowed disabled:text-greySix"
-                      >
-                        {t('shipments.detail.preferentialDuty')}
-                      </button>
-                    ) : null}
-                  </div>
+                  {onChallenge || onViewPreferentialDuty ? (
+                    <InboxRowActionMenu
+                      options={
+                        [
+                          onChallenge
+                            ? {
+                                label: item.is_challenged
+                                  ? t('shipments.detail.challenged')
+                                  : t('shipments.detail.challengeHsCode'),
+                                textClassName: 'text-primary',
+                                disabled: disableChallenge || Boolean(item.is_challenged),
+                                onSelect: () => onChallenge(item),
+                              }
+                            : null,
+                          onViewPreferentialDuty
+                            ? {
+                                label: t('shipments.detail.preferentialDuty'),
+                                textClassName: 'text-primary',
+                                disabled: !item.hsCode,
+                                onSelect: () => onViewPreferentialDuty(item),
+                              }
+                            : null,
+                        ].filter(Boolean) as InboxRowActionMenuOption[]
+                      }
+                    />
+                  ) : null}
                 </td>
               </tr>
             ))}

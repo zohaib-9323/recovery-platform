@@ -110,4 +110,20 @@ describe('mapRecoveryDocumentToInboxEmail — unprocessed status labels', () => 
     )
     expect(email.unprocessedShipments[0].s3Key).toBeUndefined()
   })
+
+  it('tags an unprocessable file from a processed email as recordType "processed", not "quarantined", so its download call targets the right backend lookup', () => {
+    const email = mapRecoveryDocumentToInboxEmail(
+      baseRecord([
+        {
+          filename: '1.xlsx',
+          type: 'UNKNOWN',
+          s3Key: 'accepted/doc-1/mid-1/unprocessable/1.xlsx',
+          bucket: 'dev-th-recovery-v2',
+        },
+      ]),
+    )
+
+    const unprocessableAttachment = email.attachments.find((a) => a.name === '1.xlsx')
+    expect(unprocessableAttachment?.recordType).toBe('processed')
+  })
 })

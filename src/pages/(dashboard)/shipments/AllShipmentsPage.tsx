@@ -108,12 +108,18 @@ export function AllShipmentsPage() {
   const { data: prefs } = useGetRecoveryPreferencesQuery()
   const timeZone = prefs?.content?.timezone ?? null
 
-  const { data, isFetching, refetch } = useGetRecoveryShipmentsListQuery({
-    page: currentPage,
-    limit: pageSize,
-    pageSize,
-    search: debouncedSearch.trim() || undefined,
-  })
+  const { data, isFetching, refetch } = useGetRecoveryShipmentsListQuery(
+    {
+      page: currentPage,
+      limit: pageSize,
+      pageSize,
+      search: debouncedSearch.trim() || undefined,
+    },
+    // Without this, navigating away and back to this page (component remount, same
+    // args) serves the RTK Query cache as-is instead of refetching — the list looks
+    // stale until a full page reload until the cache naturally expires.
+    { refetchOnMountOrArgChange: true },
+  )
 
   const [updateSanctionDecision, { isLoading: isUpdatingSanctionDecision }] =
     useUpdateRecoveryShipmentSanctionDecisionMutation()

@@ -9,7 +9,7 @@ export function DashboardLayout() {
       <AppSidebar />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white">
         <AppHeader />
-        <main className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-hidden bg-bgColor">
+        <main className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto bg-bgColor">
           <Outlet />
         </main>
       </div>
