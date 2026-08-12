@@ -128,6 +128,8 @@ export const messages: Record<string, string> = {
   'auth.invalidSubdomain.goToMainSite': 'Go to Main Site',
   'auth.tenantValidation.validating': 'Validating white label domain...',
   'settings.pageTitle': 'Profile settings',
+  'imports.pageTitle': 'Imports',
+  'imports.empty': 'No imports yet',
   'settings.delete.requestReceived': 'Deletion request received',
   'settings.delete.requestReceivedDescription':
     'Your request will be reviewed. You will be contacted if we need more information.',
