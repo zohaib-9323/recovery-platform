@@ -39,6 +39,7 @@ module.exports = {
         black: '#000000',
         blackFive: '#333333',
         whiteOne: '#FFFFFF',
+        whiteTwo: '#F1F5F9',
         disableColor: '#CCCCCC',
         lightGrey: '#E5E5E5',
         lightGreyTwo: '#F1F1F1',

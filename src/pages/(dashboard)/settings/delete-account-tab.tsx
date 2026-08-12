@@ -6,6 +6,7 @@ import {
   usePostRecoveryDeleteRequestMutation,
 } from '@/app/services/recoveryApi'
 import { useAuth } from '@/app/hooks/useAuth'
+import { CustomLoader } from '@/components/feedback/custom-loader'
 import { InputField } from '@/components/fields'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n/useI18n'
@@ -87,7 +88,7 @@ export function DeleteAccountTab() {
   }
 
   if (pendingCheckLoading && !requestAlreadyPending) {
-    return <p className="text-sm text-rp-muted">{t('settings.delete.loading')}</p>
+    return <CustomLoader />
   }
 
   if (requestAlreadyPending) {

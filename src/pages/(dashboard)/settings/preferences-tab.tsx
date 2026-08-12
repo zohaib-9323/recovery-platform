@@ -4,6 +4,7 @@ import {
   useGetRecoveryPreferencesQuery,
   usePostRecoveryPreferencesMutation,
 } from '@/app/services/recoveryApi'
+import { CustomLoader } from '@/components/feedback/custom-loader'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n/useI18n'
@@ -144,7 +145,7 @@ export function PreferencesTab() {
   }
 
   if (loading) {
-    return <p className="text-sm text-rp-muted">{t('settings.preferences.loading')}</p>
+    return <CustomLoader />
   }
 
   return <PreferencesForm key={instanceKey} baseline={baseline} instanceKey={instanceKey} />
