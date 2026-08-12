@@ -16,6 +16,9 @@ export function getSideBarTitle(pathname: string): string {
   if (path === '/inbox' || path.startsWith('/inbox/')) {
     return ''
   }
+  if (path === '/notifications' || path.startsWith('/notifications/')) {
+    return ''
+  }
   if (path === '/settings' || path.startsWith('/settings/')) {
     return ''
   }
@@ -41,6 +44,9 @@ export function getHrefLink(pathname: string): string {
   }
   if (path === '/inbox' || path.startsWith('/inbox/')) {
     return 'Inbox'
+  }
+  if (path === '/notifications' || path.startsWith('/notifications/')) {
+    return 'Notifications'
   }
   if (path.startsWith('/dashboard')) {
     return 'Platform'
