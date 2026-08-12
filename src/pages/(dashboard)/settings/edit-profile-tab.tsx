@@ -6,6 +6,7 @@ import {
   usePatchRecoveryProfileMutation,
 } from '@/app/services/recoveryApi'
 import { useAppDispatch } from '@/app/redux-hooks'
+import { CustomLoader } from '@/components/feedback/custom-loader'
 import { CityDropdown, CountryDropdown, InputField } from '@/components/fields'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n/useI18n'
@@ -395,7 +396,7 @@ export function EditProfileTab() {
   }
 
   if (loading || !profile) {
-    return <p className="text-sm text-rp-muted">{t('settings.edit.loading')}</p>
+    return <CustomLoader />
   }
 
   return (
