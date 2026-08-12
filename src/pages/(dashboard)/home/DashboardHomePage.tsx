@@ -9,6 +9,7 @@ import {
 } from '@/app/services/recoveryApi'
 import { ActionCard } from '@/components/dashboard/action-card'
 import { StatCard } from '@/components/dashboard/stat-card'
+import { CustomLoader } from '@/components/feedback/custom-loader'
 import type { KpiStat } from '@/data/mock/dashboard'
 import { useI18n } from '@/i18n/useI18n'
 import { mapRecoveryStatusToLegacy } from '@/lib/recovery-shipment-status-map'
@@ -92,7 +93,7 @@ function toManageShipmentsTableRow(shipment: RecoveryShipmentRecord): ManageShip
 export function DashboardHomePage() {
   const { t } = useI18n()
   const navigate = useNavigate()
-  const { data: dashboardData } = useGetRecoveryDashboardQuery()
+  const { data: dashboardData, isLoading: isDashboardLoading } = useGetRecoveryDashboardQuery()
   const { data: prefs } = useGetRecoveryPreferencesQuery()
   const { data: shipmentsData } = useGetRecoveryShipmentsListQuery({
     page: 1,
@@ -112,6 +113,11 @@ export function DashboardHomePage() {
       ),
     [shipmentsData?.content?.data, shipmentsData?.content?.shipments],
   )
+
+  if (isDashboardLoading && !dashboardData) {
+    return <CustomLoader />
+  }
+
   const overviewKpis: KpiStat[] = [
     {
       id: 'emails',

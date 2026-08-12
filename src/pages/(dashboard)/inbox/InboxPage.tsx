@@ -93,12 +93,14 @@ export function InboxPage() {
   }, [emails, selectedId])
 
   const {
-    data: detailData,
+    currentData: detailData,
     isFetching: isDetailFetching,
     isError: isDetailError,
     error: detailError,
     refetch: refetchDetail,
-  } = useGetRecoveryInboxDocumentByIdQuery(effectiveSelectedId ?? skipToken)
+  } = useGetRecoveryInboxDocumentByIdQuery(effectiveSelectedId ?? skipToken, {
+    refetchOnMountOrArgChange: true,
+  })
 
   const selected = useMemo<InboxEmail | null>(() => {
     const detailRecord = detailData?.content?.data
@@ -109,8 +111,8 @@ export function InboxPage() {
   const sidebarError = isListError
     ? getQueryErrorMessage(listError, t('inbox.sidebar.loadError'))
     : null
-  const isInitialListLoading = (isListLoading || isListFetching) && emails.length === 0
-  const isLoadingMore = isListFetching && emails.length > 0
+  const isInitialListLoading = (isListLoading || isListFetching) && page === 1
+  const isLoadingMore = isListFetching && page > 1
   const canLoadMore = page < totalPages
 
   const detailPanelError = isDetailError

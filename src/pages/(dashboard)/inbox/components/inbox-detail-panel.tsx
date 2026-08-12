@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import { CustomLoader } from '@/components/feedback/custom-loader'
 import {
   useGetRecoveryDownloadUrlMutation,
   useMoveProcessableToUnprocessableMutation,
@@ -252,7 +253,7 @@ export function InboxDetailPanel({
           className,
         )}
       >
-        <p className="text-base font-light text-blackFive">{t('inbox.detail.loading')}</p>
+        <CustomLoader />
       </section>
     )
   }
