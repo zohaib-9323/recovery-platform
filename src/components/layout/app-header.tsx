@@ -199,6 +199,22 @@ export function AppHeader() {
                         ))
                       )}
                     </div>
+                    {notifications.length > 0 && pathName !== '/notifications' ? (
+                      <div className="mb-2 mt-3 flex w-full items-center justify-center gap-2">
+                        <div className="w-fit">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setNotificationPopup(false)
+                              navigate('/notifications')
+                            }}
+                            className="w-20 rounded bg-yellow p-2 text-xxtiny font-light text-white"
+                          >
+                            {t('layout.appHeader.viewAll')}
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
                 <div className="relative ml-2 h-10 min-w-10 smallScreen:ml-5">
