@@ -27,6 +27,7 @@ module.exports = {
         'rp-accent-dark': 'var(--rp-accent-dark, #c48f00)',
         'rp-icon': 'var(--rp-icon, #E3A602)',
         'rp-success': '#22c55e',
+        'rp-blue': 'var(--rp-blue, #2A5FC8)',
 
         /* Trade-harmonizer palette (manage-shipments / generic-table / item-card) */
         primary: 'var(--primary-color, #E3A602)',

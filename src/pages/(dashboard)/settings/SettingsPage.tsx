@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 
 import { DeleteAccountTab } from './delete-account-tab'
 import { EditProfileTab } from './edit-profile-tab'
+import { IntegrationsTab } from './integrations-tab'
 import { PreferencesTab } from './preferences-tab'
 import { SecurityTab } from './security-tab'
 import { SETTINGS_TABS, type SettingsTabId } from './settings-constants'
@@ -38,6 +39,7 @@ export function SettingsPage() {
       <div className="flex flex-wrap items-center gap-2 rounded-lg bg-white p-3 shadow-[0px_4px_16px_0px_#4C67641A] sm:p-4">
         {SETTINGS_TABS.map(({ id, label, icon }) => {
           const selected = active === id
+          const IconComponent = typeof icon === 'string' ? null : icon
           return (
             <button
               key={id}
@@ -48,14 +50,21 @@ export function SettingsPage() {
                 selected ? 'bg-yellow text-white' : 'text-rp-fg hover:bg-[var(--hover-color)]',
               )}
             >
-              <span
-                className={cn(
-                  icon,
-                  selected ? 'text-white' : 'text-rp-fg',
-                  'text-sm sm:text-base lg:text-lg',
-                )}
-                aria-hidden
-              />
+              {IconComponent ? (
+                <IconComponent
+                  className={cn('size-4 sm:size-[18px]', selected ? 'text-white' : 'text-rp-fg')}
+                  aria-hidden
+                />
+              ) : (
+                <span
+                  className={cn(
+                    icon,
+                    selected ? 'text-white' : 'text-rp-fg',
+                    'text-sm sm:text-base lg:text-lg',
+                  )}
+                  aria-hidden
+                />
+              )}
               <span className="text-sm font-normal sm:text-base lg:text-lg">{label}</span>
             </button>
           )
@@ -66,6 +75,7 @@ export function SettingsPage() {
         {active === 'profile' && <EditProfileTab />}
         {active === 'preferences' && <PreferencesTab />}
         {active === 'security' && <SecurityTab />}
+        {active === 'integrations' && <IntegrationsTab />}
         {active === 'delete' && <DeleteAccountTab />}
       </div>
     </div>

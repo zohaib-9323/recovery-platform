@@ -1,7 +1,10 @@
+import { Link2 } from 'lucide-react'
+
 export const SETTINGS_TABS = [
   { id: 'profile', label: 'Edit Profile', icon: 'icon-Edit' },
   { id: 'preferences', label: 'Preferences', icon: 'icon-sliders' },
   { id: 'security', label: 'Security', icon: 'icon-lock' },
+  { id: 'integrations', label: 'Integration', icon: Link2 },
   { id: 'delete', label: 'Delete Account', icon: 'icon-Delete' },
 ] as const
 
