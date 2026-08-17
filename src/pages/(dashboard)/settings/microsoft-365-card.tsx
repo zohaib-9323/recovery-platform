@@ -108,12 +108,12 @@ export function Microsoft365Card() {
   }
 
   return (
-    <div className="flex min-h-[326px] w-full max-w-[552px] flex-col gap-2 rounded-[10px] border-2 border-rp-accent bg-rp-bg p-6">
-      <div className="flex flex-1 flex-col gap-6">
+    <div className="flex min-h-[300px] w-full max-w-[552px] flex-col gap-1 rounded-[10px] border-2 border-rp-accent bg-rp-bg p-6">
+      <div className="flex flex-1 flex-col gap-4">
         <div className="flex items-start justify-between gap-4">
           <Microsoft365Logo />
           {connected && (
-            <div className="flex flex-col items-end gap-1.5">
+            <div className="flex flex-col items-end gap-1">
               <span className="inline-flex items-center gap-1 rounded-[5px] bg-rp-success/10 px-2 py-1 text-sm text-rp-success">
                 <span className="size-1 rounded-full bg-rp-success" aria-hidden />
                 {t('settings.integrations.active')}
@@ -135,11 +135,9 @@ export function Microsoft365Card() {
         </div>
 
         {!connected && (
-          <div className="flex items-center gap-1 rounded-md bg-rp-accent/10 px-3 py-2">
-            <Lock className="size-4 shrink-0 text-rp-accent-dark" aria-hidden />
-            <p className="text-[12px] text-rp-accent-dark">
-              {t('settings.integrations.privacyNotice')}
-            </p>
+          <div className="flex items-center gap-1 rounded-md bg-rp-blueWithOpacity px-3 py-2">
+            <Lock className="size-4 shrink-0 text-rp-blue" aria-hidden />
+            <p className="text-[12px] text-rp-blue">{t('settings.integrations.privacyNotice')}</p>
           </div>
         )}
       </div>
