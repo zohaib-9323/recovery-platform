@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
-import { useAppSelector } from '@/app/redux-hooks'
+import { useGetM365StatusQuery } from '@/app/services/recoveryApi'
 import { useI18n } from '@/i18n/useI18n'
 
 import { ImportActionCard, Microsoft365Icon, NoImportsIcon } from './import-action-card'
@@ -11,7 +11,8 @@ export function ImportsPage() {
   const { t } = useI18n()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const isConnected = useAppSelector((state) => state.microsoftIntegration.connected)
+  const { data: m365Status } = useGetM365StatusQuery()
+  const isConnected = m365Status?.content?.connected ?? false
   const [isStartImportOpen, setIsStartImportOpen] = useState(false)
 
   const isStartImportModalOpen =

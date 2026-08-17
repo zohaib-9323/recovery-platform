@@ -240,6 +240,11 @@ export const messages: Record<string, string> = {
   'settings.integrations.disconnect': 'Disconnect',
   'settings.integrations.startImport': 'Start an Import',
   'settings.integrations.disconnectedToast': 'Microsoft 365 has been disconnected.',
+  'settings.integrations.connectedToast': 'Microsoft 365 connected successfully.',
+  'settings.integrations.connectErrorToast':
+    'Could not connect to Microsoft 365. Please try again.',
+  'settings.integrations.disconnectErrorToast':
+    'Could not disconnect Microsoft 365. Please try again.',
   'inbox.detail.emptyTitle': 'Select a message',
   'inbox.detail.emptyDescription': 'Choose an email from the list to view details.',
   'inbox.detail.from': 'From:',

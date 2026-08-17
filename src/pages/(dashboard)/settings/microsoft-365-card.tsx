@@ -1,12 +1,12 @@
+import { useEffect } from 'react'
 import { Lock } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
-import { useAuth } from '@/app/hooks/useAuth'
 import {
-  connectMicrosoft365,
-  disconnectMicrosoft365,
-} from '@/app/features/integrations/microsoftIntegrationSlice'
-import { useAppDispatch, useAppSelector } from '@/app/redux-hooks'
+  useGetM365StatusQuery,
+  useGetM365AuthUrlMutation,
+  useDisconnectM365Mutation,
+} from '@/app/services/recoveryApi'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n/useI18n'
 import { cn } from '@/lib/utils'
@@ -27,33 +27,84 @@ function Microsoft365Logo() {
 
 export function Microsoft365Card() {
   const { t } = useI18n()
-  const { user } = useAuth()
   const navigate = useNavigate()
-  const dispatch = useAppDispatch()
-  const connected = useAppSelector((state) => state.microsoftIntegration.connected)
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const email = user?.email ?? 'user@client.com'
+  const { data: statusData, isLoading: statusLoading, refetch } = useGetM365StatusQuery()
+  const [getAuthUrl, { isLoading: authUrlLoading }] = useGetM365AuthUrlMutation()
+  const [disconnect, { isLoading: disconnecting }] = useDisconnectM365Mutation()
 
-  const handleConnect = () => {
-    dispatch(connectMicrosoft365())
-    showCustomToast({
-      type: 'success',
-      title: t('settings.integrations.microsoft365'),
-      message: t('settings.integrations.connectedAs', { email }),
-    })
+  const connected = statusData?.content?.connected ?? false
+  const email = statusData?.content?.email ?? ''
+
+  // Handle redirect back from Microsoft OAuth
+  useEffect(() => {
+    const m365Param = searchParams.get('m365')
+    if (!m365Param) return
+
+    const next = new URLSearchParams(searchParams)
+    next.delete('m365')
+    next.delete('reason')
+    setSearchParams(next, { replace: true })
+
+    if (m365Param === 'connected') {
+      refetch()
+      showCustomToast({
+        type: 'success',
+        title: t('settings.integrations.microsoft365'),
+        message: t('settings.integrations.connectedToast'),
+      })
+    } else if (m365Param === 'error') {
+      showCustomToast({
+        type: 'error',
+        title: t('settings.integrations.microsoft365'),
+        message: t('settings.integrations.connectErrorToast'),
+      })
+    }
+  }, [searchParams, setSearchParams, refetch, t])
+
+  const handleConnect = async () => {
+    try {
+      const result = await getAuthUrl().unwrap()
+      const url = result?.content?.url
+      if (!url) throw new Error('No auth URL returned')
+      window.location.href = url
+    } catch {
+      showCustomToast({
+        type: 'error',
+        title: t('settings.integrations.microsoft365'),
+        message: t('settings.integrations.connectErrorToast'),
+      })
+    }
   }
 
-  const handleDisconnect = () => {
-    dispatch(disconnectMicrosoft365())
-    showCustomToast({
-      type: 'info',
-      title: t('settings.integrations.microsoft365'),
-      message: t('settings.integrations.disconnectedToast'),
-    })
+  const handleDisconnect = async () => {
+    try {
+      await disconnect().unwrap()
+      showCustomToast({
+        type: 'info',
+        title: t('settings.integrations.microsoft365'),
+        message: t('settings.integrations.disconnectedToast'),
+      })
+    } catch {
+      showCustomToast({
+        type: 'error',
+        title: t('settings.integrations.microsoft365'),
+        message: t('settings.integrations.disconnectErrorToast'),
+      })
+    }
   }
 
   const handleStartImport = () => {
     navigate('/imports?startImport=true')
+  }
+
+  if (statusLoading) {
+    return (
+      <div className="flex min-h-[326px] w-full max-w-[552px] items-center justify-center rounded-[10px] border-2 border-rp-accent bg-rp-bg p-6">
+        <span className="text-sm text-rp-muted">{t('common.loading')}</span>
+      </div>
+    )
   }
 
   return (
@@ -96,7 +147,12 @@ export function Microsoft365Card() {
       <div className="flex items-center gap-3">
         {connected ? (
           <>
-            <Button variant="secondary" className="flex-1" onClick={handleDisconnect}>
+            <Button
+              variant="secondary"
+              className="flex-1"
+              onClick={handleDisconnect}
+              disabled={disconnecting}
+            >
               {t('settings.integrations.disconnect')}
             </Button>
             <Button variant="default" className="flex-1" onClick={handleStartImport}>
@@ -104,7 +160,12 @@ export function Microsoft365Card() {
             </Button>
           </>
         ) : (
-          <Button variant="default" className="w-full" onClick={handleConnect}>
+          <Button
+            variant="default"
+            className="w-full"
+            onClick={handleConnect}
+            disabled={authUrlLoading}
+          >
             {t('settings.integrations.connect')}
           </Button>
         )}
