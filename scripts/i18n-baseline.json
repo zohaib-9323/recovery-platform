@@ -1,6 +1,7 @@
 {
-  "generatedAt": "2026-08-18T07:23:12.951Z",
+  "generatedAt": "2026-08-18T07:37:54.504Z",
   "counts": {
+    "src/pages/(dashboard)/imports/ImportsPage.tsx::jsx-text::) : isConnected ? (": 1,
     "src/pages/(dashboard)/imports/date-field-picker.tsx::jsx-text::date": 1,
     "src/pages/(dashboard)/imports/start-import-modal.tsx::jsx-text::) : step === 'dateRange' ? (": 1,
     "src/pages/(dashboard)/settings/microsoft-365-card.tsx::jsx-text::) : authUrlLoading ? (": 1
