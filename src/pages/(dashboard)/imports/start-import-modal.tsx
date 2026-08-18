@@ -1,24 +1,20 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { X } from 'lucide-react'
 
 import { useAuth } from '@/app/hooks/useAuth'
+import { useGetM365FoldersQuery, useStartM365ImportJobMutation } from '@/app/services/recoveryApi'
+import { CustomLoader } from '@/components/feedback/custom-loader'
 import { Popup } from '@/components/popup/popup'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n/useI18n'
+import { getErrorMessage } from '@/lib/api-errors'
+import { showCustomToast } from '@/lib/showCustomToast'
 import { cn } from '@/lib/utils'
 
 import { DateRangeStep, type DateRangeValue } from './date-range-step'
 import { getDaysSelected } from './date-range-utils'
 import { FolderSelectDropdown, type FolderOption } from './folder-select-dropdown'
 import { ReviewImportStep } from './review-import-step'
-
-const FOLDER_OPTIONS: FolderOption[] = [
-  { value: 'inbox', label: 'Inbox' },
-  { value: 'sent-items', label: 'Sent Items' },
-  { value: 'archive', label: 'Archive' },
-  { value: 'matters-2024', label: 'Matters 2024' },
-  { value: 'matters-2025', label: 'Matters 2025' },
-]
 
 const IMPORT_STEPS = ['source', 'dateRange', 'review'] as const
 type ImportStepId = (typeof IMPORT_STEPS)[number]
@@ -34,29 +30,76 @@ export function StartImportModal({ open, onClose }: StartImportModalProps) {
   const { t } = useI18n()
   const { user } = useAuth()
   const [step, setStep] = useState<ImportStepId>('source')
-  const [folder, setFolder] = useState(FOLDER_OPTIONS[0].value)
+  const [folder, setFolder] = useState('')
   const [dateRange, setDateRange] = useState<DateRangeValue>(EMPTY_DATE_RANGE)
+
+  const {
+    data: foldersData,
+    isFetching: isFoldersLoading,
+    isError: isFoldersError,
+    refetch: refetchFolders,
+  } = useGetM365FoldersQuery(undefined, { skip: !open })
+  const [startImportJob, { isLoading: isSubmitting }] = useStartM365ImportJobMutation()
+
+  const folders = useMemo(() => foldersData?.content?.folders ?? [], [foldersData])
+  const folderOptions: FolderOption[] = useMemo(
+    () =>
+      folders.map((f) => ({
+        value: f.id,
+        label: `${'  '.repeat(f.depth)}${f.displayName}`,
+      })),
+    [folders],
+  )
+
+  // Default to the first folder once the list loads, without an effect: fall back
+  // whenever the user hasn't picked a value that still exists in the fetched list.
+  const selectedFolderId = folders.some((f) => f.id === folder) ? folder : (folders[0]?.id ?? '')
 
   const email = user?.email ?? 'user@client.com'
   const stepIndex = IMPORT_STEPS.indexOf(step)
-  const folderLabel = FOLDER_OPTIONS.find((option) => option.value === folder)?.label ?? folder
+  const folderLabel =
+    folders.find((f) => f.id === selectedFolderId)?.displayName ?? selectedFolderId
 
-  const canProceed = step === 'dateRange' ? Boolean(dateRange.startDate && dateRange.endDate) : true
+  const canProceed =
+    step === 'dateRange'
+      ? Boolean(dateRange.startDate && dateRange.endDate)
+      : step === 'source'
+        ? Boolean(selectedFolderId)
+        : true
 
   const handleClose = () => {
     setStep('source')
-    setFolder(FOLDER_OPTIONS[0].value)
+    setFolder('')
     setDateRange(EMPTY_DATE_RANGE)
     onClose()
   }
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step === 'source') {
       setStep('dateRange')
     } else if (step === 'dateRange' && dateRange.startDate && dateRange.endDate) {
       setStep('review')
-    } else if (step === 'review') {
-      handleClose()
+    } else if (step === 'review' && dateRange.startDate && dateRange.endDate) {
+      try {
+        await startImportJob({
+          folderId: selectedFolderId,
+          folderName: folderLabel,
+          dateRangeStart: dateRange.startDate.toISOString(),
+          dateRangeEnd: dateRange.endDate.toISOString(),
+        }).unwrap()
+        showCustomToast({
+          type: 'success',
+          title: t('imports.startModal.title'),
+          message: t('imports.startModal.successToast'),
+        })
+        handleClose()
+      } catch (error) {
+        showCustomToast({
+          type: 'error',
+          title: t('imports.startModal.title'),
+          message: getErrorMessage(error, t('imports.startModal.errorToast')),
+        })
+      }
     }
   }
 
@@ -119,11 +162,29 @@ export function StartImportModal({ open, onClose }: StartImportModalProps) {
                 <span className="text-xs font-semibold text-rp-fg">
                   {t('imports.startModal.folderLabel')}
                 </span>
-                <FolderSelectDropdown
-                  value={folder}
-                  onChange={setFolder}
-                  options={FOLDER_OPTIONS}
-                />
+                {isFoldersLoading ? (
+                  <CustomLoader />
+                ) : isFoldersError ? (
+                  <div className="flex flex-col items-start gap-2">
+                    <p className="text-xs text-red-600">{t('imports.startModal.folderError')}</p>
+                    <Button
+                      variant="secondary"
+                      className="h-8 px-3 text-xs"
+                      onClick={refetchFolders}
+                    >
+                      {t('common.retry')}
+                    </Button>
+                  </div>
+                ) : (
+                  <FolderSelectDropdown
+                    value={selectedFolderId}
+                    onChange={setFolder}
+                    options={folderOptions}
+                  />
+                )}
+                {!isFoldersLoading && !isFoldersError && folders.length === 0 ? (
+                  <p className="text-xs text-rp-muted">{t('imports.startModal.folderEmpty')}</p>
+                ) : null}
                 <p className="text-xs text-rp-muted">{t('imports.startModal.folderHint')}</p>
               </div>
             </div>
@@ -148,10 +209,14 @@ export function StartImportModal({ open, onClose }: StartImportModalProps) {
           <Button
             variant="default"
             className="w-[149px]"
-            disabled={!canProceed}
+            disabled={!canProceed || isSubmitting}
             onClick={handleNext}
           >
-            {t('imports.startModal.next')}
+            {step === 'review'
+              ? isSubmitting
+                ? t('imports.startModal.submitting')
+                : t('imports.startModal.submit')
+              : t('imports.startModal.next')}
           </Button>
         </div>
       </div>

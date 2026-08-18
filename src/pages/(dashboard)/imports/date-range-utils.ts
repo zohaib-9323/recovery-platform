@@ -18,3 +18,13 @@ export function getDaysSelected(startDate: Date, endDate: Date): number {
 export function formatDisplayDate(date: Date): string {
   return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 }
+
+export function formatShortDateRange(startDate: Date, endDate: Date): string {
+  const start = startDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
+  const end = endDate.toLocaleDateString('en-US', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+  return `${start} - ${end}`
+}
