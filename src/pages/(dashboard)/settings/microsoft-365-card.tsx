@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Lock } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
@@ -7,6 +7,7 @@ import {
   useGetM365AuthUrlMutation,
   useDisconnectM365Mutation,
 } from '@/app/services/recoveryApi'
+import { CustomLoader } from '@/components/feedback/custom-loader'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n/useI18n'
 import { cn } from '@/lib/utils'
@@ -38,9 +39,16 @@ export function Microsoft365Card() {
   const email = statusData?.content?.email ?? ''
 
   // Handle redirect back from Microsoft OAuth
+  const handledM365Ref = useRef<string | null>(null)
   useEffect(() => {
     const m365Param = searchParams.get('m365')
-    if (!m365Param) return
+    if (!m365Param) {
+      handledM365Ref.current = null
+      return
+    }
+    // Guards against React StrictMode's dev double-invoke firing this twice for one redirect.
+    if (handledM365Ref.current === m365Param) return
+    handledM365Ref.current = m365Param
 
     const next = new URLSearchParams(searchParams)
     next.delete('m365')
@@ -157,13 +165,12 @@ export function Microsoft365Card() {
               {t('settings.integrations.startImport')}
             </Button>
           </>
+        ) : authUrlLoading ? (
+          <div className="flex w-full justify-center">
+            <CustomLoader />
+          </div>
         ) : (
-          <Button
-            variant="default"
-            className="w-full"
-            onClick={handleConnect}
-            disabled={authUrlLoading}
-          >
+          <Button variant="default" className="w-full" onClick={handleConnect}>
             {t('settings.integrations.connect')}
           </Button>
         )}
