@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { useGetM365StatusQuery } from '@/app/services/recoveryApi'
+import { CustomLoader } from '@/components/feedback/custom-loader'
 import { useI18n } from '@/i18n/useI18n'
 
 import { ImportActionCard, Microsoft365Icon, NoImportsIcon } from './import-action-card'
@@ -11,7 +12,7 @@ export function ImportsPage() {
   const { t } = useI18n()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { data: m365Status } = useGetM365StatusQuery()
+  const { data: m365Status, isLoading: isStatusLoading } = useGetM365StatusQuery()
   const isConnected = m365Status?.content?.connected ?? false
   const [isStartImportOpen, setIsStartImportOpen] = useState(false)
 
@@ -35,7 +36,9 @@ export function ImportsPage() {
         </div>
       </div>
       <div className="flex min-h-0 flex-1 items-center justify-center p-3 sm:p-6">
-        {isConnected ? (
+        {isStatusLoading ? (
+          <CustomLoader />
+        ) : isConnected ? (
           <ImportActionCard
             icon={<NoImportsIcon />}
             title={t('imports.empty')}
