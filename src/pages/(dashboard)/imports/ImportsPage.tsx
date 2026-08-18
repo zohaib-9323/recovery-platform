@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
-import { useGetM365ImportJobsQuery, useGetM365StatusQuery } from '@/app/services/recoveryApi'
+import { useGetM365ImportJobsQuery, useGetM365StatusQuery } from '@/app/services/recoveryM365Api'
 import { CustomLoader } from '@/components/feedback/custom-loader'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n/useI18n'
@@ -9,6 +9,12 @@ import { useI18n } from '@/i18n/useI18n'
 import { ImportActionCard, Microsoft365Icon, NoImportsIcon } from './import-action-card'
 import { ImportJobCard } from './import-job-card'
 import { StartImportModal } from './start-import-modal'
+
+/** Statuses that mean the job is still in progress — poll while any of these are present. */
+const ACTIVE_STATUSES = new Set(['queued', 'running', 'retrying'])
+
+/** Poll interval while at least one job is active; 0 = no polling. */
+const POLL_MS = 3000
 
 export function ImportsPage() {
   const { t } = useI18n()
@@ -20,12 +26,25 @@ export function ImportsPage() {
   const isConnected = m365Status?.content?.connected ?? false
   const [isStartImportOpen, setIsStartImportOpen] = useState(false)
 
+  // Start polling as soon as a job is in an active state; stop automatically
+  // when all jobs reach a terminal state (completed / failed / cancelled).
+  const [pollingInterval, setPollingInterval] = useState(0)
+
   const { data: jobsData, isFetching: isJobsFetching } = useGetM365ImportJobsQuery(
     { page: 1, limit: 50 },
-    { skip: !isConnected, refetchOnMountOrArgChange: true },
+    { skip: !isConnected, refetchOnMountOrArgChange: true, pollingInterval },
   )
   const jobs = jobsData?.content?.items ?? []
   const totalJobs = jobsData?.content?.total ?? 0
+
+  // Keep polling in sync with whether any job is still active. Adjusting state during
+  // render (guarded so it only fires when the target actually changes) avoids the extra
+  // render + cascading updates a useEffect would cause here.
+  const hasActiveJobs = jobs.some((j) => ACTIVE_STATUSES.has(j.status))
+  const targetPollingInterval = hasActiveJobs ? POLL_MS : 0
+  if (jobsData && pollingInterval !== targetPollingInterval) {
+    setPollingInterval(targetPollingInterval)
+  }
 
   const isStartImportModalOpen =
     isStartImportOpen || (isConnected && searchParams.get('startImport') === 'true')
@@ -72,6 +91,7 @@ export function ImportsPage() {
             <ImportJobCard
               key={job.id}
               job={job}
+              onViewDetail={() => navigate(`/imports/${job.id}`)}
               onViewInInbox={() => navigate('/inbox')}
               onStartAnother={() => setIsStartImportOpen(true)}
               onRetry={() => setIsStartImportOpen(true)}

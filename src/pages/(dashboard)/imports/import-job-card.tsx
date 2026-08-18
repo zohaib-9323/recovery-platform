@@ -21,6 +21,7 @@ import { InfoBanner } from './info-banner'
 
 export type ImportJobCardProps = {
   job: M365ImportJobSummary
+  onViewDetail?: () => void
   onViewInInbox?: () => void
   onStartAnother?: () => void
   onRetry?: () => void
@@ -150,6 +151,7 @@ function ExpandableSection({
 
 export function ImportJobCard({
   job,
+  onViewDetail,
   onViewInInbox,
   onStartAnother,
   onRetry,
@@ -180,7 +182,14 @@ export function ImportJobCard({
         <span className="text-sm font-semibold text-rp-fg">
           {job.folderName} - {rangeLabel}
         </span>
-        <StatusBadge job={job} />
+        <div className="flex items-center gap-3">
+          <StatusBadge job={job} />
+          {onViewDetail && (
+            <Button variant="secondary" size="sm" onClick={onViewDetail}>
+              {t('imports.job.details')} →
+            </Button>
+          )}
+        </div>
       </div>
 
       <MetricRow job={job} />

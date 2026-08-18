@@ -35,15 +35,6 @@ import type {
   RecoveryDocumentRecordType,
 } from '@/types/recovery-inbox-api'
 import type {
-  M365StatusEnvelope,
-  M365AuthUrlEnvelope,
-  M365FoldersEnvelope,
-  M365ImportJobEnvelope,
-  M365ImportJobBody,
-  M365ImportJobsListEnvelope,
-  M365ImportJobsListQuery,
-} from '@/types/recovery-m365-api'
-import type {
   RecoveryPreferentialDutyEnvelope,
   RecoveryShipmentDetailEnvelope,
   RecoveryShipmentDownloadEnvelope,
@@ -70,6 +61,8 @@ export const recoveryApi = createApi({
     'RecoveryNotifications',
     'M365Connection',
     'M365ImportJobs',
+    'M365ImportJobDetail',
+    'M365ImportJobItems',
   ],
   endpoints: (builder) => ({
     login: builder.mutation<RecoveryAuthEnvelope, LoginRequestBody>({
@@ -457,33 +450,6 @@ export const recoveryApi = createApi({
         },
       }),
     }),
-    getM365Status: builder.query<M365StatusEnvelope, void>({
-      query: () => ({ url: '/recovery/m365/status', method: 'GET' }),
-      providesTags: [{ type: 'M365Connection', id: 'STATUS' }],
-    }),
-    getM365AuthUrl: builder.mutation<M365AuthUrlEnvelope, void>({
-      query: () => ({ url: '/recovery/m365/auth-url', method: 'GET' }),
-    }),
-    disconnectM365: builder.mutation<RecoveryApiEnvelope<null>, void>({
-      query: () => ({ url: '/recovery/m365/disconnect', method: 'DELETE' }),
-      invalidatesTags: [{ type: 'M365Connection', id: 'STATUS' }],
-    }),
-    getM365Folders: builder.query<M365FoldersEnvelope, void>({
-      query: () => ({ url: '/recovery/m365/folders', method: 'GET' }),
-      providesTags: [{ type: 'M365Connection', id: 'FOLDERS' }],
-    }),
-    startM365ImportJob: builder.mutation<M365ImportJobEnvelope, M365ImportJobBody>({
-      query: (body) => ({ url: '/recovery/m365/import-jobs', method: 'POST', body }),
-      invalidatesTags: [{ type: 'M365ImportJobs', id: 'LIST' }],
-    }),
-    getM365ImportJobs: builder.query<M365ImportJobsListEnvelope, M365ImportJobsListQuery | void>({
-      query: (params) => ({
-        url: '/recovery/m365/import-jobs',
-        method: 'GET',
-        params: { page: params?.page ?? 1, limit: params?.limit ?? 20 },
-      }),
-      providesTags: [{ type: 'M365ImportJobs', id: 'LIST' }],
-    }),
   }),
 })
 
@@ -518,10 +484,4 @@ export const {
   useUpdateRecoveryShipmentSanctionDecisionMutation,
   useChallengeRecoveryHsCodeMutation,
   useGetRecoveryPreferentialDutyQuery,
-  useGetM365StatusQuery,
-  useGetM365AuthUrlMutation,
-  useDisconnectM365Mutation,
-  useGetM365FoldersQuery,
-  useStartM365ImportJobMutation,
-  useGetM365ImportJobsQuery,
 } = recoveryApi

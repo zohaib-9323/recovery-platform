@@ -5,7 +5,7 @@ import {
   useGetM365FoldersQuery,
   useGetM365StatusQuery,
   useStartM365ImportJobMutation,
-} from '@/app/services/recoveryApi'
+} from '@/app/services/recoveryM365Api'
 import { CustomLoader } from '@/components/feedback/custom-loader'
 import { Popup } from '@/components/popup/popup'
 import { Button } from '@/components/ui/button'
@@ -15,7 +15,7 @@ import { showCustomToast } from '@/lib/showCustomToast'
 import { cn } from '@/lib/utils'
 
 import { DateRangeStep, type DateRangeValue } from './date-range-step'
-import { getDaysSelected } from './date-range-utils'
+import { endOfDay, getDaysSelected } from './date-range-utils'
 import { FolderSelectDropdown, type FolderOption } from './folder-select-dropdown'
 import { ReviewImportStep } from './review-import-step'
 
@@ -88,7 +88,9 @@ export function StartImportModal({ open, onClose }: StartImportModalProps) {
           folderId: selectedFolderId,
           folderName: folderLabel,
           dateRangeStart: dateRange.startDate.toISOString(),
-          dateRangeEnd: dateRange.endDate.toISOString(),
+          // endOfDay ensures "Aug 18 → Aug 18" sends 23:59:59.999, not midnight,
+          // so the backend receives a non-zero range covering the full selected day.
+          dateRangeEnd: endOfDay(dateRange.endDate).toISOString(),
         }).unwrap()
         showCustomToast({
           type: 'success',

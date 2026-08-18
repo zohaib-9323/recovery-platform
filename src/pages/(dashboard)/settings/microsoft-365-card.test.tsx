@@ -18,15 +18,15 @@ const mockRefetch = jest.fn()
 const mockGetAuthUrl = jest.fn()
 const mockDisconnect = jest.fn()
 
-jest.mock('@/app/services/recoveryApi', () => ({
-  ...jest.requireActual('@/app/services/recoveryApi'),
+jest.mock('@/app/services/recoveryM365Api', () => ({
+  ...jest.requireActual('@/app/services/recoveryM365Api'),
   useGetM365StatusQuery: jest.fn(),
   useGetM365AuthUrlMutation: jest.fn(),
   useDisconnectM365Mutation: jest.fn(),
 }))
 
 const { useGetM365StatusQuery, useGetM365AuthUrlMutation, useDisconnectM365Mutation } =
-  jest.requireMock('@/app/services/recoveryApi')
+  jest.requireMock('@/app/services/recoveryM365Api')
 
 function makeStore() {
   return configureStore({

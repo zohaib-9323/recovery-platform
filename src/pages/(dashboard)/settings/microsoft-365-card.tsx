@@ -6,7 +6,7 @@ import {
   useGetM365StatusQuery,
   useGetM365AuthUrlMutation,
   useDisconnectM365Mutation,
-} from '@/app/services/recoveryApi'
+} from '@/app/services/recoveryM365Api'
 import { CustomLoader } from '@/components/feedback/custom-loader'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n/useI18n'
