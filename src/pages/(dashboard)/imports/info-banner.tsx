@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 const TONE_CLASSES = {
   blue: 'border-rp-blue bg-rp-blueWithOpacity text-rp-blue',
   accent: 'border-rp-accent bg-rp-accent/10 text-rp-accent',
-  success: 'border-rp-success bg-rp-success/10 text-rp-success',
+  success: 'border-rp-green bg-[#2e7d32]/10 text-rp-green',
   danger: 'border-red-600 bg-red-50 text-red-600',
 } as const
 

@@ -122,8 +122,8 @@ export function Microsoft365Card() {
           <Microsoft365Logo />
           {connected && (
             <div className="flex flex-col items-end gap-1">
-              <span className="inline-flex items-center gap-1 rounded-[5px] bg-rp-success/10 px-2 py-1 text-sm text-rp-success">
-                <span className="size-1 rounded-full bg-rp-success" aria-hidden />
+              <span className="inline-flex items-center gap-1 rounded-[5px] bg-[#2e7d32]/10 px-2 py-1 text-sm text-rp-green">
+                <span className="size-1 rounded-full bg-rp-green" aria-hidden />
                 {t('settings.integrations.active')}
               </span>
               <p className="text-xs font-medium text-rp-muted">

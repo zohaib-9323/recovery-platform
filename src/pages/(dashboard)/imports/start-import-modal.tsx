@@ -1,8 +1,11 @@
 import { useMemo, useState } from 'react'
 import { X } from 'lucide-react'
 
-import { useAuth } from '@/app/hooks/useAuth'
-import { useGetM365FoldersQuery, useStartM365ImportJobMutation } from '@/app/services/recoveryApi'
+import {
+  useGetM365FoldersQuery,
+  useGetM365StatusQuery,
+  useStartM365ImportJobMutation,
+} from '@/app/services/recoveryApi'
 import { CustomLoader } from '@/components/feedback/custom-loader'
 import { Popup } from '@/components/popup/popup'
 import { Button } from '@/components/ui/button'
@@ -28,7 +31,7 @@ type StartImportModalProps = {
 
 export function StartImportModal({ open, onClose }: StartImportModalProps) {
   const { t } = useI18n()
-  const { user } = useAuth()
+  const { data: m365Status } = useGetM365StatusQuery(undefined, { skip: !open })
   const [step, setStep] = useState<ImportStepId>('source')
   const [folder, setFolder] = useState('')
   const [dateRange, setDateRange] = useState<DateRangeValue>(EMPTY_DATE_RANGE)
@@ -55,7 +58,7 @@ export function StartImportModal({ open, onClose }: StartImportModalProps) {
   // whenever the user hasn't picked a value that still exists in the fetched list.
   const selectedFolderId = folders.some((f) => f.id === folder) ? folder : (folders[0]?.id ?? '')
 
-  const email = user?.email ?? 'user@client.com'
+  const email = m365Status?.content?.email ?? 'user@client.com'
   const stepIndex = IMPORT_STEPS.indexOf(step)
   const folderLabel =
     folders.find((f) => f.id === selectedFolderId)?.displayName ?? selectedFolderId
@@ -240,7 +243,7 @@ function ImportStep({
       <span
         className={cn(
           'flex size-5 shrink-0 items-center justify-center rounded-full text-[10px]',
-          status === 'completed' ? 'bg-rp-success text-white' : 'bg-rp-border text-rp-fg',
+          status === 'completed' ? 'bg-rp-green text-white' : 'bg-rp-border text-rp-fg',
         )}
       >
         {number}

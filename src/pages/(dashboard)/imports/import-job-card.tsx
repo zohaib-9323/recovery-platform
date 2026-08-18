@@ -31,8 +31,8 @@ const STATUS_BADGE_CLASSES: Record<M365ImportJobSummary['status'], string> = {
   queued: 'border border-rp-border bg-rp-surface text-rp-muted',
   running: 'border border-rp-blue bg-rp-blueWithOpacity text-rp-blue',
   retrying: 'border border-rp-accent bg-rp-accent/10 text-rp-accent',
-  completed: 'border border-rp-success bg-rp-success/10 text-rp-success',
-  completed_with_errors: 'border border-rp-success bg-rp-success/10 text-rp-success',
+  completed: 'border border-rp-green bg-[#2e7d32]/10 text-rp-green',
+  completed_with_errors: 'border border-rp-green bg-[#2e7d32]/10 text-rp-green',
   failed: 'border border-red-600 bg-red-50 text-red-600',
   cancelled: 'border border-rp-border bg-rp-surface text-rp-muted',
 }
