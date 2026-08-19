@@ -7,6 +7,7 @@ import {
   useGetM365ImportJobDetailQuery,
   useGetM365ImportJobItemsQuery,
 } from '@/app/services/recoveryM365Api'
+import { useImportRealtimeRefresh } from '@/app/hooks/useImportRealtimeRefresh'
 import { CustomLoader } from '@/components/feedback/custom-loader'
 import { Button } from '@/components/ui/button'
 import type { M365EmailGroup } from '@/types/recovery-m365-api'
@@ -14,7 +15,7 @@ import type { M365EmailGroup } from '@/types/recovery-m365-api'
 import { formatShortDateRange } from './date-range-utils'
 import { ImportDetailStaticShipments } from './import-detail-static-shipments'
 import { ImportDocumentsBrowser } from './import-documents-browser'
-import { ACTIVE_STATUSES, FailedTable, POLL_MS, StatBox, StatusBadge } from './import-job-status'
+import { ACTIVE_STATUSES, FailedTable, StatBox, StatusBadge } from './import-job-status'
 import { InfoBanner } from './info-banner'
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -41,7 +42,6 @@ function InfoField({ label, value }: { label: string; value: string }) {
 export function ImportJobDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [pollingInterval, setPollingInterval] = useState(POLL_MS)
   // itemPage drives which API page is fetched; allGroups accumulates every loaded email group.
   const [itemPage, setItemPage] = useState(1)
   const [allGroups, setAllGroups] = useState<M365EmailGroup[]>([])
@@ -60,8 +60,8 @@ export function ImportJobDetailPage() {
     data: jobData,
     isLoading: isJobLoading,
     isError,
+    refetch: refetchJobDetail,
   } = useGetM365ImportJobDetailQuery(id ?? '', {
-    pollingInterval,
     skip: !id,
   })
   const { data: profile } = useGetRecoveryProfileQuery()
@@ -69,13 +69,10 @@ export function ImportJobDetailPage() {
   const job = jobData?.content
   const isActive = job ? ACTIVE_STATUSES.has(job.status) : true
 
-  // Keep the polling interval in sync with the job's active state. Adjusting state
-  // during render (guarded so it only fires when the target actually changes) avoids
-  // the extra render + cascading updates a useEffect would cause here.
-  const targetPollingInterval = job ? (isActive ? POLL_MS : 0) : POLL_MS
-  if (job && pollingInterval !== targetPollingInterval) {
-    setPollingInterval(targetPollingInterval)
-  }
+  // No polling: this only refetches when a push notification about this job's status
+  // change arrives (see useImportRealtimeRefresh) — either via Firebase's foreground
+  // onMessage (useFCM) or the service worker relaying a background push.
+  useImportRealtimeRefresh(refetchJobDetail, Boolean(id))
 
   const { data: itemsData, isFetching: isItemsFetching } = useGetM365ImportJobItemsQuery(
     { id: id ?? '', page: itemPage, limit: 10 },

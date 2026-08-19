@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { useGetM365ImportJobsQuery, useGetM365StatusQuery } from '@/app/services/recoveryM365Api'
+import { useImportRealtimeRefresh } from '@/app/hooks/useImportRealtimeRefresh'
 import { CustomLoader } from '@/components/feedback/custom-loader'
 import { CustomPagination } from '@/components/pagination/custom-pagination'
 import { Button } from '@/components/ui/button'
@@ -10,12 +11,6 @@ import { useI18n } from '@/i18n/useI18n'
 import { ImportActionCard, Microsoft365Icon, NoImportsIcon } from './import-action-card'
 import { ImportJobCard } from './import-job-card'
 import { StartImportModal } from './start-import-modal'
-
-/** Statuses that mean the job is still in progress — poll while any of these are present. */
-const ACTIVE_STATUSES = new Set(['queued', 'running', 'retrying'])
-
-/** Poll interval while at least one job is active; 0 = no polling. */
-const POLL_MS = 3000
 
 export function ImportsPage() {
   const { t } = useI18n()
@@ -30,27 +25,23 @@ export function ImportsPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 8
 
-  // Start polling as soon as a job is in an active state; stop automatically
-  // when all jobs reach a terminal state (completed / failed / cancelled).
-  const [pollingInterval, setPollingInterval] = useState(0)
-
-  const { data: jobsData, isFetching: isJobsFetching } = useGetM365ImportJobsQuery(
+  // No polling: the list only refetches when a push notification about a job status
+  // change arrives (see useImportRealtimeRefresh) — either via Firebase's foreground
+  // onMessage (useFCM) or the service worker relaying a background push.
+  const {
+    data: jobsData,
+    isFetching: isJobsFetching,
+    refetch: refetchJobs,
+  } = useGetM365ImportJobsQuery(
     { page: currentPage, limit: pageSize },
-    { skip: !isConnected, refetchOnMountOrArgChange: true, pollingInterval },
+    { skip: !isConnected, refetchOnMountOrArgChange: true },
   )
   const jobs = jobsData?.content?.items ?? []
   const totalJobs = jobsData?.content?.total ?? 0
   const totalPages = Math.max(1, jobsData?.content?.totalPages ?? 1)
   const safePage = Math.min(currentPage, totalPages)
 
-  // Keep polling in sync with whether any job is still active. Adjusting state during
-  // render (guarded so it only fires when the target actually changes) avoids the extra
-  // render + cascading updates a useEffect would cause here.
-  const hasActiveJobs = jobs.some((j) => ACTIVE_STATUSES.has(j.status))
-  const targetPollingInterval = hasActiveJobs ? POLL_MS : 0
-  if (jobsData && pollingInterval !== targetPollingInterval) {
-    setPollingInterval(targetPollingInterval)
-  }
+  useImportRealtimeRefresh(refetchJobs, isConnected)
 
   const isStartImportModalOpen =
     isStartImportOpen || (isConnected && searchParams.get('startImport') === 'true')

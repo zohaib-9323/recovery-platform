@@ -7,8 +7,8 @@ import { formatReceived, truncate } from './format-utils'
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
+/** Statuses that mean the job is still in progress (used to gate the items query / UI copy). */
 export const ACTIVE_STATUSES = new Set<M365ImportJobStatus>(['queued', 'running', 'retrying'])
-export const POLL_MS = 3000
 
 const STATUS_BADGE: Record<
   M365ImportJobStatus,
