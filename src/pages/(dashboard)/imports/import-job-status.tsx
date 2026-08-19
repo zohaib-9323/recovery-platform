@@ -32,12 +32,12 @@ const STATUS_BADGE: Record<
   },
   completed: {
     label: 'Completed',
-    className: 'border border-rp-success bg-rp-success/10 text-rp-success',
+    className: 'border border-rp-green bg-[#2e7d32]/10 text-rp-green',
     Icon: CheckCircle2,
   },
   completed_with_errors: {
     label: 'Completed',
-    className: 'border border-rp-success bg-rp-success/10 text-rp-success',
+    className: 'border border-rp-green bg-[#2e7d32]/10 text-rp-green',
     Icon: CheckCircle2,
   },
   failed: {

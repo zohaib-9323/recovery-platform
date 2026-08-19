@@ -130,27 +130,29 @@ export function StartImportModal({ open, onClose }: StartImportModalProps) {
         </div>
 
         <div className="flex flex-col gap-10">
-          <ol className="flex items-center gap-3 px-3">
-            <ImportStep
-              number={1}
-              label={t('imports.startModal.steps.source')}
-              status={stepIndex > 0 ? 'completed' : 'current'}
-              onClick={stepIndex > 0 ? () => setStep('source') : undefined}
-            />
-            <StepDivider />
-            <ImportStep
-              number={2}
-              label={t('imports.startModal.steps.dateRange')}
-              status={stepIndex > 1 ? 'completed' : stepIndex === 1 ? 'current' : 'upcoming'}
-              onClick={stepIndex > 1 ? () => setStep('dateRange') : undefined}
-            />
-            <StepDivider />
-            <ImportStep
-              number={3}
-              label={t('imports.startModal.steps.review')}
-              status={stepIndex === 2 ? 'current' : 'upcoming'}
-            />
-          </ol>
+          <div className="border border-rp-border px-6 py-4">
+            <ol className="flex items-center">
+              <ImportStep
+                number={1}
+                label={t('imports.startModal.steps.source')}
+                status={stepIndex > 0 ? 'completed' : 'current'}
+                onClick={stepIndex > 0 ? () => setStep('source') : undefined}
+              />
+              <StepDivider />
+              <ImportStep
+                number={2}
+                label={t('imports.startModal.steps.dateRange')}
+                status={stepIndex > 1 ? 'completed' : stepIndex === 1 ? 'current' : 'upcoming'}
+                onClick={stepIndex > 1 ? () => setStep('dateRange') : undefined}
+              />
+              <StepDivider />
+              <ImportStep
+                number={3}
+                label={t('imports.startModal.steps.review')}
+                status={stepIndex === 2 ? 'current' : 'upcoming'}
+              />
+            </ol>
+          </div>
 
           {step === 'source' ? (
             <div className="flex flex-col gap-5">
@@ -244,8 +246,10 @@ function ImportStep({
     <li className="flex shrink-0 items-center gap-2.5">
       <span
         className={cn(
-          'flex size-5 shrink-0 items-center justify-center rounded-full text-[10px]',
-          status === 'completed' ? 'bg-rp-green text-white' : 'bg-rp-border text-rp-fg',
+          'flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
+          status === 'completed' && 'bg-rp-green text-white',
+          status === 'current' && 'bg-rp-accent text-white',
+          status === 'upcoming' && 'bg-rp-disabled text-rp-muted',
         )}
       >
         {number}
@@ -254,7 +258,7 @@ function ImportStep({
         <Button
           type="button"
           variant="ghost"
-          className="h-auto w-auto whitespace-nowrap rounded p-1 text-xs font-normal text-rp-heading hover:bg-rp-surface hover:underline"
+          className="h-auto w-auto whitespace-nowrap rounded p-1 text-sm font-normal text-rp-heading hover:bg-rp-surface hover:underline"
           onClick={onClick}
         >
           {label}
@@ -262,8 +266,8 @@ function ImportStep({
       ) : (
         <span
           className={cn(
-            'whitespace-nowrap text-xs',
-            status === 'upcoming' ? 'text-rp-muted' : 'text-rp-heading',
+            'whitespace-nowrap text-sm',
+            status === 'upcoming' ? 'text-rp-muted' : 'font-semibold text-rp-heading',
           )}
         >
           {label}
@@ -274,5 +278,5 @@ function ImportStep({
 }
 
 function StepDivider() {
-  return <span className="h-px w-9 shrink-0 bg-rp-border" aria-hidden />
+  return <span className="mx-3 h-[1.5px] flex-1 bg-[#7D7D7D]" aria-hidden />
 }

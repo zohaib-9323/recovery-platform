@@ -11,7 +11,7 @@ import { formatReceived, truncate } from './format-utils'
 
 const ITEM_STATUS_STYLE: Record<M365DocumentItem['status'], { label: string; className: string }> =
   {
-    fetched: { label: 'Passed', className: 'bg-[#2E7D321A] text-[#2E7D32]' },
+    fetched: { label: 'Passed', className: 'bg-[#2e7d32]/10 text-rp-green' },
     duplicate: { label: 'Duplicate', className: 'bg-[#F5F5F5] text-[#4B4B4B]' },
     failed: { label: 'Failed', className: 'bg-[#C628281A] text-[#C62828]' },
   }
