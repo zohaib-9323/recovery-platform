@@ -158,6 +158,8 @@ export const messages: Record<string, string> = {
   'imports.startModal.dateRange.selectDate': 'Select Date',
   'imports.startModal.dateRange.previousMonth': 'Previous month',
   'imports.startModal.dateRange.nextMonth': 'Next month',
+  'imports.startModal.dateRange.selectMonth': 'Select month',
+  'imports.startModal.dateRange.selectYear': 'Select year',
   'imports.startModal.dateRange.hint':
     'You can run more imports later for periods before this one, going back up to {{years}} years.',
   'imports.startModal.dateRange.daysSelected': '{{count}} of {{max}} days selected',
@@ -201,8 +203,7 @@ export const messages: Record<string, string> = {
   'imports.job.unprocessableTitle': "Items that couldn't be imported ({{count}})",
   'imports.job.unprocessableHint':
     'Some emails or attachments in this range could not be imported. Check the Inbox for what was added successfully.',
-  'imports.job.details': 'Details',
-  'imports.job.viewInInbox': 'View in Inbox',
+  'imports.job.details': 'View Details',
   'imports.job.startAnother': 'Start another import',
   'imports.job.retryImport': 'Retry import',
   'imports.job.contactSupport': 'Contact support',

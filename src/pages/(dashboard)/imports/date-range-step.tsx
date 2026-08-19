@@ -33,13 +33,13 @@ export function DateRangeStep({ value, onChange }: DateRangeStepProps) {
   )
 
   const startMinDate = endDate
-    ? new Date(Math.max(earliestDate.getTime(), addDays(endDate, -MAX_RANGE_DAYS).getTime()))
+    ? new Date(Math.max(earliestDate.getTime(), addDays(endDate, -(MAX_RANGE_DAYS - 1)).getTime()))
     : earliestDate
   const startMaxDate = endDate ? endDate : today
 
   const endMinDate = startDate ?? earliestDate
   const endMaxDate = startDate
-    ? new Date(Math.min(addDays(startDate, MAX_RANGE_DAYS).getTime(), today.getTime()))
+    ? new Date(Math.min(addDays(startDate, MAX_RANGE_DAYS - 1).getTime(), today.getTime()))
     : today
 
   const daysSelected = startDate && endDate ? getDaysSelected(startDate, endDate) : null

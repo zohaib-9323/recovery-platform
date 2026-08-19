@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { useGetM365ImportJobsQuery, useGetM365StatusQuery } from '@/app/services/recoveryM365Api'
 import { CustomLoader } from '@/components/feedback/custom-loader'
+import { CustomPagination } from '@/components/pagination/custom-pagination'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n/useI18n'
 
@@ -26,16 +27,21 @@ export function ImportsPage() {
   const isConnected = m365Status?.content?.connected ?? false
   const [isStartImportOpen, setIsStartImportOpen] = useState(false)
 
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 8
+
   // Start polling as soon as a job is in an active state; stop automatically
   // when all jobs reach a terminal state (completed / failed / cancelled).
   const [pollingInterval, setPollingInterval] = useState(0)
 
   const { data: jobsData, isFetching: isJobsFetching } = useGetM365ImportJobsQuery(
-    { page: 1, limit: 50 },
+    { page: currentPage, limit: pageSize },
     { skip: !isConnected, refetchOnMountOrArgChange: true, pollingInterval },
   )
   const jobs = jobsData?.content?.items ?? []
   const totalJobs = jobsData?.content?.total ?? 0
+  const totalPages = Math.max(1, jobsData?.content?.totalPages ?? 1)
+  const safePage = Math.min(currentPage, totalPages)
 
   // Keep polling in sync with whether any job is still active. Adjusting state during
   // render (guarded so it only fires when the target actually changes) avoids the extra
@@ -92,11 +98,18 @@ export function ImportsPage() {
               key={job.id}
               job={job}
               onViewDetail={() => navigate(`/imports/${job.id}`)}
-              onViewInInbox={() => navigate('/inbox')}
               onStartAnother={() => setIsStartImportOpen(true)}
               onRetry={() => setIsStartImportOpen(true)}
             />
           ))}
+
+          {totalPages > 1 ? (
+            <CustomPagination
+              totalPages={totalPages}
+              currentPage={safePage}
+              onPageChange={setCurrentPage}
+            />
+          ) : null}
         </div>
       ) : (
         <div className="flex min-h-0 flex-1 items-center justify-center p-3 sm:p-6">
