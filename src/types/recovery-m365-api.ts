@@ -105,12 +105,9 @@ export type M365ImportJobsListEnvelope = RecoveryApiEnvelope<M365ImportJobsListC
 
 export type M365FetchedItemStatus = 'fetched' | 'failed' | 'duplicate'
 
-export type M365FetchedItem = {
+/** One attachment document within an email group returned by GET /import-jobs/:id/items */
+export type M365DocumentItem = {
   id: string
-  messageId: string
-  subject: string
-  fromEmail: string
-  receivedDateTime: string
   attachmentName: string
   attachmentContentType: string
   attachmentSizeBytes: number
@@ -128,10 +125,45 @@ export type M365FetchedItem = {
   createdAt: string
 }
 
+/** One email with all its qualifying attachment documents. Returned by GET /import-jobs/:id/items */
+export type M365EmailGroup = {
+  messageId: string
+  subject: string
+  fromEmail: string
+  receivedDateTime: string
+  documents: M365DocumentItem[]
+}
+
+/**
+ * @deprecated Flat item shape — kept only for download-endpoint compatibility.
+ * The list endpoint now returns M365EmailGroup[].
+ */
+export type M365FetchedItem = {
+  id: string
+  messageId: string
+  subject: string
+  fromEmail: string
+  receivedDateTime: string
+  attachmentName: string
+  attachmentContentType: string
+  attachmentSizeBytes: number
+  attachmentSizeFormatted: string
+  status: M365FetchedItemStatus
+  failureDetail: string | null
+  graphMessageId: string | null
+  graphAttachmentId: string | null
+  s3Bucket: string | null
+  s3Key: string | null
+  createdAt: string
+}
+
 export type M365ImportJobItemsContent = {
-  items: M365FetchedItem[]
+  /** Paginated email groups — each item is one email with all its documents. */
+  items: M365EmailGroup[]
+  /** Total number of distinct emails (not documents) for this job. */
   total: number
   page: number
+  /** Max email groups per page (default 10). */
   limit: number
   totalPages: number
 }
