@@ -12,9 +12,29 @@ import { Button } from '@/components/ui/button'
 import type { M365EmailGroup } from '@/types/recovery-m365-api'
 
 import { formatShortDateRange } from './date-range-utils'
+import { ImportDetailStaticShipments } from './import-detail-static-shipments'
 import { ImportDocumentsBrowser } from './import-documents-browser'
 import { ACTIVE_STATUSES, FailedTable, POLL_MS, StatBox, StatusBadge } from './import-job-status'
 import { InfoBanner } from './info-banner'
+
+// ── Constants ──────────────────────────────────────────────────────────────────
+
+// Flip on once the backend returns processable/in-processing/unprocessable shipment
+// data for an import job — the UI is already built in import-detail-static-shipments.
+const SHOW_STATIC_SHIPMENT_SECTIONS = false
+
+const DEFAULT_AVATAR = `${process.env.PUBLIC_URL}/images/no-profile.png`
+
+// ── Sub-components ─────────────────────────────────────────────────────────────
+
+function InfoField({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-xs text-rp-muted">{label}</span>
+      <span className="text-sm font-semibold text-rp-heading">{value}</span>
+    </div>
+  )
+}
 
 // ── Page ───────────────────────────────────────────────────────────────────────
 
@@ -114,98 +134,105 @@ export function ImportJobDetailPage() {
   const userName =
     [profile?.content?.firstName, profile?.content?.lastName].filter(Boolean).join(' ') ||
     'Recovery User'
+  const location = [profile?.content?.city, profile?.content?.country].filter(Boolean).join(', ')
+  const profilePic = profile?.content?.profilePic
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-3 sm:p-6">
       {/* Back */}
-      <button
-        type="button"
-        onClick={handleBack}
-        className="inline-flex items-center gap-1.5 text-sm text-rp-muted transition-colors hover:text-rp-fg"
-      >
-        <ArrowLeft className="size-4" aria-hidden />
-        Import History
-      </button>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={handleBack}
+          aria-label="Back to Import History"
+          className="inline-flex size-8 shrink-0 items-center justify-center rounded-[4px] border border-rp-border bg-rp-page transition-colors hover:bg-rp-surface"
+        >
+          <ArrowLeft className="size-4 text-rp-fg" aria-hidden />
+        </button>
+        <span className="text-lg font-semibold text-rp-heading">{userName}</span>
+      </div>
 
       {/* User section */}
-      <section className="rounded-[10px] border border-rp-border bg-rp-page p-5">
-        <h2 className="mb-4 text-sm font-bold uppercase tracking-wide text-rp-heading">
-          User Information
-        </h2>
+      <section className="flex flex-col gap-4 rounded-[10px] border border-rp-border bg-rp-page p-5 shadow-sm">
+        <div className="flex size-[60px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-rp-surface">
+          <img
+            key={profilePic || DEFAULT_AVATAR}
+            src={profilePic || DEFAULT_AVATAR}
+            alt=""
+            className="size-full object-cover"
+            onError={(e) => {
+              e.currentTarget.src = DEFAULT_AVATAR
+            }}
+          />
+        </div>
+        <h2 className="text-lg font-semibold text-rp-heading">User Information</h2>
         <div className="flex flex-wrap gap-x-12 gap-y-3 text-sm">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-xs text-rp-muted">Full Name</span>
-            <span className="font-semibold text-rp-heading">{userName}</span>
-          </div>
-          <div className="flex flex-col gap-0.5">
-            <span className="text-xs text-rp-muted">Email Address</span>
-            <span className="font-semibold text-rp-heading">{profile?.content?.email ?? '—'}</span>
-          </div>
+          <InfoField label="Full Name" value={userName} />
+          <InfoField label="Phone Number" value={profile?.content?.phone || '—'} />
+          <InfoField label="Email Address" value={profile?.content?.email ?? '—'} />
+          <InfoField label="Location" value={location || '—'} />
           <div className="flex items-center gap-2">
             <Mail className="size-4 text-rp-muted" aria-hidden />
-            <div className="flex flex-col gap-0.5">
-              <span className="text-xs text-rp-muted">Connected Mailbox</span>
-              <span className="font-semibold text-rp-heading">{job.mailboxEmail}</span>
-            </div>
+            <InfoField label="Connected Mailbox" value={job.mailboxEmail} />
           </div>
         </div>
       </section>
 
       {/* Import details */}
-      <section className="rounded-[10px] border border-rp-border bg-rp-page p-5">
-        <h2 className="mb-4 text-sm font-bold uppercase tracking-wide text-rp-heading">
-          Import Details
-        </h2>
+      <div className="flex w-full flex-col gap-3">
+        <h2 className="text-lg font-semibold text-rp-heading">Import Details</h2>
 
-        <div className="mb-4 flex items-center justify-between gap-4">
-          <span className="text-sm font-semibold text-rp-fg">
-            {job.folderName} — {rangeLabel}
-          </span>
-          <StatusBadge status={job.status} />
+        <div className="flex w-full flex-col gap-4 rounded-[10px] border border-rp-border bg-rp-page p-5 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="text-sm font-semibold text-rp-fg">
+              {job.folderName} — {rangeLabel}
+            </span>
+            <StatusBadge status={job.status} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+            <StatBox value={job.stats.scanned} label="SCANNED" />
+            <StatBox value={job.stats.matched} label="MATCHED" />
+            <StatBox value={job.stats.added} label="ADDED" />
+            <StatBox value={job.stats.skipped} label="SKIPPED" />
+            <StatBox value={job.stats.failed} label="FAILED" />
+          </div>
+
+          {job.status === 'queued' && (
+            <InfoBanner tone="blue">
+              This job is queued and will start automatically when the previous import finishes.
+            </InfoBanner>
+          )}
+          {job.status === 'running' && (
+            <InfoBanner tone="blue">
+              Import is running. This page updates automatically — you can leave and come back.
+            </InfoBanner>
+          )}
+          {job.status === 'retrying' && (
+            <InfoBanner tone="accent" icon={AlertTriangle}>
+              A temporary error occurred. The import will retry shortly.
+            </InfoBanner>
+          )}
+          {isCompleted && (
+            <InfoBanner tone="success" icon={Check}>
+              {job.stats.failed > 0
+                ? `Import complete with ${job.stats.failed} failed attachment(s). ${job.stats.added} emails were added successfully.`
+                : `Import complete. ${job.stats.added} emails were added successfully.`}
+            </InfoBanner>
+          )}
+          {hasFailed && (
+            <InfoBanner tone="danger" icon={X}>
+              <span className="mb-1 block font-semibold">Import failed</span>
+              {job.fatalError ?? 'An unexpected error stopped the import. Please try again.'}
+            </InfoBanner>
+          )}
+          {job.status === 'cancelled' && (
+            <InfoBanner tone="danger" icon={X}>
+              This import was cancelled.
+            </InfoBanner>
+          )}
         </div>
-
-        <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
-          <StatBox value={job.stats.scanned} label="SCANNED" />
-          <StatBox value={job.stats.matched} label="MATCHED" />
-          <StatBox value={job.stats.added} label="ADDED" />
-          <StatBox value={job.stats.skipped} label="SKIPPED" />
-          <StatBox value={job.stats.failed} label="FAILED" />
-        </div>
-
-        {job.status === 'queued' && (
-          <InfoBanner tone="blue">
-            This job is queued and will start automatically when the previous import finishes.
-          </InfoBanner>
-        )}
-        {job.status === 'running' && (
-          <InfoBanner tone="blue">
-            Import is running. This page updates automatically — you can leave and come back.
-          </InfoBanner>
-        )}
-        {job.status === 'retrying' && (
-          <InfoBanner tone="accent" icon={AlertTriangle}>
-            A temporary error occurred. The import will retry shortly.
-          </InfoBanner>
-        )}
-        {isCompleted && (
-          <InfoBanner tone="success" icon={Check}>
-            {job.stats.failed > 0
-              ? `Import complete with ${job.stats.failed} failed attachment(s). ${job.stats.added} emails were added successfully.`
-              : `Import complete. ${job.stats.added} emails were added successfully.`}
-          </InfoBanner>
-        )}
-        {hasFailed && (
-          <InfoBanner tone="danger" icon={X}>
-            <span className="mb-1 block font-semibold">Import failed</span>
-            {job.fatalError ?? 'An unexpected error stopped the import. Please try again.'}
-          </InfoBanner>
-        )}
-        {job.status === 'cancelled' && (
-          <InfoBanner tone="danger" icon={X}>
-            This import was cancelled.
-          </InfoBanner>
-        )}
-      </section>
+      </div>
 
       {/* Documents */}
       <section className="rounded-[10px] border border-rp-border bg-rp-page p-5">
@@ -233,6 +260,10 @@ export function ImportJobDetailPage() {
           />
         ) : null}
       </section>
+
+      {/* Processable / In Processable / Unprocessable Shipments — hidden until the
+          backend provides this data; see import-detail-static-shipments.tsx */}
+      {SHOW_STATIC_SHIPMENT_SECTIONS && <ImportDetailStaticShipments />}
 
       {/* Per-email processing failures recorded by the import worker */}
       {!isActive && hasJobFailures && (

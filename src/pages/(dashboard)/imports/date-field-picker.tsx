@@ -8,8 +8,17 @@ import { cn } from '@/lib/utils'
 import { formatDisplayDate, startOfDay } from './date-range-utils'
 
 const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+const MONTH_LABELS = Array.from({ length: 12 }, (_, month) =>
+  new Date(2000, month, 1).toLocaleDateString('en-US', { month: 'long' }),
+)
 
 type DateCell = { date: Date; inMonth: boolean }
+
+function clampDate(date: Date, min: Date, max: Date): Date {
+  if (date < min) return min
+  if (date > max) return max
+  return date
+}
 
 function isSameDay(a: Date | null, b: Date | null): boolean {
   if (!a || !b) return false
@@ -59,7 +68,10 @@ export function DateFieldPicker({
 }: DateFieldPickerProps) {
   const { t } = useI18n()
   const [open, setOpen] = useState(false)
-  const [viewDate, setViewDate] = useState(() => value ?? minDate)
+  const boundedMin = startOfDay(minDate)
+  const boundedMax = startOfDay(maxDate)
+  const defaultViewDate = () => value ?? clampDate(startOfDay(new Date()), boundedMin, boundedMax)
+  const [viewDate, setViewDate] = useState(defaultViewDate)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -75,17 +87,46 @@ export function DateFieldPicker({
 
   const handleToggle = () => {
     const next = !open
-    if (next) setViewDate(value ?? minDate)
+    if (next) setViewDate(defaultViewDate())
     setOpen(next)
   }
 
-  const boundedMin = startOfDay(minDate)
-  const boundedMax = startOfDay(maxDate)
   const isDisabled = (date: Date) => date < boundedMin || date > boundedMax
 
-  const monthLabel = viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
   const cells = buildMonthGrid(viewDate)
   const formattedValue = value ? formatDisplayDate(value) : null
+
+  const minYear = boundedMin.getFullYear()
+  const maxYear = boundedMax.getFullYear()
+  const yearOptions = Array.from({ length: maxYear - minYear + 1 }, (_, index) => minYear + index)
+
+  const currentYear = viewDate.getFullYear()
+  const monthMin = currentYear === minYear ? boundedMin.getMonth() : 0
+  const monthMax = currentYear === maxYear ? boundedMax.getMonth() : 11
+  const monthOptions = Array.from(
+    { length: monthMax - monthMin + 1 },
+    (_, index) => monthMin + index,
+  )
+
+  const handleMonthChange = (month: number) => {
+    setViewDate(new Date(currentYear, month, 1))
+  }
+
+  const handleYearChange = (year: number) => {
+    const nextMonthMin = year === minYear ? boundedMin.getMonth() : 0
+    const nextMonthMax = year === maxYear ? boundedMax.getMonth() : 11
+    const clampedMonth = Math.min(Math.max(viewDate.getMonth(), nextMonthMin), nextMonthMax)
+    setViewDate(new Date(year, clampedMonth, 1))
+  }
+
+  const goToAdjacentMonth = (offset: number) => {
+    const naive = new Date(viewDate.getFullYear(), viewDate.getMonth() + offset, 1)
+    const year = Math.min(Math.max(naive.getFullYear(), minYear), maxYear)
+    const nextMonthMin = year === minYear ? boundedMin.getMonth() : 0
+    const nextMonthMax = year === maxYear ? boundedMax.getMonth() : 11
+    const month = Math.min(Math.max(naive.getMonth(), nextMonthMin), nextMonthMax)
+    setViewDate(new Date(year, month, 1))
+  }
 
   return (
     <div className="flex flex-1 flex-col gap-2.5">
@@ -105,29 +146,50 @@ export function DateFieldPicker({
 
         {open ? (
           <div className="absolute left-0 z-30 mt-2 w-[290px] rounded-xl border border-rp-border bg-white pb-5 shadow-[0px_2px_19px_rgba(0,0,0,0.1)]">
-            <div className="flex items-center justify-between px-4 py-3.5">
+            <div className="flex items-center justify-between gap-1 px-4 py-3.5">
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
                 aria-label={t('imports.startModal.dateRange.previousMonth')}
-                className="h-7 w-7 rounded-full p-0"
-                onClick={() =>
-                  setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))
-                }
+                className="h-7 w-7 shrink-0 rounded-full p-0"
+                onClick={() => goToAdjacentMonth(-1)}
               >
                 <ChevronLeft className="size-4" />
               </Button>
-              <span className="text-xs font-medium text-rp-fg">{monthLabel}</span>
+              <div className="flex items-center gap-1">
+                <select
+                  aria-label={t('imports.startModal.dateRange.selectMonth')}
+                  value={viewDate.getMonth()}
+                  onChange={(event) => handleMonthChange(Number(event.target.value))}
+                  className="rounded-md border-none bg-transparent py-0.5 pl-1 pr-0.5 text-xs font-medium text-rp-fg outline-none hover:bg-rp-border focus-visible:ring-1 focus-visible:ring-rp-accent"
+                >
+                  {monthOptions.map((month) => (
+                    <option key={month} value={month}>
+                      {MONTH_LABELS[month]}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  aria-label={t('imports.startModal.dateRange.selectYear')}
+                  value={viewDate.getFullYear()}
+                  onChange={(event) => handleYearChange(Number(event.target.value))}
+                  className="rounded-md border-none bg-transparent py-0.5 pl-1 pr-0.5 text-xs font-medium text-rp-fg outline-none hover:bg-rp-border focus-visible:ring-1 focus-visible:ring-rp-accent"
+                >
+                  {yearOptions.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
                 aria-label={t('imports.startModal.dateRange.nextMonth')}
-                className="h-7 w-7 rounded-full p-0"
-                onClick={() =>
-                  setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1))
-                }
+                className="h-7 w-7 shrink-0 rounded-full p-0"
+                onClick={() => goToAdjacentMonth(1)}
               >
                 <ChevronRight className="size-4" />
               </Button>

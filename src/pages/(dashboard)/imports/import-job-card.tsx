@@ -22,7 +22,6 @@ import { InfoBanner } from './info-banner'
 export type ImportJobCardProps = {
   job: M365ImportJobSummary
   onViewDetail?: () => void
-  onViewInInbox?: () => void
   onStartAnother?: () => void
   onRetry?: () => void
   onContactSupport?: () => void
@@ -152,7 +151,6 @@ function ExpandableSection({
 export function ImportJobCard({
   job,
   onViewDetail,
-  onViewInInbox,
   onStartAnother,
   onRetry,
   onContactSupport,
@@ -184,9 +182,9 @@ export function ImportJobCard({
         </span>
         <div className="flex items-center gap-3">
           <StatusBadge job={job} />
-          {onViewDetail && (
+          {onViewDetail && !isCompleted && (
             <Button variant="secondary" size="sm" onClick={onViewDetail}>
-              {t('imports.job.details')} →
+              {t('imports.job.details')}
             </Button>
           )}
         </div>
@@ -264,8 +262,8 @@ export function ImportJobCard({
 
       {isCompleted && (
         <div className="flex items-center gap-3">
-          <Button variant="secondary" size="sm" onClick={onViewInInbox}>
-            {t('imports.job.viewInInbox')}
+          <Button variant="secondary" size="sm" onClick={onViewDetail}>
+            {t('imports.job.details')}
           </Button>
           <Button variant="default" size="sm" onClick={onStartAnother}>
             {t('imports.job.startAnother')}
