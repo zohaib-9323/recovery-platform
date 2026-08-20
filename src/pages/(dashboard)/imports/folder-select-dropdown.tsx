@@ -50,7 +50,7 @@ export function FolderSelectDropdown({ value, onChange, options }: FolderSelectD
 
       {open ? (
         <div className="absolute left-0 right-0 z-30 mt-2 overflow-hidden rounded-[10px] border border-rp-disabled bg-white shadow-[0px_1px_2px_-1px_rgba(0,0,0,0.1),0px_1px_3px_rgba(0,0,0,0.1)]">
-          <div role="listbox" className="py-1">
+          <div role="listbox" className="max-h-64 overflow-y-auto py-1">
             {options.map((option) => {
               const selected = option.value === value
               return (
