@@ -1,21 +1,29 @@
-import { type FormEvent, useEffect, useMemo, useState } from 'react'
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { KeyRound, Mail } from 'lucide-react'
+import {
+  type ClipboardEvent,
+  type KeyboardEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 
 import {
   useRequestFirstLoginOtpMutation,
   useVerifyFirstLoginOtpMutation,
 } from '@/app/services/recoveryApi'
-import { AppLogo } from '@/components/brand/app-logo'
 import { LoginButton } from '@/components/buttons'
-import { InputField } from '@/components/fields'
-import { Card, CardContent } from '@/components/ui/card'
 import { useI18n } from '@/i18n/useI18n'
+import { AUTH_HEADING_CLASS } from '@/pages/auth/authFieldStyles'
+import { AuthBackToLogin } from '@/pages/auth/components/AuthBackToLogin'
 import {
   readFirstLoginFlowState,
   saveFirstLoginFlowState,
   type FirstLoginFlowState,
 } from '@/pages/auth/first-login-flow'
+
+const OTP_LENGTH = 6
+const RESEND_TIMER_SECONDS = 300
 
 function readApiMessage(error: unknown, fallback: string): string {
   if (error && typeof error === 'object' && 'data' in error) {
@@ -45,13 +53,20 @@ function getStateFromLocation(locationState: unknown): FirstLoginFlowState | nul
   }
 }
 
+function formatTimer(seconds: number): string {
+  const minutes = Math.floor(seconds / 60)
+  const remaining = seconds % 60
+  return `${minutes}:${remaining < 10 ? '0' : ''}${remaining}`
+}
+
 export function FirstLoginVerifyOtpPage() {
   const { t } = useI18n()
   const navigate = useNavigate()
   const location = useLocation()
-  const [otp, setOtp] = useState('')
+  const [digits, setDigits] = useState<string[]>(() => Array<string>(OTP_LENGTH).fill(''))
+  const [timer, setTimer] = useState(RESEND_TIMER_SECONDS)
   const [error, setError] = useState<string | null>(null)
-  const [resendMessage, setResendMessage] = useState<string | null>(null)
+  const inputRefs = useRef<Array<HTMLInputElement | null>>([])
   const [verifyOtp, { isLoading: isVerifying }] = useVerifyFirstLoginOtpMutation()
   const [requestOtp, { isLoading: isRequesting }] = useRequestFirstLoginOtpMutation()
 
@@ -65,29 +80,54 @@ export function FirstLoginVerifyOtpPage() {
     if (flowState) saveFirstLoginFlowState(flowState)
   }, [flowState])
 
+  useEffect(() => {
+    if (timer <= 0) return
+    const interval = setInterval(() => setTimer((prev) => prev - 1), 1000)
+    return () => clearInterval(interval)
+  }, [timer])
+
   if (!flowState) {
     return <Navigate to="/login" replace />
   }
 
-  const normalizedOtp = otp.replace(/\D/g, '').slice(0, 6)
-  const otpError =
-    normalizedOtp.length > 0 && normalizedOtp.length < 6
-      ? t('auth.firstLogin.otp.invalid')
-      : undefined
-  const canSubmit = normalizedOtp.length === 6
+  const otp = digits.join('')
+  const canSubmit = digits.every((digit) => digit !== '')
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
+  const handleChange = (index: number, value: string) => {
+    if (!/^\d?$/.test(value)) return
     setError(null)
-    setResendMessage(null)
+    const next = [...digits]
+    next[index] = value
+    setDigits(next)
+    if (value !== '' && index < OTP_LENGTH - 1) {
+      inputRefs.current[index + 1]?.focus()
+    }
+  }
 
+  const handleKeyDown = (index: number, e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && digits[index] === '' && index > 0) {
+      inputRefs.current[index - 1]?.focus()
+    }
+  }
+
+  const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault()
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, OTP_LENGTH)
+    if (pasted.length !== OTP_LENGTH) return
+    setDigits(pasted.split(''))
+    setError(null)
+    inputRefs.current[OTP_LENGTH - 1]?.focus()
+  }
+
+  const handleSubmit = async () => {
+    setError(null)
     if (!canSubmit) {
       setError(t('auth.firstLogin.otp.fixFields'))
       return
     }
 
     try {
-      const result = await verifyOtp({ email: flowState.email, otp: normalizedOtp }).unwrap()
+      const result = await verifyOtp({ email: flowState.email, otp }).unwrap()
       const setupToken = result.content?.setupToken
       if (!setupToken) {
         setError(t('auth.firstLogin.otp.verifyFailed'))
@@ -108,96 +148,96 @@ export function FirstLoginVerifyOtpPage() {
 
   const handleResendOtp = async () => {
     setError(null)
-    setResendMessage(null)
     try {
       await requestOtp({ email: flowState.email }).unwrap()
-      setResendMessage(t('auth.firstLogin.otp.resent', { email: flowState.email }))
+      setTimer(RESEND_TIMER_SECONDS)
+      setDigits(Array<string>(OTP_LENGTH).fill(''))
+      inputRefs.current[0]?.focus()
     } catch (err) {
       setError(readApiMessage(err, t('auth.firstLogin.otp.resendFailed')))
     }
   }
 
   return (
-    <Card
-      padding="none"
-      className="box-border w-full max-w-[584px] rounded-[10px] border-0 bg-white p-5 shadow-[0_8px_24px_2px_rgba(0,0,0,0.059)]"
-    >
-      <CardContent className="flex flex-col gap-4 p-0">
-        <div className="flex flex-col items-center gap-3 text-center">
-          <AppLogo size="lg" />
-          <h1 className="text-4xl font-bold leading-tight text-rp-heading">
-            {t('auth.firstLogin.otp.title')}
-          </h1>
-          <p className="max-w-[430px] text-base text-rp-description">
-            {t('auth.firstLogin.otp.description', { email: flowState.email })}
-          </p>
+    <div className="h-full w-full px-5 sm:px-7 md:px-10">
+      <div className="flex h-full w-full flex-col justify-center gap-2">
+        <h2 className={AUTH_HEADING_CLASS}>{t('auth.firstLogin.otp.title')}</h2>
+        <p className="mt-1 text-xs font-normal text-lightBlackOne sm:mt-2 sm:text-sm lg:text-base">
+          {t('auth.firstLogin.otp.description', { email: flowState.email })}{' '}
+          {t('auth.firstLogin.otp.descriptionSuffix')}
+        </p>
+
+        <div className="mt-6 grid w-full grid-cols-6 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
+          {digits.map((digit, index) => (
+            <input
+              key={index}
+              type="text"
+              inputMode="numeric"
+              maxLength={1}
+              aria-label={`${t('auth.firstLogin.otp.codeLabel')} ${index + 1}`}
+              className="h-14 w-full rounded-[10px] bg-grey text-center text-2xl font-normal text-primary focus:outline-none sm:h-20 sm:text-3xl md:h-28 md:text-4xl lg:text-5xl"
+              value={digit}
+              onChange={(e) => handleChange(index, e.target.value)}
+              onKeyDown={(e) => handleKeyDown(index, e)}
+              onPaste={handlePaste}
+              ref={(el) => {
+                inputRefs.current[index] = el
+              }}
+            />
+          ))}
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <InputField
-            fieldType="text"
-            id="first-login-email"
-            name="first-login-email"
-            label={t('auth.firstLogin.otp.emailLabel')}
-            autoComplete="email"
-            leftIcon={<Mail strokeWidth={2} />}
-            value={flowState.email}
-            readOnly
-          />
+        {error ? (
+          <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+            {error}
+          </p>
+        ) : null}
 
-          <InputField
-            fieldType="text"
-            id="first-login-otp"
-            name="first-login-otp"
-            label={t('auth.firstLogin.otp.codeLabel')}
-            autoComplete="one-time-code"
-            leftIcon={<KeyRound strokeWidth={2} />}
-            placeholder={t('auth.firstLogin.otp.codePlaceholder')}
-            value={normalizedOtp}
-            onChange={(e) => {
-              setOtp(e.target.value)
-              setError(null)
-              setResendMessage(null)
+        <div className="mt-4 flex items-center justify-start gap-2 sm:mt-6">
+          <span className="text-xsmall font-normal text-lightBlackOne md:text-normal">
+            {t('auth.firstLogin.otp.didNotReceive')}
+          </span>
+          {timer > 0 ? (
+            <span className="text-sm font-bold text-primary sm:text-xsmall lg:text-normal">
+              {formatTimer(timer)}
+            </span>
+          ) : (
+            <button
+              type="button"
+              className="flex items-center justify-center text-xsmall font-bold text-primary md:text-normal"
+              onClick={() => {
+                void handleResendOtp()
+              }}
+              disabled={isRequesting}
+            >
+              {isRequesting ? (
+                <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              ) : (
+                <span className="text-sm font-bold text-primary underline underline-offset-1 sm:text-xsmall lg:text-normal">
+                  {t('auth.firstLogin.otp.resend')}
+                </span>
+              )}
+            </button>
+          )}
+        </div>
+
+        <div className="flex justify-between sm:mt-2">
+          <LoginButton
+            type="button"
+            onClick={() => {
+              void handleSubmit()
             }}
-            error={otpError}
-            aria-invalid={Boolean(otpError)}
-          />
-
-          {error ? (
-            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-              {error}
-            </p>
-          ) : null}
-
-          {resendMessage ? (
-            <p className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
-              {resendMessage}
-            </p>
-          ) : null}
-
-          <LoginButton type="submit" disabled={!canSubmit || isVerifying}>
+            disabled={!canSubmit || isVerifying}
+          >
             {isVerifying ? t('auth.firstLogin.otp.verifying') : t('auth.firstLogin.otp.submit')}
           </LoginButton>
+        </div>
 
-          <button
-            type="button"
-            className="text-sm font-semibold text-rp-icon hover:underline disabled:cursor-not-allowed disabled:opacity-60"
-            onClick={() => {
-              void handleResendOtp()
-            }}
-            disabled={isRequesting}
-          >
-            {isRequesting ? t('auth.firstLogin.otp.resending') : t('auth.firstLogin.otp.resend')}
-          </button>
-        </form>
-
-        <p className="text-sm text-rp-description">
-          {t('auth.firstLogin.otp.backToLogin')}{' '}
-          <Link to="/login" className="font-semibold text-rp-heading hover:underline">
-            {t('auth.firstLogin.otp.loginLink')}
-          </Link>
-        </p>
-      </CardContent>
-    </Card>
+        <AuthBackToLogin
+          prompt={t('auth.firstLogin.otp.backToLogin')}
+          linkLabel={t('auth.firstLogin.otp.loginLink')}
+        />
+      </div>
+    </div>
   )
 }

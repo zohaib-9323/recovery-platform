@@ -1,15 +1,21 @@
 import { type FormEvent, useState } from 'react'
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { Check, Eye, EyeOff, KeyRound } from 'lucide-react'
 
 import { useResetPasswordMutation } from '@/app/services/recoveryApi'
-import { AppLogo } from '@/components/brand/app-logo'
 import { LoginButton } from '@/components/buttons'
 import { InputField } from '@/components/fields'
-import { SuccessPopup } from '@/components/popup'
-import { Card, CardContent } from '@/components/ui/card'
 import { useI18n } from '@/i18n/useI18n'
 import { isValidPassword } from '@/lib/validation'
+import {
+  AUTH_FIELD_SHELL_CLASS,
+  AUTH_HEADING_CLASS,
+  AUTH_INPUT_CLASS,
+  AUTH_LABEL_CLASS,
+} from '@/pages/auth/authFieldStyles'
+import { AuthBackToLogin } from '@/pages/auth/components/AuthBackToLogin'
+import { PasswordRules } from '@/pages/auth/components/PasswordRules'
+import { PasswordSuccessPopup } from '@/pages/auth/components/PasswordSuccessPopup'
 
 function readApiMessage(error: unknown, fallback: string): string {
   if (error && typeof error === 'object' && 'data' in error) {
@@ -20,17 +26,6 @@ function readApiMessage(error: unknown, fallback: string): string {
     }
   }
   return fallback
-}
-
-function RuleItem({ ok, text }: { ok: boolean; text: string }) {
-  return (
-    <span
-      className={`flex items-center gap-1 text-xs ${ok ? 'text-[#22A45D]' : 'text-rp-description'}`}
-    >
-      <Check className="h-3.5 w-3.5" />
-      {text}
-    </span>
-  )
 }
 
 export function ResetPasswordPage() {
@@ -62,13 +57,6 @@ export function ResetPasswordPage() {
     digit: /\d/.test(newPasswordTrimmed),
   }
 
-  const newPasswordError =
-    newPasswordTrimmed.length > 0 && !isValidPassword(newPasswordTrimmed)
-      ? t('auth.reset.rulesError')
-      : undefined
-  const confirmPasswordError =
-    confirmPasswordTrimmed.length > 0 && !matches ? t('auth.reset.passwordMismatch') : undefined
-
   const canSubmit = isValidPassword(newPasswordTrimmed) && matches
 
   const handleSubmit = async (e: FormEvent) => {
@@ -89,40 +77,39 @@ export function ResetPasswordPage() {
 
   return (
     <>
-      <Card
-        padding="none"
-        className="box-border w-full max-w-[584px] rounded-[10px] border-0 bg-white p-5 shadow-[0_8px_24px_2px_rgba(0,0,0,0.059)]"
-      >
-        <CardContent className="flex flex-col gap-4 p-0">
-          <div className="flex flex-col items-center gap-3 text-center">
-            <AppLogo size="lg" />
-            <h1 className="text-4xl font-bold leading-tight text-rp-heading">
-              {t('auth.reset.title')}
-            </h1>
-            <p className="text-base text-rp-description">{t('auth.reset.description')}</p>
-          </div>
+      <div className="h-full w-full px-5 sm:px-7 md:px-10">
+        <div className="flex h-full w-full flex-col justify-center gap-2">
+          <h1 className={AUTH_HEADING_CLASS}>{t('auth.reset.title')}</h1>
+          <p className="text-xs font-normal text-lightBlackOne sm:text-sm lg:text-base">
+            {t('auth.reset.description')}
+          </p>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <div className="space-y-2">
+          <form
+            onSubmit={handleSubmit}
+            className="no-scrollbar h-fit overflow-hidden overflow-y-scroll"
+          >
+            <div className="mt-5 flex w-full flex-col gap-2">
               <InputField
                 fieldType="password"
                 id="new-password"
                 name="new-password"
                 label={t('auth.reset.newPasswordLabel')}
+                labelClassName={AUTH_LABEL_CLASS}
+                className={AUTH_FIELD_SHELL_CLASS}
+                inputClassName={AUTH_INPUT_CLASS}
                 type={showNewPassword ? 'text' : 'password'}
                 autoComplete="new-password"
-                leftIcon={<KeyRound strokeWidth={2} />}
+                leftIcon={<KeyRound className="h-5 w-5 text-primary" strokeWidth={2} />}
                 value={newPassword}
                 onChange={(e) => {
                   setNewPassword(e.target.value.trim())
                   setError(null)
                 }}
-                error={newPasswordError}
-                aria-invalid={Boolean(newPasswordError)}
+                aria-invalid={newPasswordTrimmed.length > 0 && !isValidPassword(newPasswordTrimmed)}
                 rightSlot={
                   <button
                     type="button"
-                    className="rounded p-1 text-rp-icon hover:bg-rp-accent/10"
+                    className="rounded p-1 text-primary hover:bg-primary/10"
                     onClick={() => setShowNewPassword((s) => !s)}
                     aria-label={
                       showNewPassword ? t('common.hidePassword') : t('common.showPassword')
@@ -132,35 +119,32 @@ export function ResetPasswordPage() {
                   </button>
                 }
               />
-              <div className="grid grid-cols-2 gap-x-2 gap-y-1 sm:grid-cols-5">
-                <RuleItem ok={checks.length} text={t('auth.reset.rule.length')} />
-                <RuleItem ok={checks.lower} text={t('auth.reset.rule.lower')} />
-                <RuleItem ok={checks.upper} text={t('auth.reset.rule.upper')} />
-                <RuleItem ok={checks.special} text={t('auth.reset.rule.special')} />
-                <RuleItem ok={checks.digit} text={t('auth.reset.rule.digit')} />
-              </div>
             </div>
 
-            <div className="space-y-2">
+            <PasswordRules checks={checks} />
+
+            <div className="my-8 flex w-full flex-col gap-2">
               <InputField
                 fieldType="password"
                 id="confirm-password"
                 name="confirm-password"
                 label={t('auth.reset.confirmPasswordLabel')}
+                labelClassName={AUTH_LABEL_CLASS}
+                className={AUTH_FIELD_SHELL_CLASS}
+                inputClassName={AUTH_INPUT_CLASS}
                 type={showConfirmPassword ? 'text' : 'password'}
                 autoComplete="new-password"
-                leftIcon={<KeyRound strokeWidth={2} />}
+                leftIcon={<KeyRound className="h-5 w-5 text-primary" strokeWidth={2} />}
                 value={confirmPassword}
                 onChange={(e) => {
                   setConfirmPassword(e.target.value.trim())
                   setError(null)
                 }}
-                error={confirmPasswordError}
-                aria-invalid={Boolean(confirmPasswordError)}
+                aria-invalid={confirmPasswordTrimmed.length > 0 && !matches}
                 rightSlot={
                   <button
                     type="button"
-                    className="rounded p-1 text-rp-icon hover:bg-rp-accent/10"
+                    className="rounded p-1 text-primary hover:bg-primary/10"
                     onClick={() => setShowConfirmPassword((s) => !s)}
                     aria-label={
                       showConfirmPassword ? t('common.hidePassword') : t('common.showPassword')
@@ -174,41 +158,47 @@ export function ResetPasswordPage() {
                   </button>
                 }
               />
-              {confirmPasswordTrimmed ? (
-                <p className={`text-xs ${matches ? 'text-[#22A45D]' : 'text-rp-description'}`}>
-                  {matches ? t('auth.reset.matched') : t('auth.reset.notMatchedYet')}
+              {canSubmit ? (
+                <div className="flex flex-row items-center gap-2">
+                  <Check className="h-3 w-3 text-greenOne" strokeWidth={3} />
+                  <p className="text-tiny font-normal text-greenOne">{t('auth.reset.matched')}</p>
+                </div>
+              ) : null}
+              {confirmPasswordTrimmed && !canSubmit ? (
+                <p className="text-tiny font-normal text-lightBlackOne">
+                  {t('auth.reset.notMatchedYet')}
                 </p>
               ) : null}
             </div>
 
             {error ? (
-              <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+              <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
                 {error}
               </p>
             ) : null}
 
-            <LoginButton type="submit" disabled={!canSubmit || isLoading}>
-              {isLoading ? t('auth.reset.submitting') : t('auth.reset.submit')}
-            </LoginButton>
+            <div className="w-full">
+              <LoginButton type="submit" disabled={!canSubmit || isLoading}>
+                {isLoading ? t('auth.reset.submitting') : t('auth.reset.submit')}
+              </LoginButton>
+            </div>
           </form>
 
-          <p className="text-sm text-rp-description">
-            {t('auth.reset.backToLogin')}{' '}
-            <Link to="/login" className="font-semibold text-rp-heading hover:underline">
-              {t('auth.reset.loginLink')}
-            </Link>
-          </p>
-        </CardContent>
-      </Card>
+          <AuthBackToLogin
+            prompt={t('auth.reset.backToLogin')}
+            linkLabel={t('auth.reset.loginLink')}
+          />
+        </div>
+      </div>
 
-      <SuccessPopup
-        open={showSuccess}
-        title={t('auth.reset.popupTitle')}
-        description={t('auth.reset.popupDescription')}
-        actionLabel={t('auth.reset.popupAction')}
-        onAction={() => navigate('/login', { replace: true })}
-        onClose={() => setShowSuccess(false)}
-      />
+      {showSuccess ? (
+        <PasswordSuccessPopup
+          title={t('auth.reset.popupTitle')}
+          description={t('auth.reset.popupDescription')}
+          actionLabel={t('auth.reset.popupAction')}
+          onAction={() => navigate('/login', { replace: true })}
+        />
+      ) : null}
     </>
   )
 }

@@ -3,14 +3,18 @@ import { Navigate, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, KeyRound, Mail } from 'lucide-react'
 
 import { useLoginMutation } from '@/app/services/recoveryApi'
-import { AppLogo } from '@/components/brand/app-logo'
 import { LoginButton } from '@/components/buttons'
 import { InputField } from '@/components/fields'
-import { Card, CardContent } from '@/components/ui/card'
 import { useAuth } from '@/app/hooks/useAuth'
 import { useI18n } from '@/i18n/useI18n'
 import { showCustomToast } from '@/lib/showCustomToast'
 import { isValidEmail } from '@/lib/validation'
+import {
+  AUTH_FIELD_SHELL_CLASS,
+  AUTH_HEADING_CLASS,
+  AUTH_INPUT_CLASS,
+  AUTH_LABEL_CLASS,
+} from '@/pages/auth/authFieldStyles'
 import { saveFirstLoginFlowState } from '@/pages/auth/first-login-flow'
 
 function getErrorMessage(err: unknown, fallback: string): string {
@@ -56,8 +60,10 @@ export function LoginPage() {
   const canSubmit = trimmedEmail.length > 0 && password.length > 0 && isValidEmail(trimmedEmail)
 
   const tenantName =
-    (typeof document !== 'undefined' ? document.documentElement.dataset.tenantName : undefined) ??
-    t('auth.login.title')
+    (typeof document !== 'undefined'
+      ? document.documentElement.dataset.tenantName
+      : undefined
+    )?.trim() || t('auth.login.title')
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -90,75 +96,85 @@ export function LoginPage() {
   }
 
   return (
-    <Card
-      padding="none"
-      className="box-border min-h-[450.720703125px] w-full max-w-[584px] rounded-[10px] border-0 bg-white p-5 shadow-[0_8px_24px_2px_rgba(0,0,0,0.059)]"
-    >
-      <CardContent className="flex flex-col gap-[10px] p-0">
-        <div className="flex flex-col items-center gap-[10px] text-center">
-          <AppLogo size="lg" />
-          <h1 className="text-2xl font-bold text-rp-heading">{tenantName}</h1>
-          <p className="text-sm text-rp-description">{t('auth.login.subtitle')}</p>
-        </div>
+    <div className="h-full w-full px-5 sm:px-7 md:px-10">
+      <div className="flex w-full flex-col justify-start gap-2 sm:h-full md:justify-center">
+        <h1 className={AUTH_HEADING_CLASS}>
+          {t('auth.login.welcomeBack', { tenant: tenantName })}
+        </h1>
+        <form onSubmit={handleSubmit}>
+          <div className="no-scrollbar h-fit overflow-hidden overflow-y-scroll pb-4 sm:pb-8">
+            <p className="text-xs font-normal text-lightBlackOne sm:text-sm lg:text-base">
+              {t('auth.login.subtitle')}
+            </p>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-[10px]">
-          <InputField
-            fieldType="email"
-            id="email"
-            name="email"
-            label={t('auth.login.emailLabel')}
-            autoComplete="email"
-            leftIcon={<Mail strokeWidth={2} />}
-            placeholder={t('auth.login.emailPlaceholder')}
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value.replace(/\s/g, ''))
-            }}
-            error={emailError}
-            aria-invalid={Boolean(emailError)}
-          />
+            <div className="mt-4 flex w-full flex-col gap-2">
+              <InputField
+                fieldType="email"
+                id="email"
+                name="email"
+                label={t('auth.login.emailLabel')}
+                labelClassName={AUTH_LABEL_CLASS}
+                className={AUTH_FIELD_SHELL_CLASS}
+                inputClassName={AUTH_INPUT_CLASS}
+                autoComplete="email"
+                leftIcon={<Mail className="h-5 w-5 text-primary" strokeWidth={2} />}
+                placeholder={t('auth.login.emailPlaceholder')}
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value.replace(/\s/g, ''))
+                }}
+                error={emailError}
+                aria-invalid={Boolean(emailError)}
+              />
+            </div>
 
-          <div className="flex flex-col gap-2">
-            <InputField
-              fieldType="password"
-              id="password"
-              name="password"
-              label={t('auth.login.passwordLabel')}
-              type={showPassword ? 'text' : 'password'}
-              autoComplete="current-password"
-              leftIcon={<KeyRound strokeWidth={2} />}
-              placeholder={t('auth.login.passwordPlaceholder')}
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value)
-              }}
-              rightSlot={
-                <button
-                  type="button"
-                  className="rounded p-1 text-rp-icon hover:bg-rp-accent/10"
-                  onClick={() => setShowPassword((s) => !s)}
-                  aria-label={showPassword ? t('common.hidePassword') : t('common.showPassword')}
-                >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              }
-            />
-            <div className="flex justify-end">
+            <div className="mt-5 flex w-full flex-col gap-2">
+              <InputField
+                fieldType="password"
+                id="password"
+                name="password"
+                label={t('auth.login.passwordLabel')}
+                labelClassName={AUTH_LABEL_CLASS}
+                className={AUTH_FIELD_SHELL_CLASS}
+                inputClassName={AUTH_INPUT_CLASS}
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
+                leftIcon={<KeyRound className="h-5 w-5 text-primary" strokeWidth={2} />}
+                placeholder={t('auth.login.passwordPlaceholder')}
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                }}
+                rightSlot={
+                  <button
+                    type="button"
+                    className="rounded p-1 text-primary hover:bg-primary/10"
+                    onClick={() => setShowPassword((s) => !s)}
+                    aria-label={showPassword ? t('common.hidePassword') : t('common.showPassword')}
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                }
+              />
+            </div>
+            <div className="mt-2 w-full">
               <button
                 type="button"
-                className="text-sm font-semibold text-rp-icon hover:underline"
                 onClick={() => navigate('/forgot-password')}
+                className="float-right text-xs font-normal text-primary hover:underline"
               >
                 {t('auth.login.forgotPassword')}
               </button>
             </div>
           </div>
 
-          <LoginButton type="submit" disabled={!canSubmit || isLoading}>
-            {isLoading ? t('auth.login.signingIn') : t('auth.login.submit')}
-          </LoginButton>
+          <div className="w-full">
+            <LoginButton type="submit" disabled={!canSubmit || isLoading}>
+              {isLoading ? t('auth.login.signingIn') : t('auth.login.submit')}
+            </LoginButton>
+          </div>
         </form>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
