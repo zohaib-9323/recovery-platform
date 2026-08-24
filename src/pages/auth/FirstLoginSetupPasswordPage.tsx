@@ -154,7 +154,7 @@ export function FirstLoginSetupPasswordPage() {
                 rightSlot={
                   <button
                     type="button"
-                    className="rounded p-1 text-primary hover:bg-primary/10"
+                    className="rounded p-1 text-primary hover:bg-lightGrey"
                     onClick={() => setShowNewPassword((s) => !s)}
                     aria-label={
                       showNewPassword ? t('common.hidePassword') : t('common.showPassword')
@@ -189,7 +189,7 @@ export function FirstLoginSetupPasswordPage() {
                 rightSlot={
                   <button
                     type="button"
-                    className="rounded p-1 text-primary hover:bg-primary/10"
+                    className="rounded p-1 text-primary hover:bg-lightGrey"
                     onClick={() => setShowConfirmPassword((s) => !s)}
                     aria-label={
                       showConfirmPassword ? t('common.hidePassword') : t('common.showPassword')

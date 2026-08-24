@@ -10,6 +10,7 @@ import { useI18n } from '@/i18n/useI18n'
 import { showCustomToast } from '@/lib/showCustomToast'
 import { isValidEmail } from '@/lib/validation'
 import {
+  AUTH_DESCRIPTION_CLASS,
   AUTH_FIELD_SHELL_CLASS,
   AUTH_HEADING_CLASS,
   AUTH_INPUT_CLASS,
@@ -103,9 +104,7 @@ export function LoginPage() {
         </h1>
         <form onSubmit={handleSubmit}>
           <div className="no-scrollbar h-fit overflow-hidden overflow-y-scroll pb-4 sm:pb-8">
-            <p className="text-xs font-normal text-lightBlackOne sm:text-sm lg:text-base">
-              {t('auth.login.subtitle')}
-            </p>
+            <p className={AUTH_DESCRIPTION_CLASS}>{t('auth.login.subtitle')}</p>
 
             <div className="mt-4 flex w-full flex-col gap-2">
               <InputField
@@ -148,7 +147,7 @@ export function LoginPage() {
                 rightSlot={
                   <button
                     type="button"
-                    className="rounded p-1 text-primary hover:bg-primary/10"
+                    className="rounded p-1 text-primary hover:bg-lightGrey"
                     onClick={() => setShowPassword((s) => !s)}
                     aria-label={showPassword ? t('common.hidePassword') : t('common.showPassword')}
                   >
@@ -157,6 +156,7 @@ export function LoginPage() {
                 }
               />
             </div>
+
             <div className="mt-2 w-full">
               <button
                 type="button"

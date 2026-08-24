@@ -16,9 +16,9 @@ export const messages: Record<string, string> = {
   'common.emailCount.other': 'emails',
   'layout.brand': 'Trade Harmonizer',
   'layout.poweredBy': 'Powered by',
-  'layout.marketing.title': 'Simplify Your Shipments.',
+  'layout.marketing.title': 'Streamline Your Inbox.',
   'layout.marketing.description':
-    'Empower Your Business. Access seamless shipment management, accurate cost calculations, and intuitive user profiles—all in one place.',
+    'Automate Document Processing. Capture emails, extract key data, and organize documents intelligently—all from one powerful platform.',
   'layout.appHeader.collapseSidebar': 'Collapse sidebar',
   'layout.appHeader.expandSidebar': 'Expand sidebar',
   'layout.appHeader.notifications': 'Notifications',
@@ -37,9 +37,8 @@ export const messages: Record<string, string> = {
   'layout.profileMenu.openMenu': 'Open profile menu',
   'errors.boundary.generic': 'Something went wrong. Please refresh the page.',
   'auth.login.title': 'Recovery Platform',
-  'auth.login.welcomeBack': 'Welcome back to {{tenant}}',
-  'auth.login.subtitle':
-    'Effortlessly manage shipments, user profiles, and cost calculations, all within one trusted platform.',
+  'auth.login.welcomeBack': '{{tenant}}',
+  'auth.login.subtitle': 'Email Document Intake Platform',
   'auth.login.emailLabel': 'Email Address',
   'auth.login.emailPlaceholder': 'Enter Email Address',
   'auth.login.passwordLabel': 'Password',

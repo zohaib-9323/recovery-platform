@@ -39,6 +39,15 @@ export function AuthLayout() {
         </div>
 
         <div className="relative hidden w-full items-center justify-center overflow-hidden text-center text-white md:flex md:w-[45%]">
+          {/*
+           * The primary tint is `bg-primary` + `mix-blend-multiply` over a
+           * 10%-opacity photo, exactly as trade-harmonizer does it. Note it
+           * can NOT be expressed as a single `bg-primary/95` layer: `primary`
+           * resolves to `var(--primary-color, …)` so tenants can re-brand it,
+           * and Tailwind silently drops opacity modifiers on var-based
+           * colours — `bg-primary/95` compiles to no CSS at all, which leaves
+           * the raw photo showing through.
+           */}
           <img
             src={`${process.env.PUBLIC_URL}/images/th-bg.png`}
             alt=""
