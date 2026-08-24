@@ -21,16 +21,58 @@ function Harness({ initial = [] as string[] }) {
 }
 
 const openList = () => fireEvent.click(screen.getAllByRole('button')[0])
+const clickOk = () => fireEvent.click(screen.getByRole('button', { name: 'OK' }))
+const clickCancel = () => fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
 const selection = () => screen.getByTestId('selection').textContent
 
 describe('FolderSelectDropdown (multi-select)', () => {
-  it('lets several folders be selected in one go', () => {
+  it('commits several folders in one go when OK is pressed', () => {
     render(<Harness />)
     openList()
     fireEvent.click(screen.getByRole('option', { name: /Inbox/ }))
     fireEvent.click(screen.getByRole('option', { name: /Sent Items/ }))
     fireEvent.click(screen.getByRole('option', { name: /Archive/ }))
+    clickOk()
     expect(selection()).toBe('inbox,sent,archive')
+  })
+
+  it('stages picks without changing the selection until OK', () => {
+    render(<Harness initial={['inbox']} />)
+    openList()
+    fireEvent.click(screen.getByRole('option', { name: /Archive/ }))
+    expect(selection()).toBe('inbox')
+    clickOk()
+    expect(selection()).toBe('inbox,archive')
+  })
+
+  it('discards staged picks on Cancel, keeping the previous selection', () => {
+    render(<Harness initial={['inbox']} />)
+    openList()
+    fireEvent.click(screen.getByRole('option', { name: /Archive/ }))
+    fireEvent.click(screen.getByRole('option', { name: /Sent Items/ }))
+    clickCancel()
+    expect(selection()).toBe('inbox')
+  })
+
+  it('reopens from the committed selection after a Cancel', () => {
+    render(<Harness initial={['inbox']} />)
+    openList()
+    fireEvent.click(screen.getByRole('option', { name: /Archive/ }))
+    clickCancel()
+    openList()
+    expect(screen.getByRole('option', { name: /Archive/ })).toHaveAttribute(
+      'aria-selected',
+      'false',
+    )
+  })
+
+  it('closes and discards when clicking outside the dropdown', () => {
+    render(<Harness initial={['inbox']} />)
+    openList()
+    fireEvent.click(screen.getByRole('option', { name: /Archive/ }))
+    fireEvent.mouseDown(document.body)
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+    expect(selection()).toBe('inbox')
   })
 
   it('stays open while picking, so multiple choices do not need re-opening', () => {
@@ -45,6 +87,7 @@ describe('FolderSelectDropdown (multi-select)', () => {
     render(<Harness initial={['inbox', 'sent']} />)
     openList()
     fireEvent.click(screen.getByRole('option', { name: /Inbox/ }))
+    clickOk()
     expect(selection()).toBe('sent')
   })
 
