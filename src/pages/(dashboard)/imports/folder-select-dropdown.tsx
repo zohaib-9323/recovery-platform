@@ -6,8 +6,9 @@ import { cn } from '@/lib/utils'
 export type FolderOption = { value: string; label: string }
 
 type FolderSelectDropdownProps = {
-  value: string
-  onChange: (value: string) => void
+  /** Selected folder ids. Multiple folders can be scanned in one import job. */
+  value: string[]
+  onChange: (value: string[]) => void
   options: FolderOption[]
 }
 
@@ -31,7 +32,25 @@ export function FolderSelectDropdown({ value, onChange, options }: FolderSelectD
     return () => document.removeEventListener('mousedown', onMouseDown)
   }, [])
 
-  const selectedLabel = options.find((option) => option.value === value)?.label ?? value
+  const selectedLabels = options
+    .filter((option) => value.includes(option.value))
+    .map((option) => option.label)
+
+  // Keep the trigger readable when many folders are picked.
+  const selectedLabel =
+    selectedLabels.length === 0
+      ? 'Select folders'
+      : selectedLabels.length <= 2
+        ? selectedLabels.join(', ')
+        : `${selectedLabels[0]}, ${selectedLabels[1]} +${selectedLabels.length - 2} more`
+
+  const toggle = (optionValue: string) => {
+    onChange(
+      value.includes(optionValue)
+        ? value.filter((v) => v !== optionValue)
+        : [...value, optionValue],
+    )
+  }
 
   return (
     <div ref={wrapperRef} className="relative w-full">
@@ -42,7 +61,9 @@ export function FolderSelectDropdown({ value, onChange, options }: FolderSelectD
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        <span>{selectedLabel}</span>
+        <span className="truncate" title={selectedLabels.join(', ')}>
+          {selectedLabel}
+        </span>
         <ChevronDown
           className={cn('h-4 w-4 text-rp-muted transition-transform', open && 'rotate-180')}
         />
@@ -50,9 +71,10 @@ export function FolderSelectDropdown({ value, onChange, options }: FolderSelectD
 
       {open ? (
         <div className="absolute left-0 right-0 z-30 mt-2 overflow-hidden rounded-[10px] border border-rp-disabled bg-white shadow-[0px_1px_2px_-1px_rgba(0,0,0,0.1),0px_1px_3px_rgba(0,0,0,0.1)]">
-          <div role="listbox" className="max-h-64 overflow-y-auto py-1">
+          {/* Multi-select: the list stays open so several folders can be picked. */}
+          <div role="listbox" aria-multiselectable className="max-h-[260px] overflow-y-auto py-1">
             {options.map((option) => {
-              const selected = option.value === value
+              const selected = value.includes(option.value)
               return (
                 <button
                   key={option.value}
@@ -65,10 +87,7 @@ export function FolderSelectDropdown({ value, onChange, options }: FolderSelectD
                       ? 'bg-lightYellowThree font-bold text-rp-fg'
                       : 'text-rp-muted hover:bg-rp-surface',
                   )}
-                  onClick={() => {
-                    setOpen(false)
-                    if (!selected) onChange(option.value)
-                  }}
+                  onClick={() => toggle(option.value)}
                 >
                   {option.label}
                   {selected ? <Check className="h-4 w-4 text-rp-accent" aria-hidden /> : null}

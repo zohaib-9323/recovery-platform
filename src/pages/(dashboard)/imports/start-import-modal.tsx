@@ -33,7 +33,7 @@ export function StartImportModal({ open, onClose }: StartImportModalProps) {
   const { t } = useI18n()
   const { data: m365Status } = useGetM365StatusQuery(undefined, { skip: !open })
   const [step, setStep] = useState<ImportStepId>('source')
-  const [folder, setFolder] = useState('')
+  const [folderIds, setFolderIds] = useState<string[]>([])
   const [dateRange, setDateRange] = useState<DateRangeValue>(EMPTY_DATE_RANGE)
 
   const {
@@ -55,24 +55,30 @@ export function StartImportModal({ open, onClose }: StartImportModalProps) {
   )
 
   // Default to the first folder once the list loads, without an effect: fall back
-  // whenever the user hasn't picked a value that still exists in the fetched list.
-  const selectedFolderId = folders.some((f) => f.id === folder) ? folder : (folders[0]?.id ?? '')
+  // whenever the user hasn't picked values that still exist in the fetched list.
+  const validSelection = folderIds.filter((id) => folders.some((f) => f.id === id))
+  const selectedFolderIds =
+    validSelection.length > 0 ? validSelection : folders[0] ? [folders[0].id] : []
+
+  const selectedFolders = selectedFolderIds.map((id) => ({
+    folderId: id,
+    folderName: folders.find((f) => f.id === id)?.displayName ?? id,
+  }))
 
   const email = m365Status?.content?.email ?? 'user@client.com'
   const stepIndex = IMPORT_STEPS.indexOf(step)
-  const folderLabel =
-    folders.find((f) => f.id === selectedFolderId)?.displayName ?? selectedFolderId
+  const folderLabel = selectedFolders.map((f) => f.folderName).join(', ')
 
   const canProceed =
     step === 'dateRange'
       ? Boolean(dateRange.startDate && dateRange.endDate)
       : step === 'source'
-        ? Boolean(selectedFolderId)
+        ? selectedFolderIds.length > 0
         : true
 
   const handleClose = () => {
     setStep('source')
-    setFolder('')
+    setFolderIds([])
     setDateRange(EMPTY_DATE_RANGE)
     onClose()
   }
@@ -85,8 +91,7 @@ export function StartImportModal({ open, onClose }: StartImportModalProps) {
     } else if (step === 'review' && dateRange.startDate && dateRange.endDate) {
       try {
         await startImportJob({
-          folderId: selectedFolderId,
-          folderName: folderLabel,
+          folders: selectedFolders,
           dateRangeStart: dateRange.startDate.toISOString(),
           // endOfDay ensures "Aug 18 → Aug 18" sends 23:59:59.999, not midnight,
           // so the backend receives a non-zero range covering the full selected day.
@@ -184,8 +189,8 @@ export function StartImportModal({ open, onClose }: StartImportModalProps) {
                   </div>
                 ) : (
                   <FolderSelectDropdown
-                    value={selectedFolderId}
-                    onChange={setFolder}
+                    value={selectedFolderIds}
+                    onChange={setFolderIds}
                     options={folderOptions}
                   />
                 )}

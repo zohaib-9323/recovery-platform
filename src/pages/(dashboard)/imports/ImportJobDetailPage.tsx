@@ -17,6 +17,7 @@ import { ImportDetailStaticShipments } from './import-detail-static-shipments'
 import { ImportDocumentsBrowser } from './import-documents-browser'
 import { ACTIVE_STATUSES, FailedTable, StatBox, StatusBadge } from './import-job-status'
 import { InfoBanner } from './info-banner'
+import { formatFolders } from './format-utils'
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -182,14 +183,15 @@ export function ImportJobDetailPage() {
         <div className="flex w-full flex-col gap-4 rounded-[10px] border border-rp-border bg-rp-page p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="text-sm font-semibold text-rp-fg">
-              {job.folderName} — {rangeLabel}
+              {formatFolders(job.folders, job.folderName)} — {rangeLabel}
             </span>
             <StatusBadge status={job.status} />
           </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             <StatBox value={job.stats.scanned} label="SCANNED" />
             <StatBox value={job.stats.matched} label="MATCHED" />
+            <StatBox value={job.stats.unmatched} label="UNMATCHED" />
             <StatBox value={job.stats.added} label="ADDED" />
             <StatBox value={job.stats.skipped} label="SKIPPED" />
             <StatBox value={job.stats.failed} label="FAILED" />
