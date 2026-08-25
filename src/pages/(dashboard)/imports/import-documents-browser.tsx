@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Download, Loader2, Mail } from 'lucide-react'
+import { Download, Folder, Loader2, Mail } from 'lucide-react'
 
 import { useDownloadM365ImportItemMutation } from '@/app/services/recoveryM365Api'
 import { cn } from '@/lib/utils'
 import type { M365DocumentItem, M365EmailGroup } from '@/types/recovery-m365-api'
 
 import { formatReceived, truncate } from './format-utils'
+import { ImportSkippedAttachments } from './import-skipped-attachments'
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -15,6 +16,12 @@ const ITEM_STATUS_STYLE: Record<M365DocumentItem['status'], { label: string; cla
     duplicate: { label: 'Duplicate', className: 'bg-[#F5F5F5] text-[#4B4B4B]' },
     failed: { label: 'Failed', className: 'bg-[#C628281A] text-[#C62828]' },
   }
+
+/**
+ * An unreadable scan that was imported anyway rather than discarded — losing a
+ * scanned C88 costs a real refund, so it is kept and flagged for a human look.
+ */
+const UNVERIFIED_STYLE = { label: 'Needs review', className: 'bg-[#E3A6021A] text-[#8A6100]' }
 
 const EMAILS_PER_PAGE = 10
 
@@ -76,6 +83,7 @@ function ImportEmailListItem({
   active: boolean
   onSelect: () => void
 }) {
+  const skippedCount = group.skipped?.length ?? 0
   return (
     <button
       type="button"
@@ -87,8 +95,8 @@ function ImportEmailListItem({
           : 'border-bottomBorder bg-white hover:bg-gray-50',
       )}
     >
-      <p className="truncate text-sm font-medium text-black" title={group.fromEmail}>
-        {group.fromEmail}
+      <p className="truncate text-sm font-medium text-black" title={senderTitle(group)}>
+        {group.fromName || group.fromEmail}
       </p>
       <p
         className="mt-1 line-clamp-2 text-sm font-light leading-[140%] text-blackFive"
@@ -96,16 +104,56 @@ function ImportEmailListItem({
       >
         {group.subject}
       </p>
-      <div className="mt-2 flex items-center justify-between gap-2">
-        <span className="text-xs font-light text-blackFive">
+      {/* Two stacked rows: the sidebar is only ~300px wide, so the received date and the
+          attachment counts overlap when they share a single row. */}
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <span className="shrink-0 text-xs font-light text-blackFive">
           {formatReceived(group.receivedDateTime)}
         </span>
-        <span className="inline-flex items-center gap-1 rounded-md border border-bottomBorder px-2 py-0.5 text-xs font-normal text-blackFive">
+        <FolderChips folderNames={group.folderNames} />
+      </div>
+      <div className="mt-1.5 flex flex-wrap items-center justify-end gap-1.5">
+        <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md border border-bottomBorder px-2 py-0.5 text-xs font-normal text-blackFive">
           <Mail className="size-3 shrink-0" aria-hidden />
           {group.documents.length} {group.documents.length === 1 ? 'File' : 'Files'}
         </span>
+        {skippedCount > 0 && (
+          <span
+            className="inline-flex shrink-0 items-center whitespace-nowrap rounded-md bg-[#F5F5F5] px-2 py-0.5 text-xs font-normal text-[#4B4B4B]"
+            title={`${skippedCount} attachment${skippedCount === 1 ? ' was' : 's were'} not imported`}
+          >
+            {skippedCount} skipped
+          </span>
+        )}
       </div>
     </button>
+  )
+}
+
+/** Name and address together, so hovering always reveals the real address. */
+function senderTitle(group: M365EmailGroup): string {
+  return group.fromName ? `${group.fromName} <${group.fromEmail}>` : group.fromEmail
+}
+
+/**
+ * Which mailbox folder the email came from. Renders nothing for emails
+ * imported before folder attribution existed, so old jobs stay clean.
+ */
+function FolderChips({ folderNames }: { folderNames: string[] }) {
+  if (folderNames.length === 0) return null
+  return (
+    <>
+      {folderNames.map((name) => (
+        <span
+          key={name}
+          className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md bg-[#F0F4F8] px-1.5 py-0.5 text-[11px] font-normal text-[#4B5F72]"
+          title={`Found in ${name}`}
+        >
+          <Folder className="size-2.5 shrink-0" aria-hidden />
+          {name}
+        </span>
+      ))}
+    </>
   )
 }
 
@@ -124,74 +172,107 @@ function ImportDocumentsPanel({ jobId, group }: { jobId: string; group: M365Emai
         </h1>
         <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm font-light text-blackFive">
           <span>
-            <span className="font-medium text-black">From</span> {group.fromEmail}
+            <span className="font-medium text-black">From</span>{' '}
+            {group.fromName ? `${group.fromName} (${group.fromEmail})` : group.fromEmail}
           </span>
           <span>
             <span className="font-medium text-black">Received</span>{' '}
             {formatReceived(group.receivedDateTime)}
           </span>
+          {group.folderNames.length > 0 && (
+            <span>
+              <span className="font-medium text-black">
+                {group.folderNames.length === 1 ? 'Folder' : 'Folders'}
+              </span>{' '}
+              {group.folderNames.join(', ')}
+            </span>
+          )}
         </div>
       </header>
 
-      {/* Attachments table */}
-      <div className="rounded-lg border border-bottomBorder p-4 shadow-[0px_4px_16px_0px_#4C67641A]">
-        <h3 className="mb-3 text-[18px] font-semibold leading-tight text-black">Attachments</h3>
-        <div className="max-h-[400px] overflow-auto">
-          <table className="w-full">
-            <thead className="sticky top-0 z-10 bg-white">
-              <tr className="border-b border-bottomBorder">
-                <th className="px-3 py-3 text-left text-base font-normal text-blackFive">
-                  Attachment
-                </th>
-                <th className="px-3 py-3 text-left text-base font-normal text-blackFive">Size</th>
-                <th className="px-3 py-3 text-left text-base font-normal text-blackFive">Status</th>
-                <th className="px-3 py-3 text-left text-base font-normal text-blackFive">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {group.documents.map((item) => {
-                const s = ITEM_STATUS_STYLE[item.status]
-                const isFailed = item.status === 'failed'
-                return (
-                  <tr
-                    key={item.id}
-                    className={cn('border-b border-bottomBorder', isFailed && 'bg-red-50/40')}
-                  >
-                    <td className="px-3 py-3">
-                      <p
-                        className="max-w-[240px] truncate text-sm font-light text-black"
-                        title={item.attachmentName}
-                      >
-                        {item.attachmentName}
-                      </p>
-                      {isFailed && item.failureDetail && (
-                        <p className="mt-0.5 text-xs text-red-600" title={item.failureDetail}>
-                          {truncate(item.failureDetail, 60)}
+      {/* Imported attachments — the whole card is hidden when this email imported nothing */}
+      {group.documents.length > 0 && (
+        <div className="rounded-lg border border-bottomBorder p-4 shadow-[0px_4px_16px_0px_#4C67641A]">
+          <h3 className="mb-3 text-[18px] font-semibold leading-tight text-black">
+            Imported ({group.documents.length})
+          </h3>
+          <div className="max-h-[400px] overflow-auto">
+            <table className="w-full">
+              <thead className="sticky top-0 z-10 bg-white">
+                <tr className="border-b border-bottomBorder">
+                  <th className="px-3 py-3 text-left text-base font-normal text-blackFive">
+                    Attachment
+                  </th>
+                  <th className="px-3 py-3 text-left text-base font-normal text-blackFive">Size</th>
+                  <th className="px-3 py-3 text-left text-base font-normal text-blackFive">
+                    Status
+                  </th>
+                  <th className="px-3 py-3 text-left text-base font-normal text-blackFive">
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {group.documents.map((item) => {
+                  const s = item.unverified ? UNVERIFIED_STYLE : ITEM_STATUS_STYLE[item.status]
+                  const isFailed = item.status === 'failed'
+                  return (
+                    <tr
+                      key={item.id}
+                      className={cn('border-b border-bottomBorder', isFailed && 'bg-red-50/40')}
+                    >
+                      <td className="px-3 py-3">
+                        <p
+                          className="max-w-[240px] truncate text-sm font-light text-black"
+                          title={item.attachmentName}
+                        >
+                          {item.attachmentName}
                         </p>
-                      )}
-                    </td>
-                    <td className="px-3 py-3 text-sm font-light text-black">
-                      {item.attachmentSizeFormatted}
-                    </td>
-                    <td className="px-3 py-3">
-                      <span className={cn('rounded-md px-2 py-1 text-sm', s.className)}>
-                        {s.label}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3">
-                      {isFailed ? (
-                        <span className="text-xs text-red-500">—</span>
-                      ) : (
-                        <DownloadActionButton jobId={jobId} item={item} />
-                      )}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+                        {isFailed && item.failureDetail && (
+                          <p className="mt-0.5 text-xs text-red-600" title={item.failureDetail}>
+                            {truncate(item.failureDetail, 60)}
+                          </p>
+                        )}
+                      </td>
+                      <td className="px-3 py-3 text-sm font-light text-black">
+                        {item.attachmentSizeFormatted}
+                      </td>
+                      <td className="px-3 py-3">
+                        <span className={cn('rounded-md px-2 py-1 text-sm', s.className)}>
+                          {item.unverified ? 'Needs review' : (item.classifiedType ?? s.label)}
+                        </span>
+                        {item.unverified && (
+                          <p className="mt-1 max-w-[200px] text-xs font-light leading-[150%] text-blackFive">
+                            Imported without checking its contents — the file could not be read.
+                          </p>
+                        )}
+                      </td>
+                      <td className="px-3 py-3">
+                        {isFailed ? (
+                          <span className="text-xs text-red-500">—</span>
+                        ) : (
+                          <DownloadActionButton jobId={jobId} item={item} />
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Attachments the funnel discarded, with reasons (metadata only). Renders
+          nothing when there is nothing to skip. */}
+      <ImportSkippedAttachments skipped={group.skipped ?? []} />
+
+      {/* Neither card applies: say so rather than leaving the panel blank. */}
+      {group.documents.length === 0 && (group.skipped?.length ?? 0) === 0 && (
+        <p className="rounded-lg border border-bottomBorder px-3 py-4 text-sm font-light text-blackFive">
+          No attachments were found in this email.
+        </p>
+      )}
     </section>
   )
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AlertTriangle, ArrowLeft, Check, Mail, X } from 'lucide-react'
 
@@ -17,6 +17,7 @@ import { ImportDetailStaticShipments } from './import-detail-static-shipments'
 import { ImportDocumentsBrowser } from './import-documents-browser'
 import { ACTIVE_STATUSES, FailedTable, StatBox, StatusBadge } from './import-job-status'
 import { InfoBanner } from './info-banner'
+import { formatFolders } from './format-utils'
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -45,6 +46,8 @@ export function ImportJobDetailPage() {
   // itemPage drives which API page is fetched; allGroups accumulates every loaded email group.
   const [itemPage, setItemPage] = useState(1)
   const [allGroups, setAllGroups] = useState<M365EmailGroup[]>([])
+  // Tracks whether this visit's job fetch has been dispatched yet — see showJobLoader below.
+  const [hasStartedJobFetch, setHasStartedJobFetch] = useState(false)
 
   // Reset accumulated groups whenever the user navigates to a different job. Adjusting
   // state during render (guarded by comparing against the previous id) avoids the
@@ -54,15 +57,19 @@ export function ImportJobDetailPage() {
     setPrevId(id)
     setAllGroups([])
     setItemPage(1)
+    setHasStartedJobFetch(false)
   }
 
   const {
     data: jobData,
-    isLoading: isJobLoading,
+    isFetching: isJobFetching,
     isError,
     refetch: refetchJobDetail,
   } = useGetM365ImportJobDetailQuery(id ?? '', {
     skip: !id,
+    // Always hit the API when the page is (re)opened instead of showing the
+    // cached job from a previous visit.
+    refetchOnMountOrArgChange: true,
   })
   const { data: profile } = useGetRecoveryProfileQuery()
 
@@ -71,12 +78,28 @@ export function ImportJobDetailPage() {
 
   // No polling: this only refetches when a push notification about this job's status
   // change arrives (see useImportRealtimeRefresh) — either via Firebase's foreground
-  // onMessage (useFCM) or the service worker relaying a background push.
-  useImportRealtimeRefresh(refetchJobDetail, Boolean(id))
+  // onMessage (useFCM) or the service worker relaying a background push. Those
+  // background refreshes are flagged so they update the page in place instead of
+  // replacing it with the full-page loader.
+  const [isRealtimeRefreshing, setIsRealtimeRefreshing] = useState(false)
+  const handleRealtimeRefresh = useCallback(() => {
+    setIsRealtimeRefreshing(true)
+    void Promise.resolve(refetchJobDetail()).finally(() => setIsRealtimeRefreshing(false))
+  }, [refetchJobDetail])
+  useImportRealtimeRefresh(handleRealtimeRefresh, Boolean(id))
+
+  // Show the loader on every visit, not only the first. On a revisit RTK Query serves the
+  // cached job on the first render (isFetching is still false until the mount refetch is
+  // dispatched in an effect), so waiting on isFetching alone would flash stale content.
+  if (isJobFetching && !hasStartedJobFetch) {
+    setHasStartedJobFetch(true)
+  }
+  const showJobLoader =
+    Boolean(id) && !isRealtimeRefreshing && (!hasStartedJobFetch || isJobFetching)
 
   const { data: itemsData, isFetching: isItemsFetching } = useGetM365ImportJobItemsQuery(
     { id: id ?? '', page: itemPage, limit: 10 },
-    { skip: !id || !job || isActive },
+    { skip: !id || !job || isActive, refetchOnMountOrArgChange: true },
   )
 
   const totalItemPages = itemsData?.content?.totalPages ?? 1
@@ -84,7 +107,10 @@ export function ImportJobDetailPage() {
   // Append new email groups from each API page, deduplicating by messageId. Adjusting
   // state during render (guarded by comparing against the previous itemsData reference)
   // avoids the extra render + cascading updates a useEffect would cause here.
-  const [prevItemsData, setPrevItemsData] = useState(itemsData)
+  // Seeded with undefined rather than itemsData: on a revisit RTK Query already has the
+  // page in cache, so itemsData is non-null on the very first render — seeding with it
+  // would make the guard below never fire and leave the documents list empty.
+  const [prevItemsData, setPrevItemsData] = useState<typeof itemsData>(undefined)
   if (itemsData !== prevItemsData) {
     setPrevItemsData(itemsData)
     const incoming = itemsData?.content?.items
@@ -106,7 +132,7 @@ export function ImportJobDetailPage() {
     navigate('/imports')
   }
 
-  if (isJobLoading) {
+  if (showJobLoader) {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center p-6">
         <CustomLoader />
@@ -182,14 +208,15 @@ export function ImportJobDetailPage() {
         <div className="flex w-full flex-col gap-4 rounded-[10px] border border-rp-border bg-rp-page p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="text-sm font-semibold text-rp-fg">
-              {job.folderName} — {rangeLabel}
+              {formatFolders(job.folders, job.folderName)} — {rangeLabel}
             </span>
             <StatusBadge status={job.status} />
           </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             <StatBox value={job.stats.scanned} label="SCANNED" />
             <StatBox value={job.stats.matched} label="MATCHED" />
+            <StatBox value={job.stats.unmatched} label="UNMATCHED" />
             <StatBox value={job.stats.added} label="ADDED" />
             <StatBox value={job.stats.skipped} label="SKIPPED" />
             <StatBox value={job.stats.failed} label="FAILED" />

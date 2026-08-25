@@ -17,6 +17,7 @@ import { useI18n } from '@/i18n/useI18n'
 import { cn } from '@/lib/utils'
 
 import { formatShortDateRange } from './date-range-utils'
+import { formatFolders } from './format-utils'
 import { InfoBanner } from './info-banner'
 
 export type ImportJobCardProps = {
@@ -88,13 +89,14 @@ function MetricRow({ job }: { job: M365ImportJobSummary }) {
   const metrics: Array<{ key: keyof M365ImportJobSummary['stats']; labelKey: string }> = [
     { key: 'scanned', labelKey: 'imports.job.metrics.scanned' },
     { key: 'matched', labelKey: 'imports.job.metrics.matched' },
+    { key: 'unmatched', labelKey: 'imports.job.metrics.unmatched' },
     { key: 'added', labelKey: 'imports.job.metrics.added' },
     { key: 'skipped', labelKey: 'imports.job.metrics.skipped' },
     { key: 'failed', labelKey: 'imports.job.metrics.failed' },
   ]
 
   return (
-    <div className="grid grid-cols-5 gap-4">
+    <div className="grid grid-cols-3 gap-4 sm:grid-cols-6">
       {metrics.map(({ key, labelKey }) => (
         <div key={key} className="flex flex-col gap-2 rounded-[8px] bg-rp-surface p-4">
           <span className="text-2xl font-bold leading-none text-rp-heading">
@@ -178,7 +180,7 @@ export function ImportJobCard({
     <div className="flex flex-col gap-4 rounded-[10px] border border-rp-border bg-rp-page p-6">
       <div className="flex items-center justify-between gap-4">
         <span className="text-sm font-semibold text-rp-fg">
-          {job.folderName} - {rangeLabel}
+          {formatFolders(job.folders, job.folderName)} - {rangeLabel}
         </span>
         <div className="flex items-center gap-3">
           <StatusBadge job={job} />
