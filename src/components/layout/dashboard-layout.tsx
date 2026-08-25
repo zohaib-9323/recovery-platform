@@ -1,9 +1,14 @@
 import { Outlet } from 'react-router-dom'
 
+import { useFCM } from '@/app/hooks/useFCM'
 import { AppHeader } from '@/components/layout/app-header'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 
 export function DashboardLayout() {
+  // Mounted once for the authenticated session — owns Firebase's single onMessage
+  // listener and forwards relevant pushes (e.g. Imports status) to page-level hooks.
+  useFCM()
+
   return (
     <div className="flex h-dvh w-full overflow-hidden bg-bgColor">
       <AppSidebar />

@@ -1,11 +1,9 @@
-import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolkit/query'
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import type { FetchBaseQueryError } from '@reduxjs/toolkit/query'
+import { createApi } from '@reduxjs/toolkit/query/react'
 
-import { applyTokens, logout, type AuthState } from '@/app/features/auth/authSlice'
+import { applyTokens } from '@/app/features/auth/authSlice'
 import { reportRuntimeError } from '@/lib/error-reporting'
-import { refreshSession } from '@/services/authSession'
-import { isAuthUrl } from '@/app/services/auth-urls'
-import { runBaseQueryWithReauth } from '@/app/services/reauth'
+import { baseQueryWithReauth } from '@/app/services/recoveryApiBaseQuery'
 import type {
   ApiMessageEnvelope,
   FirstLoginRequestOtpBody,
@@ -48,50 +46,8 @@ import type {
   RecoveryShipmentsListEnvelope,
   RecoveryShipmentsListQuery,
 } from '@/types/recovery-shipments-api'
-import { env } from '@/utils/env'
-
-type StateWithAuth = { auth: AuthState }
-
-const baseUrl = env.apiBaseUrl.replace(/\/$/, '')
-
 function isFetchBaseQueryErrorLike(error: unknown): error is FetchBaseQueryError {
   return Boolean(error && typeof error === 'object' && 'status' in error)
-}
-
-const rawBaseQuery = fetchBaseQuery({
-  baseUrl,
-  prepareHeaders: (headers, { getState, arg }) => {
-    const a = typeof arg === 'string' ? { url: arg } : arg
-    const url = typeof a.url === 'string' ? a.url : ''
-    if (!isAuthUrl(url)) {
-      const token = (getState() as StateWithAuth).auth.token
-      if (token) headers.set('Authorization', `Bearer ${token}`)
-    }
-    return headers
-  },
-})
-
-const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
-  args,
-  api,
-  extraOptions,
-) => {
-  return runBaseQueryWithReauth<FetchBaseQueryError>(
-    args as unknown as Record<string, unknown> | string,
-    {
-      dispatch: api.dispatch,
-      getState: () => api.getState() as StateWithAuth,
-    },
-    extraOptions,
-    (a, c, e) =>
-      rawBaseQuery(a as string | FetchArgs, c as Parameters<typeof rawBaseQuery>[1], e as object),
-    (dispatch, getState) =>
-      refreshSession(
-        dispatch as Parameters<typeof refreshSession>[0],
-        () => getState() as StateWithAuth,
-      ),
-    logout,
-  ) as ReturnType<BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError>>
 }
 
 export const recoveryApi = createApi({
@@ -103,6 +59,10 @@ export const recoveryApi = createApi({
     'RecoveryShipments',
     'RecoveryShipment',
     'RecoveryNotifications',
+    'M365Connection',
+    'M365ImportJobs',
+    'M365ImportJobDetail',
+    'M365ImportJobItems',
   ],
   endpoints: (builder) => ({
     login: builder.mutation<RecoveryAuthEnvelope, LoginRequestBody>({

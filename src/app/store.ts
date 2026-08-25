@@ -5,6 +5,7 @@ import tenantThemeReducer from '@/app/features/tenant/tenantThemeSlice'
 import { buildAuthPreload } from '@/app/authPreload'
 import { recoveryApi } from '@/app/services/recoveryApi'
 import sideBarReducer from '@/app/features/ui/sideBarSlice'
+import microsoftIntegrationReducer from '@/app/features/integrations/microsoftIntegrationSlice'
 import { persistAuthState } from '@/services/authStorage'
 
 const authPreload = buildAuthPreload()
@@ -22,6 +23,7 @@ export const store = configureStore({
     auth: authReducer,
     tenantTheme: tenantThemeReducer,
     sideBar: sideBarReducer,
+    microsoftIntegration: microsoftIntegrationReducer,
     [recoveryApi.reducerPath]: recoveryApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>

@@ -59,7 +59,24 @@ export function AppSidebar() {
                 >
                   <div className="absolute bottom-0 right-0 top-0 -mr-6 w-6 group-hover:bg-transparent" />
                   <div className="flex flex-1 items-center gap-2">
-                    <span className={`${item.icon} text-large`} aria-hidden />
+                    {item.iconSrc ? (
+                      <span
+                        aria-hidden
+                        className="h-5 w-5 flex-shrink-0 bg-current"
+                        style={{
+                          WebkitMaskImage: `url(${item.iconSrc})`,
+                          maskImage: `url(${item.iconSrc})`,
+                          WebkitMaskRepeat: 'no-repeat',
+                          maskRepeat: 'no-repeat',
+                          WebkitMaskSize: 'contain',
+                          maskSize: 'contain',
+                          WebkitMaskPosition: 'center',
+                          maskPosition: 'center',
+                        }}
+                      />
+                    ) : (
+                      <span className={`${item.icon} text-large`} aria-hidden />
+                    )}
                     {expanded && <span className="truncate text-sm font-bold">{item.label}</span>}
                   </div>
                 </button>

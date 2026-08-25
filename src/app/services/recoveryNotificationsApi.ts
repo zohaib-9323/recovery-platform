@@ -51,6 +51,15 @@ const recoveryNotificationsApi = recoveryApi.injectEndpoints({
         { type: 'RecoveryNotifications', id: 'COUNTS' },
       ],
     }),
+    /** Registers this browser's FCM device token so the backend can push real-time
+     *  updates (e.g. m365_import_status_update) to the authenticated recovery user. */
+    registerRecoveryFcmToken: builder.mutation<RecoveryApiEnvelope<unknown>, { token: string }>({
+      query: (body) => ({
+        url: '/recovery/notifications/register-token',
+        method: 'POST',
+        body,
+      }),
+    }),
   }),
 })
 
@@ -59,4 +68,5 @@ export const {
   useGetRecoveryNotificationCountsQuery,
   useMarkRecoveryNotificationAsReadMutation,
   useMarkAllRecoveryNotificationsAsReadMutation,
+  useRegisterRecoveryFcmTokenMutation,
 } = recoveryNotificationsApi
