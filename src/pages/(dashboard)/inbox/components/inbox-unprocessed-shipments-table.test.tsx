@@ -36,6 +36,23 @@ function openRowMenu(rowFileName: string) {
 }
 
 describe('InboxUnprocessedShipmentsTable', () => {
+  it('renders no row action menu when no onRetry handler is supplied', () => {
+    // Retry is the menu's only entry, so callers that scope it out (the
+    // import-job detail view) must get no trigger at all rather than a menu
+    // whose single item does nothing.
+    render(<InboxUnprocessedShipmentsTable rows={[ROW_A]} />)
+
+    const row = screen.getByText('a.pdf').closest('tr')!
+    expect(row.querySelector('button')).toBeNull()
+  })
+
+  it('renders the row action menu when onRetry is supplied', () => {
+    render(<InboxUnprocessedShipmentsTable rows={[ROW_A]} onRetry={jest.fn()} />)
+
+    const row = screen.getByText('a.pdf').closest('tr')!
+    expect(row.querySelector('button')).not.toBeNull()
+  })
+
   it('renders the empty state when there are no rows', () => {
     render(<InboxUnprocessedShipmentsTable rows={[]} />)
 

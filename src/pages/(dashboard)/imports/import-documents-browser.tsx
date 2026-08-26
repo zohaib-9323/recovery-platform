@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 import type { M365DocumentItem, M365EmailGroup } from '@/types/recovery-m365-api'
 
 import { formatReceived, truncate } from './format-utils'
-import { ImportSkippedAttachments } from './import-skipped-attachments'
+import { countReportedSkips, ImportSkippedAttachments } from './import-skipped-attachments'
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -24,6 +24,8 @@ const ITEM_STATUS_STYLE: Record<M365DocumentItem['status'], { label: string; cla
 const UNVERIFIED_STYLE = { label: 'Needs review', className: 'bg-[#E3A6021A] text-[#8A6100]' }
 
 const EMAILS_PER_PAGE = 10
+
+const importedHeaderCell = 'px-4 py-3 text-left text-[15px] font-normal text-blackFive'
 
 // ── Download action button (Action column) ─────────────────────────────────────
 
@@ -58,14 +60,14 @@ function DownloadActionButton({ jobId, item }: { jobId: string; item: M365Docume
       disabled={isLoading}
       title={failed ? 'Download failed — try again' : `Download ${item.attachmentName}`}
       className={cn(
-        'flex items-center gap-2 rounded-md border border-bottomBorder px-2 py-1 text-sm text-black transition-colors hover:bg-gray-50 disabled:opacity-50',
+        'flex items-center gap-2 rounded-md border border-bottomBorder px-3 py-2 text-[15px] text-black transition-colors hover:bg-gray-50 disabled:opacity-50',
         failed && 'border-red-300 text-red-600',
       )}
     >
       {isLoading ? (
         <Loader2 className="size-3.5 animate-spin" aria-hidden />
       ) : (
-        <Download className="size-3.5" aria-hidden />
+        <Download className="size-4" aria-hidden />
       )}
       {failed ? 'Failed' : 'Download'}
     </button>
@@ -83,7 +85,7 @@ function ImportEmailListItem({
   active: boolean
   onSelect: () => void
 }) {
-  const skippedCount = group.skipped?.length ?? 0
+  const skippedCount = countReportedSkips(group.skipped)
   return (
     <button
       type="button"
@@ -120,9 +122,9 @@ function ImportEmailListItem({
         {skippedCount > 0 && (
           <span
             className="inline-flex shrink-0 items-center whitespace-nowrap rounded-md bg-[#F5F5F5] px-2 py-0.5 text-xs font-normal text-[#4B4B4B]"
-            title={`${skippedCount} attachment${skippedCount === 1 ? ' was' : 's were'} not imported`}
+            title={`${skippedCount} attachment${skippedCount === 1 ? ' was' : 's were'} already imported`}
           >
-            {skippedCount} skipped
+            {skippedCount} already imported
           </span>
         )}
       </div>
@@ -196,69 +198,73 @@ function ImportDocumentsPanel({ jobId, group }: { jobId: string; group: M365Emai
           <h3 className="mb-3 text-[18px] font-semibold leading-tight text-black">
             Imported ({group.documents.length})
           </h3>
-          <div className="max-h-[400px] overflow-auto">
-            <table className="w-full">
-              <thead className="sticky top-0 z-10 bg-white">
-                <tr className="border-b border-bottomBorder">
-                  <th className="px-3 py-3 text-left text-base font-normal text-blackFive">
-                    Attachment
-                  </th>
-                  <th className="px-3 py-3 text-left text-base font-normal text-blackFive">Size</th>
-                  <th className="px-3 py-3 text-left text-base font-normal text-blackFive">
-                    Status
-                  </th>
-                  <th className="px-3 py-3 text-left text-base font-normal text-blackFive">
-                    Action
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {group.documents.map((item) => {
-                  const s = item.unverified ? UNVERIFIED_STYLE : ITEM_STATUS_STYLE[item.status]
-                  const isFailed = item.status === 'failed'
-                  return (
-                    <tr
-                      key={item.id}
-                      className={cn('border-b border-bottomBorder', isFailed && 'bg-red-50/40')}
-                    >
-                      <td className="px-3 py-3">
-                        <p
-                          className="max-w-[240px] truncate text-sm font-light text-black"
-                          title={item.attachmentName}
-                        >
-                          {item.attachmentName}
-                        </p>
-                        {isFailed && item.failureDetail && (
-                          <p className="mt-0.5 text-xs text-red-600" title={item.failureDetail}>
-                            {truncate(item.failureDetail, 60)}
+          <div className="overflow-hidden rounded-lg border border-bottomBorder">
+            <div className="max-h-[400px] overflow-auto">
+              <table className="w-full">
+                <thead className="sticky top-0 z-10 bg-[#F8F8F8]">
+                  <tr>
+                    <th className={importedHeaderCell}>Attachment</th>
+                    <th className={importedHeaderCell}>Size</th>
+                    <th className={importedHeaderCell}>Status</th>
+                    <th className={cn(importedHeaderCell, 'text-right')}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {group.documents.map((item) => {
+                    const s = item.unverified ? UNVERIFIED_STYLE : ITEM_STATUS_STYLE[item.status]
+                    const isFailed = item.status === 'failed'
+                    return (
+                      <tr
+                        key={item.id}
+                        className={cn('border-t border-bottomBorder', isFailed && 'bg-red-50/40')}
+                      >
+                        <td className="px-4 py-4">
+                          <p
+                            className="max-w-[240px] truncate text-[15px] font-normal text-black"
+                            title={item.attachmentName}
+                          >
+                            {item.attachmentName}
                           </p>
-                        )}
-                      </td>
-                      <td className="px-3 py-3 text-sm font-light text-black">
-                        {item.attachmentSizeFormatted}
-                      </td>
-                      <td className="px-3 py-3">
-                        <span className={cn('rounded-md px-2 py-1 text-sm', s.className)}>
-                          {item.unverified ? 'Needs review' : (item.classifiedType ?? s.label)}
-                        </span>
-                        {item.unverified && (
-                          <p className="mt-1 max-w-[200px] text-xs font-light leading-[150%] text-blackFive">
-                            Imported without checking its contents — the file could not be read.
-                          </p>
-                        )}
-                      </td>
-                      <td className="px-3 py-3">
-                        {isFailed ? (
-                          <span className="text-xs text-red-500">—</span>
-                        ) : (
-                          <DownloadActionButton jobId={jobId} item={item} />
-                        )}
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                          {isFailed && item.failureDetail && (
+                            <p className="mt-0.5 text-xs text-red-600" title={item.failureDetail}>
+                              {truncate(item.failureDetail, 60)}
+                            </p>
+                          )}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-4 text-[15px] font-normal text-black">
+                          {item.attachmentSizeFormatted}
+                        </td>
+                        <td className="px-4 py-4">
+                          <span
+                            className={cn(
+                              'inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm',
+                              s.className,
+                            )}
+                          >
+                            <span aria-hidden>&bull;</span>
+                            {item.unverified ? 'Needs review' : (item.classifiedType ?? s.label)}
+                          </span>
+                          {item.unverified && (
+                            <p className="mt-1 max-w-[200px] text-xs font-light leading-[150%] text-blackFive">
+                              Imported without checking its contents — the file could not be read.
+                            </p>
+                          )}
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex justify-end">
+                            {isFailed ? (
+                              <span className="text-xs text-red-500">—</span>
+                            ) : (
+                              <DownloadActionButton jobId={jobId} item={item} />
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
@@ -268,7 +274,7 @@ function ImportDocumentsPanel({ jobId, group }: { jobId: string; group: M365Emai
       <ImportSkippedAttachments skipped={group.skipped ?? []} />
 
       {/* Neither card applies: say so rather than leaving the panel blank. */}
-      {group.documents.length === 0 && (group.skipped?.length ?? 0) === 0 && (
+      {group.documents.length === 0 && countReportedSkips(group.skipped) === 0 && (
         <p className="rounded-lg border border-bottomBorder px-3 py-4 text-sm font-light text-blackFive">
           No attachments were found in this email.
         </p>

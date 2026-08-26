@@ -1,4 +1,5 @@
 import type { RecoveryApiEnvelope } from './recovery-user-api'
+import type { RecoveryCombinedDocument } from './recovery-inbox-api'
 
 export type M365ConnectionStatus = {
   connected: boolean
@@ -244,5 +245,152 @@ export type M365ImportJobItemsQuery = {
   limit?: number
 }
 
+/**
+ * The import job's unified processable / unprocessable shipment lists.
+ *
+ * Deliberately the SAME `RecoveryCombinedDocument` shape the Inbox detail
+ * endpoint returns: the backend produces one recovery document per import job
+ * (holding that job's whole set, not one document per email), so the Inbox's
+ * mappers, tables and per-row actions all apply unchanged.
+ *
+ * `content` is null while the job is still running, and for a finished job
+ * whose documents produced nothing to pair — a normal empty state, not an error.
+ */
+export type M365ImportJobShipmentsEnvelope = RecoveryApiEnvelope<RecoveryCombinedDocument | null>
+
 export type M365ImportJobDetailEnvelope = RecoveryApiEnvelope<M365ImportJobSummary>
 export type M365ImportJobItemsEnvelope = RecoveryApiEnvelope<M365ImportJobItemsContent>
+
+// ── Cross-import unprocessed documents ───────────────────────────────────────
+
+/**
+ * One unprocessable file, flattened out of the import-job document that holds
+ * it — the row shape of the cross-import "Unprocessed Documents" screen.
+ *
+ * `documentId` + `index` is the coordinate the create-shipment call addresses a
+ * file by, and the pair is also its row identity: `documentId` alone is not
+ * unique (one import job's document holds every unpaired file from that job).
+ */
+export type M365UnprocessedDocument = {
+  /** `${documentId}:${index}` — stable across pages, safe as a selection key. */
+  id: string
+  documentId: string
+  index: number
+  filename: string
+  type: string
+  size: number | null
+  contentType: string | null
+  failureReasonCode: string | null
+  summary: string | null
+  /** Null when the file's bytes were never stored — the row renders but cannot be paired. */
+  s3Key: string | null
+  bucket: string | null
+  importJobId: string
+  folderNames: string[]
+  mailboxEmail: string | null
+  importedAt: string | null
+}
+
+/** An import job that currently contributes at least one unprocessable file. */
+export type M365UnprocessedDocumentsJob = {
+  id: string
+  folderNames: string[]
+  mailboxEmail: string | null
+  importedAt: string | null
+}
+
+export type M365UnprocessedDocumentsContent = {
+  items: M365UnprocessedDocument[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+  /** Unaffected by the active filters, so the filter can always be widened again. */
+  importJobs: M365UnprocessedDocumentsJob[]
+}
+
+export type M365UnprocessedDocumentsQuery = {
+  page?: number
+  limit?: number
+  importJobId?: string
+  search?: string
+  type?: string
+}
+
+/** One side of a cross-import manual pair. */
+export type M365UnprocessedDocumentSelection = {
+  documentId: string
+  index: number
+  s3Key: string
+}
+
+export type M365CreateCrossImportShipmentBody = {
+  title: string
+  ci: M365UnprocessedDocumentSelection
+  /** The new shipment row is stored on this side's document. */
+  c88: M365UnprocessedDocumentSelection
+}
+
+export type M365UnprocessedDocumentsEnvelope = RecoveryApiEnvelope<M365UnprocessedDocumentsContent>
+export type M365CreateCrossImportShipmentEnvelope = RecoveryApiEnvelope<{
+  documentId: string
+  shipmentId: string
+}>
+
+// ── Cross-import processable shipments ───────────────────────────────────────
+
+/** One half of a paired shipment, as the Processed Documents table links to it. */
+export type M365ProcessableShipmentFile = {
+  filename: string | null
+  s3Key: string | null
+  bucket: string | null
+  contentType: string | null
+  size: number | null
+}
+
+/**
+ * One paired C88 + CI from any import job. Pairs created by hand on the
+ * Unprocessed Documents screen appear here alongside automatically paired ones —
+ * the backend stores a manual pair on the C88 side's import-job document, so it
+ * is the same kind of row.
+ */
+export type M365ProcessableShipment = {
+  /** `${documentId}:${index}`. */
+  id: string
+  documentId: string
+  index: number
+  /** The document-local pairing key. */
+  shipmentKey: string | null
+  /**
+   * The persisted shipment's id, for linking to /shipments/:id. Null while a
+   * pair exists but its shipment has not been created yet — a normal transient
+   * state, so the row still renders.
+   */
+  shipmentId: string | null
+  title: string | null
+  date: string | null
+  c88: M365ProcessableShipmentFile
+  po: M365ProcessableShipmentFile
+  importJobId: string
+  folderNames: string[]
+  mailboxEmail: string | null
+  importedAt: string | null
+}
+
+export type M365ProcessableShipmentsContent = {
+  items: M365ProcessableShipment[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+  importJobs: M365UnprocessedDocumentsJob[]
+}
+
+export type M365ProcessableShipmentsQuery = {
+  page?: number
+  limit?: number
+  importJobId?: string
+  search?: string
+}
+
+export type M365ProcessableShipmentsEnvelope = RecoveryApiEnvelope<M365ProcessableShipmentsContent>

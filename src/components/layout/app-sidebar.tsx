@@ -1,9 +1,11 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 
 import { useAppSelector } from '@/app/redux-hooks'
 import { AppLogo } from '@/components/brand/app-logo'
 import { recoverySidebarItems } from '@/data/recovery-sidebar-items'
+import type { RecoverySidebarChild } from '@/data/recovery-sidebar-items'
 import { t } from '@/i18n/useI18n'
 
 const BRAND = t('layout.brand')
@@ -17,6 +19,45 @@ export function AppSidebar() {
     (link: string) => pathname === link || pathname.startsWith(`${link}/`),
     [pathname],
   )
+
+  /**
+   * Which child of a group is the active one: the LONGEST child link the current
+   * path matches.
+   *
+   * Plain prefix matching does not work here — "Import Jobs" links to `/imports`,
+   * which is a prefix of every sibling under it, so it would stay highlighted on
+   * `/imports/processable-shipments` as well. Longest-match picks the sibling,
+   * while still keeping "Import Jobs" active on a detail route like
+   * `/imports/abc123` that no sibling claims.
+   */
+  const activeChildKey = useCallback(
+    (children: RecoverySidebarChild[]): string | null => {
+      let best: RecoverySidebarChild | null = null
+      for (const child of children) {
+        if (pathname !== child.link && !pathname.startsWith(`${child.link}/`)) {
+          continue
+        }
+        if (!best || child.link.length > best.link.length) {
+          best = child
+        }
+      }
+      return best?.key ?? null
+    },
+    [pathname],
+  )
+
+  /**
+   * Explicit open/closed state per group, for groups the user has clicked.
+   * A group with no entry here falls back to "open when its own section is the
+   * active route", so landing on a sub-route shows where you are without a click.
+   *
+   * The fallback has to be a DEFAULT, not a requirement: gating open-ness on the
+   * route means clicking the parent from anywhere else in the app toggles a flag
+   * that can never take effect, and the menu simply never opens.
+   */
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
+  const toggleGroup = (key: string, currentlyOpen: boolean) =>
+    setOpenGroups((prev) => ({ ...prev, [key]: !currentlyOpen }))
 
   const go = (link: string) => {
     navigate(link)
@@ -46,11 +87,18 @@ export function AppSidebar() {
         <div className="flex flex-col gap-5">
           {recoverySidebarItems.map((item) => {
             const menuActive = isActive(item.link)
+            // Children only render in the expanded sidebar — the collapsed rail
+            // has no room, so there the parent keeps its original
+            // navigate-on-click behaviour unchanged.
+            const children = expanded ? item.children : undefined
+            const groupOpen = children ? (openGroups[item.key] ?? menuActive) : false
+            const activeChild = children ? activeChildKey(children) : null
             return (
               <div key={item.key} className="group relative">
                 <button
                   type="button"
-                  onClick={() => go(item.link)}
+                  onClick={() => (children ? toggleGroup(item.key, groupOpen) : go(item.link))}
+                  aria-expanded={children ? groupOpen : undefined}
                   className={`flex w-full cursor-pointer items-center justify-between truncate rounded p-2.5 text-left transition-all ${
                     menuActive
                       ? 'bg-yellow text-white'
@@ -79,7 +127,36 @@ export function AppSidebar() {
                     )}
                     {expanded && <span className="truncate text-sm font-bold">{item.label}</span>}
                   </div>
+                  {children ? (
+                    groupOpen ? (
+                      <ChevronUp className="ml-2 size-4 flex-shrink-0" aria-hidden />
+                    ) : (
+                      <ChevronDown className="ml-2 size-4 flex-shrink-0" aria-hidden />
+                    )
+                  ) : null}
                 </button>
+
+                {children && groupOpen ? (
+                  <div className="mt-1 flex flex-col">
+                    {children.map((child) => {
+                      const childActive = activeChild === child.key
+                      return (
+                        <button
+                          key={child.key}
+                          type="button"
+                          onClick={() => go(child.link)}
+                          className={`w-full truncate rounded px-3 py-2.5 text-left text-sm transition-all ${
+                            childActive
+                              ? 'bg-lightYellowThree font-bold text-yellow'
+                              : 'text-rp-fg hover:bg-[var(--hover-color)] hover:text-yellow'
+                          }`}
+                        >
+                          {child.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                ) : null}
 
                 {!expanded && (
                   <div

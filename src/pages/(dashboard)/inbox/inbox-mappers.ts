@@ -77,12 +77,22 @@ const FAILURE_REASON_LABELS: Record<string, string> = {
   PO_MISSING: 'CI missing',
 }
 
+/**
+ * The short status label for one failure reason code. Exported so screens that
+ * render unprocessable files WITHOUT going through `mapRecoveryDocumentToInboxEmail`
+ * — the cross-import Unprocessed Documents list, which flattens rows server-side —
+ * show the same words for the same code instead of maintaining a second table.
+ */
+export function getUnprocessableStatusLabel(failureReasonCode?: string | null): string {
+  return (failureReasonCode && FAILURE_REASON_LABELS[failureReasonCode]) || 'Failed'
+}
+
 function getUnprocessableStatus(shipment: RecoveryDocumentUnprocessable): {
   status: string
   statusDetail?: string
 } {
   const code = shipment.failureReasonCode
-  const status = (code && FAILURE_REASON_LABELS[code]) || 'Failed'
+  const status = getUnprocessableStatusLabel(code)
   const statusDetail = shipment.extractedData?.summary || code || undefined
   return { status, statusDetail }
 }

@@ -1,3 +1,5 @@
+import { Eye } from 'lucide-react'
+
 import { useI18n } from '@/i18n/useI18n'
 import { cn } from '@/lib/utils'
 import type { InboxAttachment, InboxShipmentRow } from '@/pages/(dashboard)/inbox/types'
@@ -11,12 +13,23 @@ export type InboxProcessedShipmentsTableProps = {
   onConvertToUnprocessed?: (processableIndex: number) => Promise<void> | void
   onDownloadAttachment?: (attachment: InboxAttachment) => Promise<void> | void
   convertingIndex?: number | null
+  /**
+   * Opens the shipment a row became. The Actions column renders ONLY when this
+   * is passed — same rule as `onRetry` on the unprocessed table, so callers with
+   * nowhere to navigate (the Inbox, the import-job detail panel) get no column
+   * rather than a column of dead buttons.
+   */
+  onViewShipment?: (row: InboxShipmentRow) => void
+  /** Rows with no shipment yet: shown, but their action is disabled. */
+  isViewDisabled?: (row: InboxShipmentRow) => boolean
   className?: string
 }
 
 export function InboxProcessedShipmentsTable({
   rows,
   onDownloadAttachment,
+  onViewShipment,
+  isViewDisabled,
   className,
 }: InboxProcessedShipmentsTableProps) {
   const { t } = useI18n()
@@ -34,6 +47,9 @@ export function InboxProcessedShipmentsTable({
               <th className={thCell}>{t('inbox.processed.col.date')}</th>
               <th className={thCell}>{t('inbox.processed.col.c88')}</th>
               <th className={thCell}>{t('inbox.processed.col.po')}</th>
+              {onViewShipment ? (
+                <th className={cn(thCell, 'text-right')}>{t('inbox.processed.col.actions')}</th>
+              ) : null}
             </tr>
           </thead>
           <tbody>
@@ -69,6 +85,20 @@ export function InboxProcessedShipmentsTable({
                     '-'
                   )}
                 </td>
+                {onViewShipment ? (
+                  <td className="px-3 py-3 text-right">
+                    <button
+                      type="button"
+                      onClick={() => onViewShipment(row)}
+                      disabled={isViewDisabled?.(row) ?? false}
+                      aria-label={t('inbox.processed.view')}
+                      title={t('inbox.processed.view')}
+                      className="inline-flex size-8 items-center justify-center rounded-md text-rp-fg transition-colors hover:bg-[var(--hover-color)] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <Eye className="size-4" aria-hidden />
+                    </button>
+                  </td>
+                ) : null}
               </tr>
             ))}
           </tbody>

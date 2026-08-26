@@ -66,6 +66,8 @@ export type RecoveryShipmentsListQuery = {
   pageSize?: number
   messageId?: string
   shipmentKey?: string
+  /** Restrict to shipments produced by a mailbox import. Ignored when messageId is set. */
+  source?: 'm365-import'
   status?: string
   search?: string
   dateFrom?: string

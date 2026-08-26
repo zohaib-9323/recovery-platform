@@ -327,6 +327,7 @@ export const messages: Record<string, string> = {
   'inbox.processed.col.shipVia': 'Ship Via',
   'inbox.processed.col.c88': 'C88',
   'inbox.processed.col.po': 'PO #',
+  'inbox.processed.view': 'View shipment',
   'inbox.processed.col.actions': 'Actions',
   'inbox.inProcessing.empty': 'No shipments currently being created for this message.',
   'inbox.inProcessing.col.title': 'Shipment Title',
@@ -352,6 +353,69 @@ export const messages: Record<string, string> = {
   'inbox.actions.retrying': 'Retrying...',
   'inbox.actions.retrySuccess': 'File reprocessed successfully.',
   'inbox.actions.retryError': 'Failed to retry file.',
+  // Import-job shipment sections. Unlike the Inbox's per-email lists, these are
+  // unified across every email in the import — the copy says so deliberately.
+  'imports.shipments.title': 'Shipments',
+  'imports.shipments.processable': 'Processable Shipments',
+  'imports.shipments.inProcessing': 'In Processing Shipments',
+  'imports.shipments.unprocessable': 'Unprocessable Shipments',
+  'imports.shipments.pendingJob':
+    'Shipments will appear here once the import finishes and its documents have been paired.',
+  'imports.shipments.empty': 'This import produced no shipment documents to pair.',
+  'imports.shipments.loadError': 'Could not load shipments for this import.',
+
+  // Cross-import "Unprocessed Documents" screen — every import job's leftovers
+  // in one list, so a C88 from one import can be paired with a CI from another.
+  'imports.unprocessed.title': 'Unprocessed Documents',
+  'imports.unprocessed.description':
+    'Every document that could not be paired automatically, across all of your imports. Select a commercial invoice and a C88 — from the same import or from different ones — to create a shipment from them.',
+  'imports.unprocessed.searchPlaceholder': 'Search by file name',
+  'imports.unprocessed.allImports': 'All imports',
+  'imports.unprocessed.col.fileName': 'File Name',
+  'imports.unprocessed.col.type': 'Type',
+  'imports.unprocessed.col.status': 'Status',
+  'imports.unprocessed.col.import': 'Import',
+  'imports.unprocessed.notStored': 'This file was not stored and cannot be paired.',
+  'imports.unprocessed.empty':
+    'No unprocessed documents. Everything your imports fetched has been paired.',
+  'imports.unprocessed.emptyFiltered': 'No unprocessed documents match these filters.',
+  'imports.unprocessed.loadError': 'Could not load unprocessed documents.',
+  'imports.unprocessed.createShipment': 'Create Shipment',
+  'imports.unprocessed.modal.title': 'Create Shipment',
+  'imports.unprocessed.modal.description':
+    'Pick which of the selected files is the commercial invoice and which is the C88. They may come from different imports.',
+  'imports.unprocessed.modal.fromImport': 'from {{import}}',
+  'imports.unprocessed.modal.success': 'Shipment created from the selected files.',
+  'imports.unprocessed.sectionTitle': 'Unprocessable Shipments',
+  'imports.unprocessed.emptyTitle': 'Nothing left unprocessed',
+  'imports.unprocessed.emptyAction': 'Go to Import Jobs',
+  'imports.unprocessed.emptyFilteredTitle': 'No matching documents',
+  'imports.unprocessed.clearFilters': 'Clear filters',
+
+  // Cross-import "Processable Shipments" screen — the paired documents from
+  // every import, plus the shipments those pairs became.
+  'imports.processable.title': 'Processable Shipments',
+  'imports.processable.documents': 'Processed Documents',
+  'imports.processable.description':
+    'Every C88 paired with its commercial invoice across all of your imports — including the pairs you created by hand from unprocessed documents.',
+  'imports.processable.searchPlaceholder': 'Search by shipment or file name',
+  'imports.processable.col.title': 'Shipment Title',
+  'imports.processable.col.date': 'Date',
+  'imports.processable.col.c88': 'C88',
+  'imports.processable.col.po': 'PO #',
+  'imports.processable.col.actions': 'Actions',
+  'imports.processable.view': 'View shipment',
+  'imports.processable.notCreatedYet': 'This pair has no shipment yet.',
+  'imports.processable.download': 'Download {{name}}',
+  'imports.processable.shipments': 'Processed Shipments',
+  'imports.processable.viewAll': 'View All',
+  'imports.processable.loadError': 'Could not load processable shipments.',
+  'imports.processable.empty':
+    'No documents have been paired yet. Run an import, or pair files by hand from Unprocessed Documents.',
+  'imports.processable.emptyTitle': 'No processable shipments',
+  'imports.processable.emptyFiltered': 'No processable shipments match these filters.',
+  'imports.processable.emptyAction': 'Go to Unprocessed Documents',
+  'imports.processable.shipmentsEmpty': 'No shipments have been created from your imports yet.',
   'inbox.createShipment.button': 'Create Shipment',
   'inbox.createShipment.title': 'Create Shipment from Files',
   'inbox.createShipment.description':
