@@ -13,17 +13,13 @@ import { Button } from '@/components/ui/button'
 import type { M365EmailGroup } from '@/types/recovery-m365-api'
 
 import { formatShortDateRange } from './date-range-utils'
-import { ImportDetailStaticShipments } from './import-detail-static-shipments'
+import { ImportDetailShipments } from './import-detail-shipments'
 import { ImportDocumentsBrowser } from './import-documents-browser'
 import { ACTIVE_STATUSES, FailedTable, StatBox, StatusBadge } from './import-job-status'
 import { InfoBanner } from './info-banner'
 import { formatFolders } from './format-utils'
 
 // ── Constants ──────────────────────────────────────────────────────────────────
-
-// Flip on once the backend returns processable/in-processing/unprocessable shipment
-// data for an import job — the UI is already built in import-detail-static-shipments.
-const SHOW_STATIC_SHIPMENT_SECTIONS = false
 
 const DEFAULT_AVATAR = `${process.env.PUBLIC_URL}/images/no-profile.png`
 
@@ -285,9 +281,10 @@ export function ImportJobDetailPage() {
         ) : null}
       </section>
 
-      {/* Processable / In Processable / Unprocessable Shipments — hidden until the
-          backend provides this data; see import-detail-static-shipments.tsx */}
-      {SHOW_STATIC_SHIPMENT_SECTIONS && <ImportDetailStaticShipments />}
+      {/* Processable / In Processing / Unprocessable Shipments, unified across
+          every email in this import — see import-detail-shipments.tsx for why
+          one fetch is enough. */}
+      <ImportDetailShipments jobId={id ?? ''} isJobActive={isActive} />
 
       {/* Per-email processing failures recorded by the import worker */}
       {!isActive && hasJobFailures && (

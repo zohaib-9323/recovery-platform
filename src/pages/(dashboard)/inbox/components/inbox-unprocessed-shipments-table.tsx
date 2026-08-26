@@ -63,18 +63,26 @@ export function InboxUnprocessedShipmentsTable({
                       </span>
                     </td>
                     <td className="px-3 py-3">
-                      <InboxRowActionMenu
-                        disabled={rowBusy}
-                        options={[
-                          {
-                            label: isRetrying
-                              ? t('inbox.actions.retrying')
-                              : t('inbox.actions.retry'),
-                            textClassName: 'text-black',
-                            onSelect: () => onRetry?.(row),
-                          },
-                        ]}
-                      />
+                      {/* Retry is the only entry in this menu, so a caller that
+                          doesn't pass onRetry gets no menu at all rather than a
+                          menu whose single item does nothing. The import-job
+                          view relies on this. */}
+                      {onRetry ? (
+                        <InboxRowActionMenu
+                          disabled={rowBusy}
+                          options={[
+                            {
+                              label: isRetrying
+                                ? t('inbox.actions.retrying')
+                                : t('inbox.actions.retry'),
+                              textClassName: 'text-black',
+                              onSelect: () => onRetry(row),
+                            },
+                          ]}
+                        />
+                      ) : (
+                        <span className="text-blackFive">—</span>
+                      )}
                     </td>
                   </tr>
                 )
