@@ -14,6 +14,7 @@ import {
 } from '@/app/services/recoveryApi'
 import { LoginButton } from '@/components/buttons'
 import { useI18n } from '@/i18n/useI18n'
+import { showCustomToast } from '@/lib/showCustomToast'
 import { AUTH_HEADING_CLASS } from '@/pages/auth/authFieldStyles'
 import { AuthBackToLogin } from '@/pages/auth/components/AuthBackToLogin'
 import {
@@ -21,6 +22,11 @@ import {
   saveFirstLoginFlowState,
   type FirstLoginFlowState,
 } from '@/pages/auth/first-login-flow'
+import {
+  isFirstLoginMockEnabled,
+  mockRequestFirstLoginOtp,
+  mockVerifyFirstLoginOtp,
+} from '@/pages/auth/first-login-mock'
 
 const OTP_LENGTH = 6
 const RESEND_TIMER_SECONDS = 300
@@ -39,15 +45,12 @@ function readApiMessage(error: unknown, fallback: string): string {
 function getStateFromLocation(locationState: unknown): FirstLoginFlowState | null {
   if (!locationState || typeof locationState !== 'object') return null
   const email = (locationState as { email?: unknown }).email
-  const temporaryPassword = (locationState as { temporaryPassword?: unknown }).temporaryPassword
   const setupToken = (locationState as { setupToken?: unknown }).setupToken
 
   if (typeof email !== 'string' || email.trim().length === 0) return null
-  if (typeof temporaryPassword !== 'string' || temporaryPassword.length === 0) return null
 
   return {
     email: email.trim(),
-    temporaryPassword,
     setupToken:
       typeof setupToken === 'string' && setupToken.trim().length > 0 ? setupToken : undefined,
   }
@@ -127,8 +130,11 @@ export function FirstLoginVerifyOtpPage() {
     }
 
     try {
-      const result = await verifyOtp({ email: flowState.email, otp }).unwrap()
-      const setupToken = result.content?.setupToken
+      // TEMPORARY (REACT_APP_FIRST_LOGIN_MOCK) — see `first-login-mock.ts`.
+      const setupToken = isFirstLoginMockEnabled()
+        ? (await mockVerifyFirstLoginOtp(otp)).setupToken
+        : (await verifyOtp({ email: flowState.email, otp }).unwrap()).content?.setupToken
+
       if (!setupToken) {
         setError(t('auth.firstLogin.otp.verifyFailed'))
         return
@@ -136,7 +142,6 @@ export function FirstLoginVerifyOtpPage() {
 
       const nextState: FirstLoginFlowState = {
         email: flowState.email,
-        temporaryPassword: flowState.temporaryPassword,
         setupToken,
       }
       saveFirstLoginFlowState(nextState)
@@ -149,10 +154,20 @@ export function FirstLoginVerifyOtpPage() {
   const handleResendOtp = async () => {
     setError(null)
     try {
-      await requestOtp({ email: flowState.email }).unwrap()
+      // TEMPORARY (REACT_APP_FIRST_LOGIN_MOCK) — see `first-login-mock.ts`.
+      if (isFirstLoginMockEnabled()) {
+        await mockRequestFirstLoginOtp()
+      } else {
+        await requestOtp({ email: flowState.email }).unwrap()
+      }
       setTimer(RESEND_TIMER_SECONDS)
       setDigits(Array<string>(OTP_LENGTH).fill(''))
       inputRefs.current[0]?.focus()
+      showCustomToast({
+        type: 'success',
+        title: t('common.success'),
+        message: t('auth.firstLogin.otp.resent', { email: flowState.email }),
+      })
     } catch (err) {
       setError(readApiMessage(err, t('auth.firstLogin.otp.resendFailed')))
     }

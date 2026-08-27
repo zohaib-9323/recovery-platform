@@ -24,6 +24,7 @@ import {
   saveFirstLoginFlowState,
   type FirstLoginFlowState,
 } from '@/pages/auth/first-login-flow'
+import { isFirstLoginMockEnabled, mockSetupFirstLoginPassword } from '@/pages/auth/first-login-mock'
 
 function readApiMessage(error: unknown, fallback: string): string {
   if (error && typeof error === 'object' && 'data' in error) {
@@ -39,16 +40,13 @@ function readApiMessage(error: unknown, fallback: string): string {
 function getStateFromLocation(locationState: unknown): FirstLoginFlowState | null {
   if (!locationState || typeof locationState !== 'object') return null
   const email = (locationState as { email?: unknown }).email
-  const temporaryPassword = (locationState as { temporaryPassword?: unknown }).temporaryPassword
   const setupToken = (locationState as { setupToken?: unknown }).setupToken
 
   if (typeof email !== 'string' || email.trim().length === 0) return null
-  if (typeof temporaryPassword !== 'string' || temporaryPassword.length === 0) return null
   if (typeof setupToken !== 'string' || setupToken.trim().length === 0) return null
 
   return {
     email: email.trim(),
-    temporaryPassword,
     setupToken: setupToken.trim(),
   }
 }
@@ -58,8 +56,10 @@ export function FirstLoginSetupPasswordPage() {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const location = useLocation()
+  const [temporaryPassword, setTemporaryPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [showTemporaryPassword, setShowTemporaryPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -83,6 +83,7 @@ export function FirstLoginSetupPasswordPage() {
   }
   const setupToken = flowState.setupToken
 
+  const temporaryPasswordTrimmed = temporaryPassword.trim()
   const newPasswordTrimmed = newPassword.trim()
   const confirmPasswordTrimmed = confirmPassword.trim()
   const matches = newPasswordTrimmed.length > 0 && newPasswordTrimmed === confirmPasswordTrimmed
@@ -93,7 +94,8 @@ export function FirstLoginSetupPasswordPage() {
     special: /[^A-Za-z0-9]/.test(newPasswordTrimmed),
     digit: /\d/.test(newPasswordTrimmed),
   }
-  const canSubmit = isValidPassword(newPasswordTrimmed) && matches
+  const passwordsReady = isValidPassword(newPasswordTrimmed) && matches
+  const canSubmit = passwordsReady && temporaryPasswordTrimmed.length > 0
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -105,12 +107,17 @@ export function FirstLoginSetupPasswordPage() {
     }
 
     try {
-      await setupPassword({
-        setupToken,
-        temporaryPassword: flowState.temporaryPassword,
-        newPassword: newPasswordTrimmed,
-        confirmPassword: confirmPasswordTrimmed,
-      }).unwrap()
+      // TEMPORARY (REACT_APP_FIRST_LOGIN_MOCK) — see `first-login-mock.ts`.
+      if (isFirstLoginMockEnabled()) {
+        await mockSetupFirstLoginPassword(temporaryPasswordTrimmed)
+      } else {
+        await setupPassword({
+          setupToken,
+          temporaryPassword: temporaryPasswordTrimmed,
+          newPassword: newPasswordTrimmed,
+          confirmPassword: confirmPasswordTrimmed,
+        }).unwrap()
+      }
 
       clearFirstLoginFlowState()
       dispatch(logout())
@@ -136,6 +143,43 @@ export function FirstLoginSetupPasswordPage() {
             <div className="mt-5 flex w-full flex-col gap-2">
               <InputField
                 fieldType="password"
+                id="first-login-temporary-password"
+                name="first-login-temporary-password"
+                label={t('auth.firstLogin.setup.temporaryPasswordLabel')}
+                labelClassName={AUTH_LABEL_CLASS}
+                className={AUTH_FIELD_SHELL_CLASS}
+                inputClassName={AUTH_INPUT_CLASS}
+                type={showTemporaryPassword ? 'text' : 'password'}
+                autoComplete="current-password"
+                leftIcon={<KeyRound className="h-5 w-5 text-primary" strokeWidth={2} />}
+                placeholder={t('auth.firstLogin.setup.temporaryPasswordPlaceholder')}
+                value={temporaryPassword}
+                onChange={(e) => {
+                  setTemporaryPassword(e.target.value)
+                  setError(null)
+                }}
+                rightSlot={
+                  <button
+                    type="button"
+                    className="rounded p-1 text-primary hover:bg-lightGrey"
+                    onClick={() => setShowTemporaryPassword((s) => !s)}
+                    aria-label={
+                      showTemporaryPassword ? t('common.hidePassword') : t('common.showPassword')
+                    }
+                  >
+                    {showTemporaryPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                }
+              />
+            </div>
+
+            <div className="mt-5 flex w-full flex-col gap-2">
+              <InputField
+                fieldType="password"
                 id="first-login-new-password"
                 name="first-login-new-password"
                 label={t('auth.firstLogin.setup.newPasswordLabel')}
@@ -145,6 +189,7 @@ export function FirstLoginSetupPasswordPage() {
                 type={showNewPassword ? 'text' : 'password'}
                 autoComplete="new-password"
                 leftIcon={<KeyRound className="h-5 w-5 text-primary" strokeWidth={2} />}
+                placeholder={t('auth.firstLogin.setup.newPasswordPlaceholder')}
                 value={newPassword}
                 onChange={(e) => {
                   setNewPassword(e.target.value.trim())
@@ -180,6 +225,7 @@ export function FirstLoginSetupPasswordPage() {
                 type={showConfirmPassword ? 'text' : 'password'}
                 autoComplete="new-password"
                 leftIcon={<KeyRound className="h-5 w-5 text-primary" strokeWidth={2} />}
+                placeholder={t('auth.firstLogin.setup.confirmPasswordPlaceholder')}
                 value={confirmPassword}
                 onChange={(e) => {
                   setConfirmPassword(e.target.value.trim())
@@ -203,7 +249,7 @@ export function FirstLoginSetupPasswordPage() {
                   </button>
                 }
               />
-              {canSubmit ? (
+              {passwordsReady ? (
                 <div className="flex flex-row items-center gap-2">
                   <Check className="h-3 w-3 text-greenOne" strokeWidth={3} />
                   <p className="text-tiny font-normal text-greenOne">
@@ -211,7 +257,7 @@ export function FirstLoginSetupPasswordPage() {
                   </p>
                 </div>
               ) : null}
-              {confirmPasswordTrimmed && !canSubmit ? (
+              {confirmPasswordTrimmed && !passwordsReady ? (
                 <p className="text-tiny font-normal text-lightBlackOne">
                   {t('auth.firstLogin.setup.notMatchedYet')}
                 </p>

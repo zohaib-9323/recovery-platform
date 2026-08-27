@@ -1,6 +1,7 @@
 import { shipmentsMessages } from './shipments-messages'
 
 export const messages: Record<string, string> = {
+  'common.success': 'Success',
   'common.hidePassword': 'Hide password',
   'common.showPassword': 'Show password',
   'common.cancel': 'Cancel',
@@ -108,11 +109,15 @@ export const messages: Record<string, string> = {
   'auth.firstLogin.otp.resendFailed': 'Failed to request OTP again.',
   'auth.firstLogin.otp.backToLogin': 'Go back to login?',
   'auth.firstLogin.otp.loginLink': 'Login',
-  'auth.firstLogin.setup.title': 'Set Password',
+  'auth.firstLogin.setup.title': 'Set New Password',
   'auth.firstLogin.setup.description':
-    'Set a new password to complete your first login. You can then sign in with the new password.',
+    'Enter the temporary password from your email and create a new secure password.',
+  'auth.firstLogin.setup.temporaryPasswordLabel': 'Temporary Password',
+  'auth.firstLogin.setup.temporaryPasswordPlaceholder': 'Enter temporary password from email',
   'auth.firstLogin.setup.newPasswordLabel': 'New Password',
+  'auth.firstLogin.setup.newPasswordPlaceholder': 'Enter Password',
   'auth.firstLogin.setup.confirmPasswordLabel': 'Confirm Password',
+  'auth.firstLogin.setup.confirmPasswordPlaceholder': 'Confirm Password',
   'auth.firstLogin.setup.rulesError': 'Password must satisfy all rules below.',
   'auth.firstLogin.setup.passwordMismatch': 'Passwords do not match.',
   'auth.firstLogin.setup.fixFields': 'Please fix the highlighted fields.',
@@ -130,8 +135,8 @@ export const messages: Record<string, string> = {
   'auth.firstLogin.setup.loginLink': 'Login',
   'auth.firstLogin.setup.popupTitle': 'Password Set Successfully!',
   'auth.firstLogin.setup.popupDescription':
-    'You have been signed out. Please log in with your new password.',
-  'auth.firstLogin.setup.popupAction': 'Login',
+    'Your new password has been set. You can now login with your new credentials.',
+  'auth.firstLogin.setup.popupAction': 'Go to Login',
   'auth.invalidSubdomain.defaultTitle': "This site can't be reached",
   'auth.invalidSubdomain.unavailableTitle': "Subdomain '{{subdomain}}' is not available",
   'auth.invalidSubdomain.description':

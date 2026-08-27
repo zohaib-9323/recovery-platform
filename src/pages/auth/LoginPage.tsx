@@ -17,6 +17,7 @@ import {
   AUTH_LABEL_CLASS,
 } from '@/pages/auth/authFieldStyles'
 import { saveFirstLoginFlowState } from '@/pages/auth/first-login-flow'
+import { isMockFirstLoginAccount, isMockFirstLoginEmail } from '@/pages/auth/first-login-mock'
 
 function getErrorMessage(err: unknown, fallback: string): string {
   if (err && typeof err === 'object' && 'data' in err) {
@@ -78,12 +79,29 @@ export function LoginPage() {
       return
     }
 
+    // TEMPORARY (REACT_APP_FIRST_LOGIN_MOCK) — the first-login API doesn't
+    // exist yet, so the demo account skips the network entirely and drops
+    // straight into the OTP screen. Remove with `first-login-mock.ts`.
+    if (isMockFirstLoginEmail(trimmedEmail)) {
+      if (!isMockFirstLoginAccount(trimmedEmail, password)) {
+        showCustomToast({
+          type: 'error',
+          title: t('auth.login.invalidCredentials'),
+          message: t('auth.login.invalidCredentials'),
+        })
+        return
+      }
+      saveFirstLoginFlowState({ email: trimmedEmail })
+      navigate('/first-login/verify-otp', { replace: true })
+      return
+    }
+
     try {
       await login({ email: trimmedEmail, password }).unwrap()
       navigate('/dashboard', { replace: true })
     } catch (err) {
       if (isFirstLoginSetupError(err)) {
-        saveFirstLoginFlowState({ email: trimmedEmail, temporaryPassword: password })
+        saveFirstLoginFlowState({ email: trimmedEmail })
         navigate('/first-login/verify-otp', { replace: true })
         return
       }

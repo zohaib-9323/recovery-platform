@@ -23,6 +23,8 @@ import { AllShipmentsPage } from '@/pages/(dashboard)/shipments/AllShipmentsPage
 import { ShipmentDetailPageV2 as ShipmentDetailPage } from '@/pages/(dashboard)/shipments/ShipmentDetailPageV2'
 import { ShipmentLogsPage } from '@/pages/(dashboard)/shipments/ShipmentLogsPage'
 import { SettingsPage } from '@/pages/(dashboard)/settings/SettingsPage'
+import { ManageUsersPage } from '@/pages/(dashboard)/users/ManageUsersPage'
+import { UserDetailPage } from '@/pages/(dashboard)/users/UserDetailPage'
 
 function SessionRefreshBoundary({ children }: { children: ReactNode }) {
   useSessionRefresh()
@@ -61,6 +63,8 @@ export function AppRouter() {
                 <Route path="/shipments/:id/logs" element={<ShipmentLogsPage />} />
                 <Route path="/shipments/:id" element={<ShipmentDetailPage />} />
                 <Route path="/inbox" element={<InboxPage />} />
+                <Route path="/users" element={<ManageUsersPage />} />
+                <Route path="/users/:id" element={<UserDetailPage />} />
                 <Route path="/imports" element={<ImportsPage />} />
                 <Route path="/imports/:id" element={<ImportJobDetailPage />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
