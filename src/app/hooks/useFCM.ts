@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { toast } from 'react-toastify'
 import { isSupported, onMessage, type MessagePayload } from 'firebase/messaging'
 
 import { getFCMToken, messaging } from '@/lib/firebase'
 import { IMPORT_LIST_REFRESH_EVENT, shouldRefreshImportListFromFcmData } from '@/lib/importRealtime'
+import { NOTIFICATION_REFRESH_EVENT } from '@/lib/notificationToasts'
 import { reportRuntimeError } from '@/lib/error-reporting'
 import { useAuth } from '@/app/hooks/useAuth'
 import { useRegisterRecoveryFcmTokenMutation } from '@/app/services/recoveryNotificationsApi'
@@ -78,11 +78,12 @@ export function useFCM(): UseFCMReturn {
       if (!supported || cancelled || !messaging) return
 
       unsubscribe = onMessage(messaging, (payload: MessagePayload) => {
-        if (payload?.notification?.title) {
-          toast.info(
-            `${payload.notification.title}${payload.notification.body ? ` — ${payload.notification.body}` : ''}`,
-          )
-        }
+        // The toast itself is raised by useNotificationToasts off the notification list,
+        // not from this payload — the backend stores the notification before pushing, so
+        // the list is the one place every notification appears whether or not the push
+        // was delivered. Dispatching here just skips the wait for the next poll, and
+        // keeps a push from producing a second copy of the same toast.
+        window.dispatchEvent(new Event(NOTIFICATION_REFRESH_EVENT))
 
         if (shouldRefreshImportListFromFcmData(payload.data)) {
           window.dispatchEvent(new Event(IMPORT_LIST_REFRESH_EVENT))
