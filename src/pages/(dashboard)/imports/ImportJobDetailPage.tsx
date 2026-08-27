@@ -94,7 +94,7 @@ export function ImportJobDetailPage() {
     Boolean(id) && !isRealtimeRefreshing && (!hasStartedJobFetch || isJobFetching)
 
   const { data: itemsData, isFetching: isItemsFetching } = useGetM365ImportJobItemsQuery(
-    { id: id ?? '', page: itemPage, limit: 10 },
+    { id: id ?? '', page: itemPage, limit: 6 },
     { skip: !id || !job || isActive, refetchOnMountOrArgChange: true },
   )
 

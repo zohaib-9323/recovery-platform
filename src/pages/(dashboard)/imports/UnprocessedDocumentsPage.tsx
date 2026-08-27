@@ -23,7 +23,7 @@ import {
   type CrossImportShipmentSubmitPayload,
 } from './cross-import-create-shipment-modal'
 
-const PAGE_SIZE = 25
+const PAGE_SIZE = 10
 const SEARCH_DEBOUNCE_MS = 300
 
 function importLabel(row: { folderNames: string[]; mailboxEmail: string | null }): string {
