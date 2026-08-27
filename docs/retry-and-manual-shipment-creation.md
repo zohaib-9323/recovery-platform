@@ -277,3 +277,41 @@ twice.
 Tests: `UnprocessedDocumentsPage.test.tsx` (9 tests). Backend companion:
 `trade-harmonizer-be/docs/10-business-flows/m365-import-shipments.md`, section
 "Cross-import pairing".
+
+---
+
+## Live import status: toasts and auto-refresh
+
+An import job runs for minutes in the background, so the Imports list and detail screens
+refresh themselves when its status changes, and a toast announces it.
+
+**Both are driven by the notification list, not by web push.** Push is best-effort — it
+needs notification permission, a registered service worker and a live Firebase config, and
+delivers nothing _silently_ when any of those is missing. That was the deployed symptom
+this replaced: import notifications appeared in the bell menu (which polls) but never
+popped a toast, and `useImportRealtimeRefresh` — wired to `onMessage` alone — never fired,
+so the job status sat stale until a manual reload. Since the backend writes the
+notification row _before_ pushing, polling the list catches every notification regardless
+of push state.
+
+| File                                 | Role                                                                                                                               |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `lib/notificationToasts.ts`          | Bold-marker stripping, import-payload detection, and the outcome → toast colour mapping (completed = success, failed = error).     |
+| `app/hooks/useNotificationToasts.ts` | Polls the list, toasts what's new, raises `IMPORT_LIST_REFRESH_EVENT` for import notifications. Mounted once in `DashboardLayout`. |
+| `app/hooks/useFCM.ts`                | No longer toasts. Dispatches `NOTIFICATION_REFRESH_EVENT` so the hook above polls immediately instead of waiting out its interval. |
+
+Two behaviours worth knowing before changing this:
+
+- **The first response is a baseline, not news.** Everything already in the list when the
+  app opens is recorded as seen without toasting — otherwise every login would open with a
+  stack of stale popups. Only what arrives afterwards toasts.
+- **A single toast path, by construction.** Because the toast is raised from the list in
+  both the pushed and the polled case, a delivered push cannot produce a duplicate. Wiring
+  a screen straight back to `onMessage` reintroduces the silent failure — subscribe to
+  `IMPORT_LIST_REFRESH_EVENT` instead.
+
+Tests: `notificationToasts.test.ts` (6) and `useNotificationToasts.test.tsx` (7 — baseline
+suppression, dedupe, burst cap and ordering, the import-refresh event, and toast
+navigation). Backend companion:
+`trade-harmonizer-be/docs/10-business-flows/m365-import-shipments.md`, section
+"Status notifications".
