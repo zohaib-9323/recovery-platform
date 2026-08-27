@@ -6,7 +6,6 @@ import { useGetRecoveryShipmentsListQuery } from '@/app/services/recoveryApi'
 import { useGetM365ProcessableShipmentsQuery } from '@/app/services/recoveryM365Api'
 import { CustomLoader } from '@/components/feedback/custom-loader'
 import { CustomPagination } from '@/components/pagination/custom-pagination'
-import { Input } from '@/components/ui/input'
 import { useI18n } from '@/i18n/useI18n'
 import { getRtkErrorMessage } from '@/lib/api-errors'
 import { toManageShipmentsTableRow } from '@/lib/manage-shipments-row'
@@ -14,6 +13,7 @@ import { showCustomToast } from '@/lib/showCustomToast'
 import { InboxProcessedShipmentsTable } from '@/pages/(dashboard)/inbox/components/inbox-processed-shipments-table'
 import type { InboxAttachment, InboxShipmentRow } from '@/pages/(dashboard)/inbox/types'
 import { AllShipmentsDataTable } from '@/pages/(dashboard)/shipments/components/all-shipments-data-table'
+import { ShipmentsSearchInput } from '@/pages/(dashboard)/shipments/components/shipments-search-input'
 import type {
   M365ProcessableShipment,
   M365ProcessableShipmentFile,
@@ -99,6 +99,7 @@ export function ProcessableShipmentsPage() {
   const [importJobId, setImportJobId] = useState('')
   const [shipmentsPage, setShipmentsPage] = useState(1)
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false)
 
   const [getRecoveryDownloadUrl] = useGetRecoveryDownloadUrlMutation()
 
@@ -147,6 +148,17 @@ export function ProcessableShipmentsPage() {
     [shipmentsData],
   )
   const shipmentsTotalPages = Math.max(1, shipmentsData?.content?.totalPages ?? 1)
+
+  // Both tables load independently, but the page should show one combined
+  // loader on first mount rather than two spinners resolving at different
+  // times. Once both requests have settled once (success or error), this
+  // never flips back — later refetches (pagination, search) fall back to
+  // each table's own inline loading state below.
+  useEffect(() => {
+    if (!hasLoadedOnce && !isFetching && !isShipmentsFetching) {
+      setHasLoadedOnce(true)
+    }
+  }, [hasLoadedOnce, isFetching, isShipmentsFetching])
 
   /**
    * Rows for the shared Inbox processed table.
@@ -224,6 +236,14 @@ export function ProcessableShipmentsPage() {
     }
   }
 
+  if (!hasLoadedOnce) {
+    return (
+      <div className="flex min-h-0 flex-1 items-center justify-center p-3 sm:p-6">
+        <CustomLoader />
+      </div>
+    )
+  }
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-3 sm:p-6">
       <div className="flex flex-col gap-1">
@@ -237,16 +257,15 @@ export function ProcessableShipmentsPage() {
             </span>
           ) : null}
         </div>
-        <p className="max-w-3xl text-sm text-rp-muted">{t('imports.processable.description')}</p>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <Input
+        <ShipmentsSearchInput
           value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
+          onChange={setSearchInput}
           placeholder={t('imports.processable.searchPlaceholder')}
-          aria-label={t('imports.processable.searchPlaceholder')}
           className="sm:max-w-xs"
+          inputWidthClass="w-full"
         />
         <select
           value={importJobId}
@@ -296,6 +315,7 @@ export function ProcessableShipmentsPage() {
         <>
           <InboxProcessedShipmentsTable
             rows={documentRows}
+            scrollWrapperClassName=""
             onDownloadAttachment={handleDownloadAttachment}
             onViewShipment={(row) => {
               const shipmentId = shipmentIdByRow.get(row.id)

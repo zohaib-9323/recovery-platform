@@ -14,6 +14,8 @@ export type InboxUnprocessedShipmentsTableProps = {
   onRetry?: (row: InboxUnprocessedShipmentRow) => Promise<void> | void
   retryingIndex?: number | null
   className?: string
+  /** Overrides the default fixed-height scroll wrapper (`max-h-[360px] overflow-auto`) — pass e.g. `''` for a full-height list that scrolls with its page instead. */
+  scrollWrapperClassName?: string
 }
 
 export function InboxUnprocessedShipmentsTable({
@@ -22,6 +24,7 @@ export function InboxUnprocessedShipmentsTable({
   onRetry,
   retryingIndex = null,
   className,
+  scrollWrapperClassName = 'max-h-[360px] overflow-auto',
 }: InboxUnprocessedShipmentsTableProps) {
   const { t } = useI18n()
   if (rows.length === 0) {
@@ -31,7 +34,7 @@ export function InboxUnprocessedShipmentsTable({
   return (
     <div className={cn('space-y-2', className)}>
       <div className="rounded-lg border border-[#E0E0E0]">
-        <div className="max-h-[360px] overflow-auto">
+        <div className={scrollWrapperClassName}>
           <table className="w-full">
             <thead className="sticky top-0 z-10 bg-[#F8F8F8]">
               <tr>

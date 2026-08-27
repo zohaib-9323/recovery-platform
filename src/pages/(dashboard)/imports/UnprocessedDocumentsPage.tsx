@@ -8,13 +8,13 @@ import {
 import { CustomLoader } from '@/components/feedback/custom-loader'
 import { CustomPagination } from '@/components/pagination/custom-pagination'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { useI18n } from '@/i18n/useI18n'
 import { getRtkErrorMessage } from '@/lib/api-errors'
 import { showCustomToast } from '@/lib/showCustomToast'
 import { InboxUnprocessedShipmentsTable } from '@/pages/(dashboard)/inbox/components/inbox-unprocessed-shipments-table'
 import { getUnprocessableStatusLabel } from '@/pages/(dashboard)/inbox/inbox-mappers'
 import type { InboxUnprocessedShipmentRow } from '@/pages/(dashboard)/inbox/types'
+import { ShipmentsSearchInput } from '@/pages/(dashboard)/shipments/components/shipments-search-input'
 import type { M365UnprocessedDocumentsJob } from '@/types/recovery-m365-api'
 
 import { ImportActionCard, NoImportsIcon } from './import-action-card'
@@ -187,17 +187,16 @@ export function UnprocessedDocumentsPage() {
             </span>
           ) : null}
         </div>
-        <p className="max-w-3xl text-sm text-rp-muted">{t('imports.unprocessed.description')}</p>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
-          <Input
+          <ShipmentsSearchInput
             value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
+            onChange={setSearchInput}
             placeholder={t('imports.unprocessed.searchPlaceholder')}
-            aria-label={t('imports.unprocessed.searchPlaceholder')}
             className="sm:max-w-xs"
+            inputWidthClass="w-full"
           />
           <select
             value={importJobId}
@@ -230,7 +229,7 @@ export function UnprocessedDocumentsPage() {
       {isError ? (
         <p className="text-sm text-redOne">{t('imports.unprocessed.loadError')}</p>
       ) : isFetching && !content ? (
-        <div className="flex justify-center py-10">
+        <div className="flex flex-1 items-center justify-center py-10">
           <CustomLoader />
         </div>
       ) : rows.length === 0 ? (
@@ -263,7 +262,7 @@ export function UnprocessedDocumentsPage() {
           )}
         </div>
       ) : (
-        <InboxUnprocessedShipmentsTable rows={tableRows} />
+        <InboxUnprocessedShipmentsTable rows={tableRows} scrollWrapperClassName="" />
       )}
 
       {totalPages > 1 ? (
