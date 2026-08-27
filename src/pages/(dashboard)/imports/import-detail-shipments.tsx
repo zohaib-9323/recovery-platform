@@ -87,17 +87,28 @@ export function ImportDetailShipments({ jobId, isJobActive }: ImportDetailShipme
   )
   const documentId = document?.id ?? null
 
-  // Hide rows already claimed by an in-flight request — from both the table and
-  // the modal's dropdowns — so the same file can't be submitted twice. On
-  // failure the pending entry is dropped and these rows reappear on their own.
   const claimedSourceIndexes = useMemo(
     () => new Set(pendingShipments.flatMap((item) => [item.ciSourceIndex, item.c88SourceIndex])),
     [pendingShipments],
   )
+  // Two exclusions, both applied AFTER mapping so `sourceIndex` still points at
+  // the row's real position in the document's `unprocessable[]` — that index is
+  // the coordinate create-shipment addresses a file by, and filtering the array
+  // before it is assigned would silently renumber every row after the gap.
+  //
+  // 1. Rows claimed by an in-flight request, so the same file can't be
+  //    submitted twice. On failure the pending entry is dropped and they
+  //    reappear on their own.
+  // 2. Rows whose bytes were never stored (`s3Key` null — an import that ran
+  //    against a broken S3 config records the metadata anyway, by design, since
+  //    the upload failure is non-fatal). Pairing re-reads each side from its
+  //    key server-side, so these can never be actioned; listing them produced a
+  //    full table whose Create Shipment modal then reported that nothing was
+  //    selectable, because the modal filters on the field the table ignored.
   const visibleUnprocessed = useMemo(
     () =>
       (document?.unprocessedShipments ?? []).filter(
-        (row) => !claimedSourceIndexes.has(row.sourceIndex),
+        (row) => !claimedSourceIndexes.has(row.sourceIndex) && Boolean(row.s3Key),
       ),
     [document, claimedSourceIndexes],
   )

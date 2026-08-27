@@ -116,6 +116,78 @@ describe('ImportDetailShipments', () => {
     expect(row.querySelector('button')).toBeNull()
   })
 
+  it('hides files whose bytes were never stored', () => {
+    // An import that ran against a broken S3 config still records the metadata
+    // (the upload failure is deliberately non-fatal), leaving rows that can
+    // never be paired because pairing re-reads each side from its s3Key.
+    mockQueryState = {
+      data: {
+        content: {
+          ...JOB_DOCUMENT,
+          unprocessable: [
+            ...JOB_DOCUMENT.unprocessable!,
+            {
+              filename: 'never-stored.pdf',
+              type: 'UNKNOWN',
+              failureReasonCode: 'PARSING_FAILURE',
+              s3Key: null,
+            },
+          ] as RecoveryCombinedDocument['unprocessable'],
+        },
+      },
+      isFetching: false,
+      isError: false,
+    }
+    render(<ImportDetailShipments jobId={JOB_ID} isJobActive={false} />)
+
+    expect(screen.queryByText('never-stored.pdf')).not.toBeInTheDocument()
+    expect(screen.getByText('from-email-one.pdf')).toBeInTheDocument()
+    expect(screen.getByText('from-email-two.pdf')).toBeInTheDocument()
+  })
+
+  it('keeps each surviving row addressed by its ORIGINAL index when one is hidden', async () => {
+    // The unstored file sits FIRST, so a filter applied before sourceIndex was
+    // assigned would renumber the two real files to 0 and 1 — and Create
+    // Shipment would then pair the wrong documents while looking correct.
+    mockQueryState = {
+      data: {
+        content: {
+          ...JOB_DOCUMENT,
+          unprocessable: [
+            {
+              filename: 'never-stored.pdf',
+              type: 'UNKNOWN',
+              failureReasonCode: 'PARSING_FAILURE',
+              s3Key: null,
+            },
+            ...JOB_DOCUMENT.unprocessable!,
+          ] as RecoveryCombinedDocument['unprocessable'],
+        },
+      },
+      isFetching: false,
+      isError: false,
+    }
+    render(<ImportDetailShipments jobId={JOB_ID} isJobActive={false} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create Shipment' }))
+    fireEvent.change(screen.getByLabelText(/Shipment Title/), { target: { value: 'Manual pair' } })
+    // Option values are sourceIndex: the real files are now at 1 and 2.
+    fireEvent.change(screen.getByLabelText(/CI Document/), { target: { value: '2' } })
+    fireEvent.change(screen.getByLabelText(/C88 Document/), { target: { value: '1' } })
+    const createButtons = screen.getAllByRole('button', { name: 'Create Shipment' })
+    fireEvent.click(createButtons[createButtons.length - 1])
+
+    await waitFor(() => expect(mockCreateManualShipment).toHaveBeenCalled())
+    expect(mockCreateManualShipment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ciIndex: 2,
+        ciS3Key: 'accepted/x/unprocessable/from-email-two.pdf',
+        c88Index: 1,
+        c88S3Key: 'accepted/x/unprocessable/from-email-one.pdf',
+      }),
+    )
+  })
+
   it('renders the empty state when the job produced nothing to pair', () => {
     mockQueryState = { data: { content: null }, isFetching: false, isError: false }
     render(<ImportDetailShipments jobId={JOB_ID} isJobActive={false} />)
