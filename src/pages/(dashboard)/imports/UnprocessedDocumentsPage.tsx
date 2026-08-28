@@ -262,12 +262,10 @@ export function UnprocessedDocumentsPage() {
           )}
         </div>
       ) : (
-        // Icon only, matching the Figma Actions column — no retry endpoint wired for
-        // cross-import rows.
         <InboxUnprocessedShipmentsTable
           rows={tableRows}
-          scrollWrapperClassName=""
-          onRetry={() => {}}
+          scrollWrapperClassName="overflow-x-auto"
+          hideActionsColumn
         />
       )}
 

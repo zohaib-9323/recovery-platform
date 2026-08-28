@@ -166,7 +166,10 @@ function mapUnprocessedRows(
       id: shipment.filename ?? `${index}`,
       sourceIndex: index,
       fileName: shipment.filename ?? `Unprocessable File #${index + 1}`,
-      type: shipment.type ?? 'UNKNOWN',
+      // Backend uses 'PO' as its legacy name for a commercial invoice, so both
+      // 'PO' and 'CI' from the backend must display as 'CI' here. Other types
+      // (e.g. 'C88', 'UNKNOWN') pass through unchanged.
+      type: shipment.type === 'PO' || shipment.type === 'CI' ? 'CI' : (shipment.type ?? 'UNKNOWN'),
       status,
       statusDetail,
       s3Key: shipment.s3Key,

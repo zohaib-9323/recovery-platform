@@ -135,7 +135,7 @@ export function StartImportModal({ open, onClose }: StartImportModalProps) {
         </div>
 
         <div className="flex flex-col gap-10">
-          <div className="border border-rp-border px-6 py-4">
+          <div className="no-scrollbar overflow-x-auto border border-rp-border px-3 py-3 sm:px-6 sm:py-4">
             <ol className="flex items-center">
               <ImportStep
                 number={1}
@@ -248,7 +248,7 @@ function ImportStep({
   onClick?: () => void
 }) {
   return (
-    <li className="flex shrink-0 items-center gap-2.5">
+    <li className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
       <span
         className={cn(
           'flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
@@ -263,7 +263,7 @@ function ImportStep({
         <Button
           type="button"
           variant="ghost"
-          className="h-auto w-auto whitespace-nowrap rounded p-1 text-sm font-normal text-rp-heading hover:bg-rp-surface hover:underline"
+          className="h-auto w-auto whitespace-nowrap rounded p-1 text-xs font-normal text-rp-heading hover:bg-rp-surface hover:underline sm:text-sm"
           onClick={onClick}
         >
           {label}
@@ -271,7 +271,7 @@ function ImportStep({
       ) : (
         <span
           className={cn(
-            'whitespace-nowrap text-sm',
+            'whitespace-nowrap text-xs sm:text-sm',
             status === 'upcoming' ? 'text-rp-muted' : 'font-semibold text-rp-heading',
           )}
         >
@@ -283,5 +283,10 @@ function ImportStep({
 }
 
 function StepDivider() {
-  return <span className="mx-3 h-[1.5px] flex-1 bg-[#7D7D7D]" aria-hidden />
+  return (
+    <span
+      className="mx-1.5 h-[1.5px] w-4 shrink-0 flex-1 bg-[#7D7D7D] sm:mx-3 sm:w-auto"
+      aria-hidden
+    />
+  )
 }

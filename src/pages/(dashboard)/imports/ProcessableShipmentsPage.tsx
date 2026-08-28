@@ -297,7 +297,7 @@ export function ProcessableShipmentsPage() {
             <>
               <InboxProcessedShipmentsTable
                 rows={documentRows}
-                scrollWrapperClassName=""
+                scrollWrapperClassName="overflow-x-auto"
                 onDownloadAttachment={handleDownloadAttachment}
                 onViewShipment={(row) => {
                   const shipmentId = shipmentIdByRow.get(row.id)

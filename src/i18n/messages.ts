@@ -145,8 +145,7 @@ export const messages: Record<string, string> = {
   'imports.startModal.steps.review': 'Review & Import',
   'imports.startModal.mailboxLabel': 'Mailbox',
   'imports.startModal.folderLabel': 'Folders',
-  'imports.startModal.folderHint':
-    'Select one or more folders. Sub-folders are shown indented under their parent folder.',
+  'imports.startModal.folderHint': 'Choose one or more folders to import emails from.',
   'imports.startModal.folderError': 'Failed to load folders. Please try again.',
   'imports.startModal.folderEmpty': 'No folders found in this mailbox.',
   'imports.startModal.next': 'Next',
@@ -381,7 +380,7 @@ export const messages: Record<string, string> = {
   'imports.unprocessed.createShipment': 'Create Shipment',
   'imports.unprocessed.modal.title': 'Create Shipment',
   'imports.unprocessed.modal.description':
-    'Pick which of the selected files is the commercial invoice and which is the C88. They may come from different imports.',
+    'Select a CI and a C88 document from Unprocessable Files to create a new shipment.',
   'imports.unprocessed.modal.fromImport': 'from {{import}}',
   'imports.unprocessed.modal.success': 'Shipment created from the selected files.',
   'imports.unprocessed.sectionTitle': 'Unprocessable Shipments',

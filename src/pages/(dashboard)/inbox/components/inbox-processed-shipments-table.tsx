@@ -1,5 +1,3 @@
-import { Eye } from 'lucide-react'
-
 import { useI18n } from '@/i18n/useI18n'
 import { cn } from '@/lib/utils'
 import type { InboxAttachment, InboxShipmentRow } from '@/pages/(dashboard)/inbox/types'
@@ -41,7 +39,7 @@ export function InboxProcessedShipmentsTable({
   }
 
   return (
-    <div className={cn('rounded-lg border border-[#E0E0E0]', className)}>
+    <div className={cn('overflow-hidden rounded-lg border border-[#E0E0E0]', className)}>
       <div className={scrollWrapperClassName}>
         <table className="w-full bg-white">
           <thead className="sticky top-0 z-10 bg-greyFour">
@@ -96,9 +94,9 @@ export function InboxProcessedShipmentsTable({
                       disabled={isViewDisabled?.(row) ?? false}
                       aria-label={t('inbox.processed.view')}
                       title={t('inbox.processed.view')}
-                      className="inline-flex size-8 items-center justify-center rounded-md text-rp-fg transition-colors hover:bg-[var(--hover-color)] disabled:cursor-not-allowed disabled:opacity-40"
+                      className="ml-auto flex size-6 items-center justify-center rounded-full border border-bottomBorder bg-white transition disabled:opacity-50"
                     >
-                      <Eye className="size-4" aria-hidden />
+                      <span className="icon-open-eye text-[12px] text-black transition group-hover:text-yellow" />
                     </button>
                   </td>
                 ) : null}
