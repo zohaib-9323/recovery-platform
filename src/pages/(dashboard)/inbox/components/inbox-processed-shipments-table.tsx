@@ -41,7 +41,12 @@ export function InboxProcessedShipmentsTable({
   return (
     <div className={cn('overflow-hidden rounded-lg border border-[#E0E0E0]', className)}>
       <div className={scrollWrapperClassName}>
-        <table className="w-full bg-white">
+        {/*
+          A min-width so the wrapper's `overflow-x-auto` actually scrolls on narrow
+          containers instead of squeezing every column down to unreadable widths —
+          same reasoning as AllShipmentsDataTable's min-w-[1100px].
+        */}
+        <table className="w-full min-w-[720px] bg-white">
           <thead className="sticky top-0 z-10 bg-greyFour">
             <tr>
               <th className={thCell}>{t('inbox.processed.col.title')}</th>

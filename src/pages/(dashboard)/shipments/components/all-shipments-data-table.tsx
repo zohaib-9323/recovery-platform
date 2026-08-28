@@ -61,6 +61,8 @@ export type AllShipmentsDataTableProps = {
   showDateSplit?: boolean
   /** Show the row-selection checkbox column. Defaults to true. */
   showCheckboxColumn?: boolean
+  /** Overrides the default horizontal-scroll wrapper (`no-scrollbar w-full overflow-x-auto`) — pass e.g. `'w-full overflow-x-auto'` to keep the scrollbar visible as a discoverability hint. */
+  scrollWrapperClassName?: string
 }
 
 export function AllShipmentsDataTable({
@@ -72,6 +74,7 @@ export function AllShipmentsDataTable({
   timeZone,
   showDateSplit = true,
   showCheckboxColumn = true,
+  scrollWrapperClassName = 'no-scrollbar w-full overflow-x-auto',
 }: AllShipmentsDataTableProps) {
   const navigate = useNavigate()
   const { t } = useI18n()
@@ -79,7 +82,7 @@ export function AllShipmentsDataTable({
 
   return (
     <div className="mx-auto w-full overflow-hidden rounded-lg border border-bottomBorder">
-      <div className="no-scrollbar w-full overflow-x-auto">
+      <div className={scrollWrapperClassName}>
         {/*
           A fixed min-width instead of viewport-breakpoint percentages: the old
           `w-[X%] ... ipadLarge:w-full` chain snapped to 100% width once the *viewport*
