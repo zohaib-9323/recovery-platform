@@ -14,6 +14,7 @@ import { FirstLoginVerifyOtpPage } from '@/pages/auth/FirstLoginVerifyOtpPage'
 import { InvalidSubdomainPage } from '@/pages/auth/InvalidSubdomainPage'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
+import { SignupPage } from '@/pages/auth/signup/SignupPage'
 import { DashboardHomePage } from '@/pages/(dashboard)/home/DashboardHomePage'
 import { InboxPage } from '@/pages/(dashboard)/inbox/InboxPage'
 import { ImportsPage } from '@/pages/(dashboard)/imports/ImportsPage'
@@ -44,6 +45,7 @@ export function AppRouter() {
             <Route element={<GuestRoute />}>
               <Route element={<AuthLayout />}>
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignupPage />} />
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/first-login/verify-otp" element={<FirstLoginVerifyOtpPage />} />

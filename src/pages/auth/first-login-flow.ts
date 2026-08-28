@@ -11,6 +11,12 @@ const FIRST_LOGIN_FLOW_STORAGE_KEY = 'recovery:first-login-flow'
 export type FirstLoginFlowState = {
   email: string
   setupToken?: string
+  /**
+   * Set when this OTP/setup run was entered from `SignupPage` rather than the
+   * login page's first-login mock — lets `FirstLoginVerifyOtpPage` show the
+   * signup stepper without affecting the original first-login flow.
+   */
+  fromSignup?: boolean
 }
 
 function isNonEmptyString(value: unknown): value is string {
@@ -31,6 +37,7 @@ export function readFirstLoginFlowState(): FirstLoginFlowState | null {
     const parsed = JSON.parse(raw) as {
       email?: unknown
       setupToken?: unknown
+      fromSignup?: unknown
     }
 
     if (!isNonEmptyString(parsed.email)) {
@@ -40,6 +47,7 @@ export function readFirstLoginFlowState(): FirstLoginFlowState | null {
     return {
       email: parsed.email.trim(),
       setupToken: isNonEmptyString(parsed.setupToken) ? parsed.setupToken.trim() : undefined,
+      fromSignup: parsed.fromSignup === true,
     }
   } catch {
     return null

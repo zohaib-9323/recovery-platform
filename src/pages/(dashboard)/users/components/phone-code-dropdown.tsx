@@ -21,6 +21,14 @@ export type PhoneCodeDropdownProps = {
   id?: string
   value: string
   onChange: (phoneCode: string) => void
+  /**
+   * `sm` (14px) matches the auth/signup grey-field scale; `md` (16px,
+   * default) matches the Manage Users modal scale. Value text must stay in
+   * sync with the size the caller's own fields use — the box is a fixed
+   * 78px (Figma "Frame 106") and a mismatched font size wraps "+ XX" onto
+   * two lines instead of clipping it.
+   */
+  size?: 'sm' | 'md'
 }
 
 function normalizeDialCode(raw: string): string {
@@ -50,7 +58,8 @@ const SingleValue = (props: SingleValueProps<PhoneCodeOption, false>) => (
  * the same react-select wiring as `CountryDropdown` (outside-click + scroll
  * close, portalled menu) so both dropdowns behave identically.
  */
-export function PhoneCodeDropdown({ id, value, onChange }: PhoneCodeDropdownProps) {
+export function PhoneCodeDropdown({ id, value, onChange, size = 'md' }: PhoneCodeDropdownProps) {
+  const fontSize = size === 'sm' ? 14 : 16
   const options = useMemo<PhoneCodeOption[]>(() => {
     const seen = new Set<string>()
     return Country.getAllCountries().reduce<PhoneCodeOption[]>((acc, country) => {
@@ -138,17 +147,18 @@ export function PhoneCodeDropdown({ id, value, onChange }: PhoneCodeDropdownProp
             height: 40,
             borderRadius: 5,
             paddingLeft: 4,
-            paddingRight: 8,
+            paddingRight: 4,
             borderColor: state.isFocused ? 'var(--primary-color, #E3A602)' : '#DADADA',
             backgroundColor: '#F2F2F2',
             boxShadow: 'none',
+            flexWrap: 'nowrap',
             '&:hover': { borderColor: '#DADADA' },
           }),
-          valueContainer: (base) => ({ ...base, padding: '0 8px' }),
-          singleValue: (base) => ({ ...base, fontSize: 16, color: '#000000' }),
-          placeholder: (base) => ({ ...base, fontSize: 16, color: '#797979' }),
-          input: (base) => ({ ...base, fontSize: 16, margin: 0, padding: 0 }),
-          indicatorsContainer: (base) => ({ ...base, color: '#000000' }),
+          valueContainer: (base) => ({ ...base, padding: '0 6px', flexWrap: 'nowrap' }),
+          singleValue: (base) => ({ ...base, fontSize, color: '#000000', whiteSpace: 'nowrap' }),
+          placeholder: (base) => ({ ...base, fontSize, color: '#797979', whiteSpace: 'nowrap' }),
+          input: (base) => ({ ...base, fontSize, margin: 0, padding: 0, whiteSpace: 'nowrap' }),
+          indicatorsContainer: (base) => ({ ...base, padding: '0 2px', color: '#000000' }),
           menu: (base) => ({ ...base, width: 260, fontSize: 14 }),
           menuPortal: (base) => ({ ...base, zIndex: 9999 }),
         }}

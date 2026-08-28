@@ -83,7 +83,7 @@ describe('first-login mock flow', () => {
     renderFlow()
     submitLogin(MOCK_TEMP_PASSWORD)
 
-    expect(await screen.findByText('Email Verification')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Email Verification' })).toBeInTheDocument()
     expect(mockLogin).not.toHaveBeenCalled()
   })
 
@@ -94,14 +94,14 @@ describe('first-login mock flow', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Login' })).toBeInTheDocument()
     })
-    expect(screen.queryByText('Email Verification')).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Email Verification' })).not.toBeInTheDocument()
     expect(mockLogin).not.toHaveBeenCalled()
   })
 
   it('rejects the 000000 demo OTP and shows the error state', async () => {
     renderFlow()
     submitLogin(MOCK_TEMP_PASSWORD)
-    await screen.findByText('Email Verification')
+    await screen.findByRole('heading', { name: 'Email Verification' })
 
     typeOtp('000000')
     fireEvent.click(screen.getByRole('button', { name: 'Verify and Proceed' }))
@@ -116,7 +116,7 @@ describe('first-login mock flow', () => {
   it('runs OTP → set new password → success popup', async () => {
     renderFlow()
     submitLogin(MOCK_TEMP_PASSWORD)
-    await screen.findByText('Email Verification')
+    await screen.findByRole('heading', { name: 'Email Verification' })
 
     typeOtp('123456')
     fireEvent.click(screen.getByRole('button', { name: 'Verify and Proceed' }))
@@ -143,7 +143,7 @@ describe('first-login mock flow', () => {
   it('rejects a wrong temporary password on the set-password screen', async () => {
     renderFlow()
     submitLogin(MOCK_TEMP_PASSWORD)
-    await screen.findByText('Email Verification')
+    await screen.findByRole('heading', { name: 'Email Verification' })
 
     typeOtp('123456')
     fireEvent.click(screen.getByRole('button', { name: 'Verify and Proceed' }))

@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, KeyRound, Mail } from 'lucide-react'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { ArrowUpRight, Eye, EyeOff, KeyRound, Mail } from 'lucide-react'
 
 import { useLoginMutation } from '@/app/services/recoveryApi'
 import { LoginButton } from '@/components/buttons'
@@ -192,6 +192,19 @@ export function LoginPage() {
             </LoginButton>
           </div>
         </form>
+
+        <div className="flex w-full flex-row items-center justify-center gap-1">
+          <span className="text-xs font-normal text-greyThree sm:text-sm">
+            {t('auth.login.noAccount')}
+          </span>
+          <Link
+            to="/signup"
+            className="flex flex-row items-center text-xs font-normal text-black sm:text-sm"
+          >
+            {t('auth.login.signupLink')}
+            <ArrowUpRight className="h-5 w-5 text-black" strokeWidth={2} />
+          </Link>
+        </div>
       </div>
     </div>
   )
