@@ -8,13 +8,13 @@ import {
 import { CustomLoader } from '@/components/feedback/custom-loader'
 import { CustomPagination } from '@/components/pagination/custom-pagination'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { useI18n } from '@/i18n/useI18n'
 import { getRtkErrorMessage } from '@/lib/api-errors'
 import { showCustomToast } from '@/lib/showCustomToast'
 import { InboxUnprocessedShipmentsTable } from '@/pages/(dashboard)/inbox/components/inbox-unprocessed-shipments-table'
 import { getUnprocessableStatusLabel } from '@/pages/(dashboard)/inbox/inbox-mappers'
 import type { InboxUnprocessedShipmentRow } from '@/pages/(dashboard)/inbox/types'
+import { ShipmentsSearchInput } from '@/pages/(dashboard)/shipments/components/shipments-search-input'
 import type { M365UnprocessedDocumentsJob } from '@/types/recovery-m365-api'
 
 import { ImportActionCard, NoImportsIcon } from './import-action-card'
@@ -23,7 +23,7 @@ import {
   type CrossImportShipmentSubmitPayload,
 } from './cross-import-create-shipment-modal'
 
-const PAGE_SIZE = 25
+const PAGE_SIZE = 10
 const SEARCH_DEBOUNCE_MS = 300
 
 function importLabel(row: { folderNames: string[]; mailboxEmail: string | null }): string {
@@ -187,17 +187,16 @@ export function UnprocessedDocumentsPage() {
             </span>
           ) : null}
         </div>
-        <p className="max-w-3xl text-sm text-rp-muted">{t('imports.unprocessed.description')}</p>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
-          <Input
+          <ShipmentsSearchInput
             value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
+            onChange={setSearchInput}
             placeholder={t('imports.unprocessed.searchPlaceholder')}
-            aria-label={t('imports.unprocessed.searchPlaceholder')}
             className="sm:max-w-xs"
+            inputWidthClass="w-full"
           />
           <select
             value={importJobId}
@@ -206,7 +205,7 @@ export function UnprocessedDocumentsPage() {
               setPage(1)
             }}
             aria-label={t('imports.unprocessed.col.import')}
-            className="h-10 rounded-lg border border-rp-border bg-rp-input px-3 text-sm text-rp-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rp-accent sm:max-w-xs"
+            className="h-10 rounded-lg border border-rp-border bg-white px-3 text-sm text-rp-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rp-accent sm:max-w-xs"
           >
             <option value="">{t('imports.unprocessed.allImports')}</option>
             {importJobs.map((job) => (
@@ -229,8 +228,8 @@ export function UnprocessedDocumentsPage() {
 
       {isError ? (
         <p className="text-sm text-redOne">{t('imports.unprocessed.loadError')}</p>
-      ) : isFetching && !content ? (
-        <div className="flex justify-center py-10">
+      ) : isFetching ? (
+        <div className="flex flex-1 items-center justify-center py-10">
           <CustomLoader />
         </div>
       ) : rows.length === 0 ? (
@@ -263,7 +262,13 @@ export function UnprocessedDocumentsPage() {
           )}
         </div>
       ) : (
-        <InboxUnprocessedShipmentsTable rows={tableRows} />
+        // Icon only, matching the Figma Actions column — no retry endpoint wired for
+        // cross-import rows.
+        <InboxUnprocessedShipmentsTable
+          rows={tableRows}
+          scrollWrapperClassName=""
+          onRetry={() => {}}
+        />
       )}
 
       {totalPages > 1 ? (

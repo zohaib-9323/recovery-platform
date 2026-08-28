@@ -23,6 +23,8 @@ export type InboxProcessedShipmentsTableProps = {
   /** Rows with no shipment yet: shown, but their action is disabled. */
   isViewDisabled?: (row: InboxShipmentRow) => boolean
   className?: string
+  /** Overrides the default fixed-height scroll wrapper (`max-h-[360px] overflow-auto`) — pass e.g. `''` for a full-height list that scrolls with its page instead. */
+  scrollWrapperClassName?: string
 }
 
 export function InboxProcessedShipmentsTable({
@@ -31,6 +33,7 @@ export function InboxProcessedShipmentsTable({
   onViewShipment,
   isViewDisabled,
   className,
+  scrollWrapperClassName = 'max-h-[360px] overflow-auto',
 }: InboxProcessedShipmentsTableProps) {
   const { t } = useI18n()
   if (rows.length === 0) {
@@ -39,9 +42,9 @@ export function InboxProcessedShipmentsTable({
 
   return (
     <div className={cn('rounded-lg border border-[#E0E0E0]', className)}>
-      <div className="max-h-[360px] overflow-auto">
-        <table className="w-full">
-          <thead className="sticky top-0 z-10 bg-[#F8F8F8]">
+      <div className={scrollWrapperClassName}>
+        <table className="w-full bg-white">
+          <thead className="sticky top-0 z-10 bg-greyFour">
             <tr>
               <th className={thCell}>{t('inbox.processed.col.title')}</th>
               <th className={thCell}>{t('inbox.processed.col.date')}</th>

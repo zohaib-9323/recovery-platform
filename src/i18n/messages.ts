@@ -367,8 +367,6 @@ export const messages: Record<string, string> = {
   // Cross-import "Unprocessed Documents" screen — every import job's leftovers
   // in one list, so a C88 from one import can be paired with a CI from another.
   'imports.unprocessed.title': 'Unprocessed Documents',
-  'imports.unprocessed.description':
-    'Every document that could not be paired automatically, across all of your imports. Select a commercial invoice and a C88 — from the same import or from different ones — to create a shipment from them.',
   'imports.unprocessed.searchPlaceholder': 'Search by file name',
   'imports.unprocessed.allImports': 'All imports',
   'imports.unprocessed.col.fileName': 'File Name',
@@ -396,8 +394,6 @@ export const messages: Record<string, string> = {
   // every import, plus the shipments those pairs became.
   'imports.processable.title': 'Processable Shipments',
   'imports.processable.documents': 'Processed Documents',
-  'imports.processable.description':
-    'Every C88 paired with its commercial invoice across all of your imports — including the pairs you created by hand from unprocessed documents.',
   'imports.processable.searchPlaceholder': 'Search by shipment or file name',
   'imports.processable.col.title': 'Shipment Title',
   'imports.processable.col.date': 'Date',

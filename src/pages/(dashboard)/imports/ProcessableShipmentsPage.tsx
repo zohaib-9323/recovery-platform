@@ -6,7 +6,6 @@ import { useGetRecoveryShipmentsListQuery } from '@/app/services/recoveryApi'
 import { useGetM365ProcessableShipmentsQuery } from '@/app/services/recoveryM365Api'
 import { CustomLoader } from '@/components/feedback/custom-loader'
 import { CustomPagination } from '@/components/pagination/custom-pagination'
-import { Input } from '@/components/ui/input'
 import { useI18n } from '@/i18n/useI18n'
 import { getRtkErrorMessage } from '@/lib/api-errors'
 import { toManageShipmentsTableRow } from '@/lib/manage-shipments-row'
@@ -14,6 +13,7 @@ import { showCustomToast } from '@/lib/showCustomToast'
 import { InboxProcessedShipmentsTable } from '@/pages/(dashboard)/inbox/components/inbox-processed-shipments-table'
 import type { InboxAttachment, InboxShipmentRow } from '@/pages/(dashboard)/inbox/types'
 import { AllShipmentsDataTable } from '@/pages/(dashboard)/shipments/components/all-shipments-data-table'
+import { ShipmentsSearchInput } from '@/pages/(dashboard)/shipments/components/shipments-search-input'
 import type {
   M365ProcessableShipment,
   M365ProcessableShipmentFile,
@@ -237,16 +237,15 @@ export function ProcessableShipmentsPage() {
             </span>
           ) : null}
         </div>
-        <p className="max-w-3xl text-sm text-rp-muted">{t('imports.processable.description')}</p>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <Input
+        <ShipmentsSearchInput
           value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
+          onChange={setSearchInput}
           placeholder={t('imports.processable.searchPlaceholder')}
-          aria-label={t('imports.processable.searchPlaceholder')}
           className="sm:max-w-xs"
+          inputWidthClass="w-full"
         />
         <select
           value={importJobId}
@@ -255,7 +254,7 @@ export function ProcessableShipmentsPage() {
             setPage(1)
           }}
           aria-label={t('imports.unprocessed.col.import')}
-          className="h-10 rounded-lg border border-rp-border bg-rp-input px-3 text-sm text-rp-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rp-accent sm:max-w-xs"
+          className="h-10 rounded-lg border border-rp-border bg-white px-3 text-sm text-rp-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rp-accent sm:max-w-xs"
         >
           <option value="">{t('imports.unprocessed.allImports')}</option>
           {importJobs.map((job) => (
@@ -266,95 +265,96 @@ export function ProcessableShipmentsPage() {
         </select>
       </div>
 
-      {isError ? (
-        <p className="text-sm text-redOne">{t('imports.processable.loadError')}</p>
-      ) : isFetching && !content ? (
-        <div className="flex justify-center py-10">
+      {isFetching || isShipmentsFetching ? (
+        <div className="flex flex-1 items-center justify-center py-10">
           <CustomLoader />
         </div>
-      ) : rows.length === 0 ? (
-        <div className="flex items-center justify-center py-10">
-          {isFiltered ? (
-            <ImportActionCard
-              icon={<NoImportsIcon />}
-              title={t('imports.unprocessed.emptyFilteredTitle')}
-              description={t('imports.processable.emptyFiltered')}
-              actionLabel={t('imports.unprocessed.clearFilters')}
-              onAction={clearFilters}
-            />
+      ) : (
+        <>
+          {isError ? (
+            <p className="text-sm text-redOne">{t('imports.processable.loadError')}</p>
+          ) : rows.length === 0 ? (
+            <div className="flex items-center justify-center py-10">
+              {isFiltered ? (
+                <ImportActionCard
+                  icon={<NoImportsIcon />}
+                  title={t('imports.unprocessed.emptyFilteredTitle')}
+                  description={t('imports.processable.emptyFiltered')}
+                  actionLabel={t('imports.unprocessed.clearFilters')}
+                  onAction={clearFilters}
+                />
+              ) : (
+                <ImportActionCard
+                  icon={<NoImportsIcon />}
+                  title={t('imports.processable.emptyTitle')}
+                  description={t('imports.processable.empty')}
+                  actionLabel={t('imports.processable.emptyAction')}
+                  onAction={() => navigate('/imports/unprocessed-documents')}
+                />
+              )}
+            </div>
           ) : (
-            <ImportActionCard
-              icon={<NoImportsIcon />}
-              title={t('imports.processable.emptyTitle')}
-              description={t('imports.processable.empty')}
-              actionLabel={t('imports.processable.emptyAction')}
-              onAction={() => navigate('/imports/unprocessed-documents')}
-            />
+            <>
+              <InboxProcessedShipmentsTable
+                rows={documentRows}
+                scrollWrapperClassName=""
+                onDownloadAttachment={handleDownloadAttachment}
+                onViewShipment={(row) => {
+                  const shipmentId = shipmentIdByRow.get(row.id)
+                  if (shipmentId) {
+                    navigate(`/shipments/${shipmentId}`)
+                  }
+                }}
+                isViewDisabled={(row) => !shipmentIdByRow.get(row.id)}
+              />
+
+              {totalPages > 1 ? (
+                <CustomPagination
+                  totalPages={totalPages}
+                  currentPage={Math.min(page, totalPages)}
+                  onPageChange={setPage}
+                />
+              ) : null}
+            </>
           )}
-        </div>
-      ) : (
-        <>
-          <InboxProcessedShipmentsTable
-            rows={documentRows}
-            onDownloadAttachment={handleDownloadAttachment}
-            onViewShipment={(row) => {
-              const shipmentId = shipmentIdByRow.get(row.id)
-              if (shipmentId) {
-                navigate(`/shipments/${shipmentId}`)
-              }
-            }}
-            isViewDisabled={(row) => !shipmentIdByRow.get(row.id)}
-          />
 
-          {totalPages > 1 ? (
-            <CustomPagination
-              totalPages={totalPages}
-              currentPage={Math.min(page, totalPages)}
-              onPageChange={setPage}
-            />
-          ) : null}
-        </>
-      )}
+          <div className="mt-2 flex items-center justify-between gap-3">
+            <h2 className="text-base font-bold text-rp-heading">
+              {t('imports.processable.shipments')}
+            </h2>
+            <button
+              type="button"
+              onClick={() => navigate('/shipments')}
+              className="text-sm text-yellow underline underline-offset-2"
+            >
+              {t('imports.processable.viewAll')}
+            </button>
+          </div>
 
-      <div className="mt-2 flex items-center justify-between gap-3">
-        <h2 className="text-base font-bold text-rp-heading">
-          {t('imports.processable.shipments')}
-        </h2>
-        <button
-          type="button"
-          onClick={() => navigate('/shipments')}
-          className="text-sm text-yellow underline underline-offset-2"
-        >
-          {t('imports.processable.viewAll')}
-        </button>
-      </div>
-
-      {isShipmentsFetching && shipmentRows.length === 0 ? (
-        <div className="flex justify-center py-10">
-          <CustomLoader />
-        </div>
-      ) : shipmentRows.length === 0 ? (
-        <p className="text-base font-light text-blackFive">
-          {t('imports.processable.shipmentsEmpty')}
-        </p>
-      ) : (
-        <>
-          <AllShipmentsDataTable
-            data={shipmentRows}
-            selectedUserIds={[]}
-            onCheckChange={() => {}}
-            // Bulk selection belongs to All Shipments, which owns the bulk
-            // actions bar. This is a read-only view onto the same rows.
-            showCheckboxColumn={false}
-            showDateSplit
-          />
-          {shipmentsTotalPages > 1 ? (
-            <CustomPagination
-              totalPages={shipmentsTotalPages}
-              currentPage={Math.min(shipmentsPage, shipmentsTotalPages)}
-              onPageChange={setShipmentsPage}
-            />
-          ) : null}
+          {shipmentRows.length === 0 ? (
+            <p className="text-base font-light text-blackFive">
+              {t('imports.processable.shipmentsEmpty')}
+            </p>
+          ) : (
+            <>
+              <AllShipmentsDataTable
+                data={shipmentRows}
+                selectedUserIds={[]}
+                onCheckChange={() => {}}
+                // Bulk selection belongs to All Shipments, which owns the bulk
+                // actions bar. This is a read-only view onto the same rows.
+                showCheckboxColumn={false}
+                showDateSplit
+              />
+              {shipmentsTotalPages > 1 ? (
+                <CustomPagination
+                  totalPages={shipmentsTotalPages}
+                  currentPage={Math.min(shipmentsPage, shipmentsTotalPages)}
+                  onPageChange={setShipmentsPage}
+                />
+              ) : null}
+            </>
+          )}
         </>
       )}
     </div>
