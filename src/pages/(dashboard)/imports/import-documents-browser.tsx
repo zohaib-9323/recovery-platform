@@ -276,7 +276,7 @@ function ImportDocumentsPanel({ jobId, group }: { jobId: string; group: M365Emai
       {/* Neither card applies: say so rather than leaving the panel blank. */}
       {group.documents.length === 0 && countReportedSkips(group.skipped) === 0 && (
         <p className="rounded-lg border border-bottomBorder px-3 py-4 text-sm font-light text-blackFive">
-          No attachments were found in this email.
+          No shipment-related attachments were found in this email.
         </p>
       )}
     </section>

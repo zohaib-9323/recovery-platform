@@ -120,11 +120,11 @@ export function AppHeader() {
                     } text-base text-humburgerIcon`}
                   />
                 </button>
-                <div className="flex min-w-0 flex-grow flex-wrap items-center justify-start gap-1 font-lexend text-xl font-bold leading-tight tracking-normal text-[#000000] sm:text-2xl md:text-[34px] md:leading-[33px]">
+                <div className="flex min-w-0 flex-grow items-center justify-start gap-1 font-lexend text-sm font-bold leading-tight tracking-normal text-[#000000] sm:text-2xl md:text-[34px] md:leading-[33px]">
                   <span className={`text-nowrap capitalize ${!prefix && 'hidden'} sm:flex`}>
                     {prefix.toUpperCase()}
                   </span>
-                  <span className="min-w-0 break-words capitalize">{suffix.toUpperCase()}</span>
+                  <span className="min-w-0 truncate capitalize">{suffix.toUpperCase()}</span>
                 </div>
               </div>
 

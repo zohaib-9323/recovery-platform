@@ -257,7 +257,7 @@ export function ImportJobDetailPage() {
       {/* Documents */}
       <section className="rounded-[10px] border border-rp-border bg-rp-page p-5">
         <h2 className="mb-4 text-sm font-bold uppercase tracking-wide text-rp-heading">
-          Fetched Documents
+          Fetched Emails
         </h2>
 
         {isActive ? (

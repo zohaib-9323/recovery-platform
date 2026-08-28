@@ -7,6 +7,7 @@ export function useMediaQuery(query: string): boolean {
   })
 
   useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia === 'undefined') return
     const media = window.matchMedia(query)
     const onChange = () => setMatches(media.matches)
     onChange()
