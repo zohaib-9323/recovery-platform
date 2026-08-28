@@ -145,8 +145,7 @@ export const messages: Record<string, string> = {
   'imports.startModal.steps.review': 'Review & Import',
   'imports.startModal.mailboxLabel': 'Mailbox',
   'imports.startModal.folderLabel': 'Folders',
-  'imports.startModal.folderHint':
-    'Select one or more folders. Sub-folders are shown indented under their parent folder.',
+  'imports.startModal.folderHint': 'Choose one or more folders to import emails from.',
   'imports.startModal.folderError': 'Failed to load folders. Please try again.',
   'imports.startModal.folderEmpty': 'No folders found in this mailbox.',
   'imports.startModal.next': 'Next',
