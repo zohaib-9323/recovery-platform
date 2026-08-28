@@ -205,7 +205,7 @@ export function UnprocessedDocumentsPage() {
               setPage(1)
             }}
             aria-label={t('imports.unprocessed.col.import')}
-            className="h-10 rounded-lg border border-rp-border bg-rp-input px-3 text-sm text-rp-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rp-accent sm:max-w-xs"
+            className="h-10 rounded-lg border border-rp-border bg-white px-3 text-sm text-rp-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rp-accent sm:max-w-xs"
           >
             <option value="">{t('imports.unprocessed.allImports')}</option>
             {importJobs.map((job) => (
@@ -228,7 +228,7 @@ export function UnprocessedDocumentsPage() {
 
       {isError ? (
         <p className="text-sm text-redOne">{t('imports.unprocessed.loadError')}</p>
-      ) : isFetching && !content ? (
+      ) : isFetching ? (
         <div className="flex flex-1 items-center justify-center py-10">
           <CustomLoader />
         </div>
@@ -262,7 +262,13 @@ export function UnprocessedDocumentsPage() {
           )}
         </div>
       ) : (
-        <InboxUnprocessedShipmentsTable rows={tableRows} scrollWrapperClassName="" />
+        // Icon only, matching the Figma Actions column — no retry endpoint wired for
+        // cross-import rows.
+        <InboxUnprocessedShipmentsTable
+          rows={tableRows}
+          scrollWrapperClassName=""
+          onRetry={() => {}}
+        />
       )}
 
       {totalPages > 1 ? (

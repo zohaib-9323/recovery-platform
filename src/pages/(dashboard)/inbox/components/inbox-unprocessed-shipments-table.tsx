@@ -1,7 +1,8 @@
+import { RefreshCw } from 'lucide-react'
+
 import { useI18n } from '@/i18n/useI18n'
 import { cn } from '@/lib/utils'
 import type { InboxUnprocessedShipmentRow } from '@/pages/(dashboard)/inbox/types'
-import { InboxRowActionMenu } from './inbox-row-action-menu'
 
 const thCell =
   'px-3 py-3 text-left text-[13px] font-normal leading-[100%] tracking-[0] text-[#000000]'
@@ -35,7 +36,7 @@ export function InboxUnprocessedShipmentsTable({
     <div className={cn('space-y-2', className)}>
       <div className="rounded-lg border border-[#E0E0E0]">
         <div className={scrollWrapperClassName}>
-          <table className="w-full">
+          <table className="w-full bg-white">
             <thead className="sticky top-0 z-10 bg-[#F8F8F8]">
               <tr>
                 <th className={thCell}>{t('inbox.unprocessed.col.fileName')}</th>
@@ -66,23 +67,26 @@ export function InboxUnprocessedShipmentsTable({
                       </span>
                     </td>
                     <td className="px-3 py-3">
-                      {/* Retry is the only entry in this menu, so a caller that
-                          doesn't pass onRetry gets no menu at all rather than a
-                          menu whose single item does nothing. The import-job
-                          view relies on this. */}
+                      {/* A caller that doesn't pass onRetry (the import-job view)
+                          gets no button at all rather than a dead one. */}
                       {onRetry ? (
-                        <InboxRowActionMenu
+                        <button
+                          type="button"
+                          onClick={() => onRetry(row)}
                           disabled={rowBusy}
-                          options={[
-                            {
-                              label: isRetrying
-                                ? t('inbox.actions.retrying')
-                                : t('inbox.actions.retry'),
-                              textClassName: 'text-black',
-                              onSelect: () => onRetry(row),
-                            },
-                          ]}
-                        />
+                          aria-label={
+                            isRetrying ? t('inbox.actions.retrying') : t('inbox.actions.retry')
+                          }
+                          title={
+                            isRetrying ? t('inbox.actions.retrying') : t('inbox.actions.retry')
+                          }
+                          className="inline-flex size-6 items-center justify-center rounded-full border-[0.5px] border-rp-accent/20 bg-rp-accent/10 text-rp-accent transition-colors hover:bg-rp-accent/20 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          <RefreshCw
+                            className={cn('size-3', isRetrying && 'animate-spin')}
+                            aria-hidden
+                          />
+                        </button>
                       ) : (
                         <span className="text-blackFive">—</span>
                       )}

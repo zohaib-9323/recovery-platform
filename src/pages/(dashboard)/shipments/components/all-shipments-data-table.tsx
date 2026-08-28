@@ -115,7 +115,7 @@ export function AllShipmentsDataTable({
                 {MS.PO}
               </th>
               <th className="p-3 text-left text-xs font-normal sm:text-sm">{MS.status}</th>
-              <th className="p-3 text-left text-xs font-normal sm:text-sm">{MS.actions}</th>
+              <th className="p-3 text-right text-xs font-normal sm:text-sm">{MS.actions}</th>
             </tr>
           </thead>
           <tbody>
@@ -255,7 +255,7 @@ export function AllShipmentsDataTable({
                         </Tooltip>
                       </span>
                     </td>
-                    <td className="flex flex-nowrap items-center gap-[5px] p-3 text-sm font-medium text-black">
+                    <td className="flex flex-nowrap items-center justify-end gap-[5px] p-3 text-sm font-medium text-black">
                       <ActionColumnSlot>
                         <button
                           type="button"

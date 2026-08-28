@@ -1,5 +1,7 @@
 import { useEffect, useId, useMemo, useState } from 'react'
 
+import { DropdownField, InputField } from '@/components/fields'
+import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n/useI18n'
 import type { M365UnprocessedDocument } from '@/types/recovery-m365-api'
 
@@ -22,8 +24,7 @@ export type CrossImportCreateShipmentModalProps = {
   onSubmit: (payload: CrossImportShipmentSubmitPayload) => void
 }
 
-const inputClassName =
-  'h-10 w-full rounded-md border border-bottomBorder bg-white px-3 text-sm text-black outline-none focus:ring-2 focus:ring-yellow/35'
+const RequiredMark = () => <span className="ml-1 text-sm font-semibold text-yellow">*</span>
 
 /**
  * The cross-import twin of the Inbox's `CreateShipmentModal`.
@@ -116,18 +117,18 @@ export function CrossImportCreateShipmentModal({
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-25 backdrop-blur-sm">
       <div className="flex w-full items-center justify-center p-3">
         <div className="h-full w-[90%] sm:w-4/5 md:w-3/5 lg:w-2/4 xl:w-2/5 2xl:w-[34%]">
-          <div className="no-scrollbar mx-auto h-full max-w-2xl rounded-lg bg-bgColor p-2 shadow-md sm:p-6">
+          <div className="no-scrollbar mx-auto h-full max-w-2xl rounded-lg bg-rp-bg p-2 shadow-md sm:p-6">
             <div className="mb-2 flex items-center justify-between">
-              <h1 className="text-md text-nowrap font-bold text-black md:text-xl">
+              <h1 className="text-xl text-nowrap font-bold text-rp-heading md:text-2xl">
                 {t('imports.unprocessed.modal.title')}
               </h1>
               <button type="button" onClick={onClose} aria-label={t('common.close')}>
-                <span className="icon-close text-large text-black" />
+                <span className="icon-close text-large text-rp-fg" />
               </button>
             </div>
 
             <div className="mb-4 sm:mb-6">
-              <p className="text-xs font-normal text-black sm:text-sm">
+              <p className="text-sm text-rp-fg sm:text-base">
                 {t('imports.unprocessed.modal.description')}
               </p>
               {hasHiddenRows ? (
@@ -138,81 +139,67 @@ export function CrossImportCreateShipmentModal({
             </div>
 
             <div className="flex flex-col gap-4">
-              <div>
-                <label
-                  className="mb-2 block text-xs font-semibold text-black sm:text-sm"
-                  htmlFor={titleInputId}
-                >
-                  {t('inbox.createShipment.titleLabel')}
-                  <span className="ml-1 text-sm font-semibold text-yellow">*</span>
-                </label>
-                <input
-                  id={titleInputId}
-                  type="text"
-                  value={title}
-                  maxLength={200}
-                  placeholder={t('inbox.createShipment.titlePlaceholder')}
-                  onChange={(e) => {
-                    setTitle(e.target.value)
-                    setFormError(null)
-                  }}
-                  className={inputClassName}
-                />
-              </div>
+              <InputField
+                fieldType="text"
+                id={titleInputId}
+                label={
+                  <>
+                    {t('inbox.createShipment.titleLabel')}
+                    <RequiredMark />
+                  </>
+                }
+                value={title}
+                maxLength={200}
+                placeholder={t('inbox.createShipment.titlePlaceholder')}
+                onChange={(e) => {
+                  setTitle(e.target.value)
+                  setFormError(null)
+                }}
+              />
 
-              <div>
-                <label
-                  className="mb-2 block text-xs font-semibold text-black sm:text-sm"
-                  htmlFor={ciSelectId}
-                >
-                  {t('inbox.createShipment.ciLabel')}
-                  <span className="ml-1 text-sm font-semibold text-yellow">*</span>
-                </label>
-                <select
-                  id={ciSelectId}
-                  value={ciId}
-                  disabled={selectableRows.length === 0}
-                  onChange={(e) => {
-                    setCiChoice(e.target.value)
-                    setFormError(null)
-                  }}
-                  className={inputClassName}
-                >
-                  <option value="">{t('inbox.createShipment.selectPlaceholder')}</option>
-                  {selectableRows.map((row) => (
-                    <option key={row.id} value={row.id} disabled={row.id === c88Id}>
-                      {optionLabel(row)}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <DropdownField
+                id={ciSelectId}
+                label={
+                  <>
+                    {t('inbox.createShipment.ciLabel')}
+                    <RequiredMark />
+                  </>
+                }
+                value={ciId}
+                disabled={selectableRows.length === 0}
+                onChange={(e) => {
+                  setCiChoice(e.target.value)
+                  setFormError(null)
+                }}
+                placeholder={t('inbox.createShipment.selectPlaceholder')}
+                options={selectableRows.map((row) => ({
+                  value: row.id,
+                  label: optionLabel(row),
+                  disabled: row.id === c88Id,
+                }))}
+              />
 
-              <div>
-                <label
-                  className="mb-2 block text-xs font-semibold text-black sm:text-sm"
-                  htmlFor={c88SelectId}
-                >
-                  {t('inbox.createShipment.c88Label')}
-                  <span className="ml-1 text-sm font-semibold text-yellow">*</span>
-                </label>
-                <select
-                  id={c88SelectId}
-                  value={c88Id}
-                  disabled={selectableRows.length === 0}
-                  onChange={(e) => {
-                    setC88Choice(e.target.value)
-                    setFormError(null)
-                  }}
-                  className={inputClassName}
-                >
-                  <option value="">{t('inbox.createShipment.selectPlaceholder')}</option>
-                  {selectableRows.map((row) => (
-                    <option key={row.id} value={row.id} disabled={row.id === ciId}>
-                      {optionLabel(row)}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <DropdownField
+                id={c88SelectId}
+                label={
+                  <>
+                    {t('inbox.createShipment.c88Label')}
+                    <RequiredMark />
+                  </>
+                }
+                value={c88Id}
+                disabled={selectableRows.length === 0}
+                onChange={(e) => {
+                  setC88Choice(e.target.value)
+                  setFormError(null)
+                }}
+                placeholder={t('inbox.createShipment.selectPlaceholder')}
+                options={selectableRows.map((row) => ({
+                  value: row.id,
+                  label: optionLabel(row),
+                  disabled: row.id === ciId,
+                }))}
+              />
 
               {isLoading ? (
                 <p className="text-sm text-blackFive">{t('common.loading')}</p>
@@ -222,22 +209,19 @@ export function CrossImportCreateShipmentModal({
               {formError ? <p className="text-sm text-redOne">{formError}</p> : null}
             </div>
 
-            <div className="mt-6 flex w-full justify-end gap-3">
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-lg border border-bottomBorder px-4 py-2 !font-light text-black disabled:opacity-70"
-              >
+            <div className="mt-6 flex w-full gap-3">
+              <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
                 {t('common.cancel')}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="default"
+                className="flex-1"
                 onClick={handleSubmit}
                 disabled={selectableRows.length === 0}
-                className="rounded-lg bg-yellow px-4 py-2 !font-light text-white disabled:bg-disableColor disabled:opacity-70"
               >
                 {t('inbox.createShipment.submit')}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
