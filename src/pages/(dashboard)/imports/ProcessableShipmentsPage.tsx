@@ -23,7 +23,7 @@ import type {
 import { ImportActionCard, NoImportsIcon } from './import-action-card'
 
 const DOCUMENTS_PAGE_SIZE = 10
-const SHIPMENTS_PAGE_SIZE = 5
+const SHIPMENTS_PAGE_SIZE = 10
 const SEARCH_DEBOUNCE_MS = 300
 
 function importLabel(row: { folderNames: string[]; mailboxEmail: string | null }): string {
@@ -225,7 +225,11 @@ export function ProcessableShipmentsPage() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-3 sm:p-6">
+    // No overflow-y-auto/min-h-0 here — DashboardLayout's <main> is already the
+    // page's scroll container. Nesting a second one here just adds an extra
+    // (invisible-scrollbar) flex-shrink layer between the content and the one
+    // scrollport that actually needs to move to reach Processed Shipments' rows.
+    <div className="flex flex-1 flex-col gap-4 p-3 sm:p-6">
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
           <h1 className="text-base font-bold text-rp-heading">
@@ -297,7 +301,6 @@ export function ProcessableShipmentsPage() {
             <>
               <InboxProcessedShipmentsTable
                 rows={documentRows}
-                scrollWrapperClassName="overflow-x-auto"
                 onDownloadAttachment={handleDownloadAttachment}
                 onViewShipment={(row) => {
                   const shipmentId = shipmentIdByRow.get(row.id)
@@ -345,6 +348,9 @@ export function ProcessableShipmentsPage() {
                 // actions bar. This is a read-only view onto the same rows.
                 showCheckboxColumn={false}
                 showDateSplit
+                // No internal vertical scroll box — all 10 rows render at full
+                // height and the page itself scrolls to reveal them.
+                scrollWrapperClassName="w-full overflow-x-auto"
               />
               {shipmentsTotalPages > 1 ? (
                 <CustomPagination
