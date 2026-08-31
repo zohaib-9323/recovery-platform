@@ -8,7 +8,14 @@ import { formatReceived, truncate } from './format-utils'
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 /** Statuses that mean the job is still in progress (used to gate the items query / UI copy). */
-export const ACTIVE_STATUSES = new Set<M365ImportJobStatus>(['queued', 'running', 'retrying'])
+export const ACTIVE_STATUSES = new Set<M365ImportJobStatus>([
+  'queued',
+  'running',
+  'retrying',
+  // Pairing is still work in progress: the documents exist but no shipments do
+  // yet, so the UI must keep polling and keep showing in-progress copy.
+  'pairing',
+])
 
 const STATUS_BADGE: Record<
   M365ImportJobStatus,
@@ -29,6 +36,12 @@ const STATUS_BADGE: Record<
     label: 'Retrying',
     className: 'border border-rp-accent bg-rp-accent/10 text-rp-accent',
     Icon: AlertTriangle,
+  },
+  pairing: {
+    label: 'Pairing documents',
+    className: 'border border-rp-blue bg-rp-blueWithOpacity text-rp-blue',
+    spin: true,
+    Icon: RefreshCw,
   },
   completed: {
     label: 'Completed',

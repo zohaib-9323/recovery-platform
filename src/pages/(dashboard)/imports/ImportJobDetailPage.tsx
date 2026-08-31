@@ -233,6 +233,12 @@ export function ImportJobDetailPage() {
               A temporary error occurred. The import will retry shortly.
             </InfoBanner>
           )}
+          {job.status === 'pairing' && (
+            <InfoBanner tone="blue">
+              All {job.stats.added} email(s) imported. Matching C88s to their invoices — shipments
+              and documents will appear here shortly. This page updates automatically.
+            </InfoBanner>
+          )}
           {isCompleted && (
             <InfoBanner tone="success" icon={Check}>
               {job.stats.failed > 0

@@ -32,6 +32,8 @@ const STATUS_BADGE_CLASSES: Record<M365ImportJobSummary['status'], string> = {
   queued: 'border border-rp-border bg-rp-surface text-rp-muted',
   running: 'border border-rp-blue bg-rp-blueWithOpacity text-rp-blue',
   retrying: 'border border-rp-accent bg-rp-accent/10 text-rp-accent',
+  // In-progress blue, same as running — pairing is work, not a finished state.
+  pairing: 'border border-rp-blue bg-rp-blueWithOpacity text-rp-blue',
   completed: 'border border-rp-green bg-[#2e7d32]/10 text-rp-green',
   completed_with_errors: 'border border-rp-green bg-[#2e7d32]/10 text-rp-green',
   failed: 'border border-red-600 bg-red-50 text-red-600',
@@ -42,6 +44,7 @@ const ACTIVE_STATUSES: ReadonlySet<M365ImportJobSummary['status']> = new Set([
   'queued',
   'running',
   'retrying',
+  'pairing',
 ])
 
 export function isActiveImportJob(job: M365ImportJobSummary): boolean {
@@ -51,10 +54,12 @@ export function isActiveImportJob(job: M365ImportJobSummary): boolean {
 function StatusBadge({ job }: { job: M365ImportJobSummary }) {
   const { t } = useI18n()
 
+  // `pairing` must be listed explicitly: the fallback arm is the success tick,
+  // so without it an in-progress job renders a green check.
   const Icon =
     job.status === 'queued'
       ? Clock
-      : job.status === 'running'
+      : job.status === 'running' || job.status === 'pairing'
         ? RefreshCw
         : job.status === 'retrying'
           ? AlertTriangle
@@ -72,7 +77,12 @@ function StatusBadge({ job }: { job: M365ImportJobSummary }) {
           STATUS_BADGE_CLASSES[job.status],
         )}
       >
-        <Icon className={cn('size-3.5 shrink-0', job.status === 'running' && 'animate-spin')} />
+        <Icon
+          className={cn(
+            'size-3.5 shrink-0',
+            (job.status === 'running' || job.status === 'pairing') && 'animate-spin',
+          )}
+        />
         {label}
       </span>
       {job.status === 'completed_with_errors' && (
@@ -160,7 +170,11 @@ export function ImportJobCard({
   const { t } = useI18n()
   const hasFailures = job.status === 'completed_with_errors' || job.stats.failed > 0
   const isCompleted = job.status === 'completed' || job.status === 'completed_with_errors'
-  const isActive = job.status === 'queued' || job.status === 'running' || job.status === 'retrying'
+  const isActive =
+    job.status === 'queued' ||
+    job.status === 'running' ||
+    job.status === 'retrying' ||
+    job.status === 'pairing'
 
   const progressPercent =
     job.stats.totalDiscovered && job.stats.totalDiscovered > 0
