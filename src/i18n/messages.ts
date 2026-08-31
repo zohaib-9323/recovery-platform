@@ -1,5 +1,5 @@
+import { authInviteMessages } from './auth-invite-messages'
 import { shipmentsMessages } from './shipments-messages'
-
 export const messages: Record<string, string> = {
   'common.success': 'Success',
   'common.hidePassword': 'Hide password',
@@ -496,4 +496,5 @@ export const messages: Record<string, string> = {
   'popup.closeOverlay': 'Close popup overlay',
   'popup.close': 'Close popup',
   ...shipmentsMessages,
+  ...authInviteMessages,
 }

@@ -38,6 +38,7 @@ jest.mock('@/app/services/recoveryApi', () => ({
   useVerifyFirstLoginOtpMutation: () => [jest.fn(), { isLoading: false }],
   useRequestFirstLoginOtpMutation: () => [jest.fn(), { isLoading: false }],
   useSetupFirstLoginPasswordMutation: () => [jest.fn(), { isLoading: false }],
+  useVerifySignupOtpMutation: () => [jest.fn(), { isLoading: false }],
 }))
 
 function makeTestStore() {

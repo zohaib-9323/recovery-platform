@@ -21,6 +21,10 @@ export const MU = {
   status: 'Status',
   actions: 'Actions',
   noUsersAvailable: 'No users available',
+  loadingUsers: 'Loading users…',
+  notAuthorizedTitle: 'Not authorized',
+  notAuthorizedMessage: 'Only the company owner can manage users.',
+  domainMismatchHint: 'This must match your own company email domain to send an invite.',
 
   /* Row action menu */
   suspendUser: 'Suspend User',

@@ -43,6 +43,40 @@ describe('InviteUserModal', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('Enter a valid email address')
   })
+
+  it("shows a non-blocking domain-mismatch hint when the email domain differs from the owner's", () => {
+    const onSubmit = jest.fn()
+    render(
+      <InviteUserModal open onClose={jest.fn()} onSubmit={onSubmit} ownerDomain="acmecorp.com" />,
+    )
+
+    fireEvent.change(screen.getByPlaceholderText('john@2company.com'), {
+      target: { value: 'someone@othercorp.com' },
+    })
+
+    expect(
+      screen.getByText('This must match your own company email domain to send an invite.'),
+    ).toBeInTheDocument()
+    // Non-blocking — the server enforces the real rule, submit stays enabled.
+    const submit = screen.getByRole('button', { name: 'Send Invitation' })
+    expect(submit).toBeEnabled()
+    fireEvent.click(submit)
+    expect(onSubmit).toHaveBeenCalledWith('someone@othercorp.com')
+  })
+
+  it("shows no hint once the email domain matches the owner's", () => {
+    render(
+      <InviteUserModal open onClose={jest.fn()} onSubmit={jest.fn()} ownerDomain="acmecorp.com" />,
+    )
+
+    fireEvent.change(screen.getByPlaceholderText('john@2company.com'), {
+      target: { value: 'jane@acmecorp.com' },
+    })
+
+    expect(
+      screen.queryByText('This must match your own company email domain to send an invite.'),
+    ).not.toBeInTheDocument()
+  })
 })
 
 describe('CreateUserModal', () => {
