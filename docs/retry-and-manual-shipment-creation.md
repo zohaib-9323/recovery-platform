@@ -199,3 +199,119 @@ substantial mocking of the whole panel).
   precedent set fixing this in Phase 4 (see git history / the backend doc's
   "Errors and fixes" if that gets preserved somewhere, or just re-derive: the
   fix was always "split the file," never "reformat around the limit").
+
+---
+
+## Reused by the import-job detail screen
+
+The Import Jobs detail page (`src/pages/(dashboard)/imports/import-detail-shipments.tsx`)
+runs this same flow against an import job, with one structural difference and one scope
+difference.
+
+**Structural:** the backend writes ONE recovery document per import job (rather than one
+per email, as the Inbox does), so a single `GET /recovery/m365/import-jobs/:id/shipments`
+returns processable/unprocessable lists already **unified across every email in the
+import** — a C88 from one email pairs with an invoice from another. There is no
+client-side aggregation. Because the payload is the same `RecoveryCombinedDocument` shape
+the Inbox detail endpoint returns, `mapRecoveryDocumentToInboxEmail`, all three shipment
+tables and `CreateShipmentModal` are reused unchanged, and Create Shipment / download hit
+the same `/recovery/documents/:id/...` endpoints described above.
+
+**Scope:** Create Shipment and attachment download only. Retry and the
+move-between-lists actions were deliberately left out of the import view.
+`InboxUnprocessedShipmentsTable` renders its row action menu only when an `onRetry`
+handler is passed — Retry is the menu's only entry, so omitting the prop is what hides
+it. Callers that add another action to that menu must revisit this.
+
+Tests: `import-detail-shipments.test.tsx` (5 tests, covering the unified list, the absent
+row menu, the pending/empty states, and that Create Shipment posts against the job's
+document id while hiding the two claimed rows). Backend companion doc:
+`trade-harmonizer-be/docs/10-business-flows/m365-import-shipments.md`.
+
+---
+
+## Extended by the cross-import "Unprocessed Documents" screen
+
+`/imports/unprocessed-documents` (`src/pages/(dashboard)/imports/UnprocessedDocumentsPage.tsx`)
+lifts the last boundary: it lists every unprocessable file from **every** import job in one
+table, so a C88 fetched by one import can be paired with an invoice fetched by another.
+
+What changes versus everything above:
+
+- **A row is `documentId` + `index`, not an index.** Rows come from many documents at once,
+  so an index alone is ambiguous. Row ids are `${documentId}:${index}`, and that pair is
+  also what the API takes.
+- **The endpoints are different.** `useGetM365UnprocessedDocumentsQuery` reads a flat,
+  server-paginated list (`GET /recovery/m365/unprocessed-documents`);
+  `useCreateCrossImportShipmentMutation` posts
+  `{ title, ci: {documentId, index, s3Key}, c88: {documentId, index, s3Key} }` to
+  `POST /recovery/m365/unprocessed-documents/create-shipment`. The `s3Key` stale-selection
+  guard works exactly as described above, per side.
+- **The tables are the Inbox's, not new ones.** `InboxUnprocessedShipmentsTable` renders the
+  unprocessed list and `InboxProcessedShipmentsTable` the paired one, so a row looks and
+  behaves the same in the Inbox, on an import job's detail panel, and here. Neither table
+  carries a document id, so where a callback needs one the page keeps a lookup keyed by row
+  id (and encodes `${rowId}:${side}` into the attachment id) rather than threading a
+  parallel array — rows get filtered and re-sorted, indices do not survive that.
+- **`InboxProcessedShipmentsTable` grew an optional `onViewShipment`.** The Actions column
+  renders only when it is passed — the same rule `onRetry` already follows on the
+  unprocessed table, so the Inbox and the import-job panel get no column rather than a
+  column of dead buttons.
+- **The modal is a separate component** (`cross-import-create-shipment-modal.tsx`), not the
+  Inbox's. Feeding these rows through `CreateShipmentModal` would collapse rows from
+  different imports that happen to share an index. Each option is labelled with the import
+  it came from, and the CI/C88 selects pre-fill from the classifier only when the selection
+  is unambiguous (exactly one row of each type) — guessing the sides silently produces a
+  wrong pair.
+- **The modal fetches its own list.** Its dropdowns must span every import _and_ every page
+  — a counterpart three pages away is the normal case here — so opening it issues a second
+  request for the whole filtered set (capped server-side at 200) instead of offering the
+  rows currently on screen.
+- Rows whose `s3Key` is null still render but are not offered in the modal — the backend
+  cannot re-read bytes that were never stored.
+
+The status labels come from `getUnprocessableStatusLabel`, exported from `inbox-mappers.ts`
+so the same `failureReasonCode` reads the same on both screens rather than being mapped
+twice.
+
+Tests: `UnprocessedDocumentsPage.test.tsx` (9 tests). Backend companion:
+`trade-harmonizer-be/docs/10-business-flows/m365-import-shipments.md`, section
+"Cross-import pairing".
+
+---
+
+## Live import status: toasts and auto-refresh
+
+An import job runs for minutes in the background, so the Imports list and detail screens
+refresh themselves when its status changes, and a toast announces it.
+
+**Both are driven by the notification list, not by web push.** Push is best-effort — it
+needs notification permission, a registered service worker and a live Firebase config, and
+delivers nothing _silently_ when any of those is missing. That was the deployed symptom
+this replaced: import notifications appeared in the bell menu (which polls) but never
+popped a toast, and `useImportRealtimeRefresh` — wired to `onMessage` alone — never fired,
+so the job status sat stale until a manual reload. Since the backend writes the
+notification row _before_ pushing, polling the list catches every notification regardless
+of push state.
+
+| File                                 | Role                                                                                                                               |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `lib/notificationToasts.ts`          | Bold-marker stripping, import-payload detection, and the outcome → toast colour mapping (completed = success, failed = error).     |
+| `app/hooks/useNotificationToasts.ts` | Polls the list, toasts what's new, raises `IMPORT_LIST_REFRESH_EVENT` for import notifications. Mounted once in `DashboardLayout`. |
+| `app/hooks/useFCM.ts`                | No longer toasts. Dispatches `NOTIFICATION_REFRESH_EVENT` so the hook above polls immediately instead of waiting out its interval. |
+
+Two behaviours worth knowing before changing this:
+
+- **The first response is a baseline, not news.** Everything already in the list when the
+  app opens is recorded as seen without toasting — otherwise every login would open with a
+  stack of stale popups. Only what arrives afterwards toasts.
+- **A single toast path, by construction.** Because the toast is raised from the list in
+  both the pushed and the polled case, a delivered push cannot produce a duplicate. Wiring
+  a screen straight back to `onMessage` reintroduces the silent failure — subscribe to
+  `IMPORT_LIST_REFRESH_EVENT` instead.
+
+Tests: `notificationToasts.test.ts` (6) and `useNotificationToasts.test.tsx` (7 — baseline
+suppression, dedupe, burst cap and ordering, the import-refresh event, and toast
+navigation). Backend companion:
+`trade-harmonizer-be/docs/10-business-flows/m365-import-shipments.md`, section
+"Status notifications".

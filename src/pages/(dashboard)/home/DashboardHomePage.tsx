@@ -1,5 +1,5 @@
 import { Inbox, Package } from 'lucide-react'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import {
@@ -93,13 +93,29 @@ function toManageShipmentsTableRow(shipment: RecoveryShipmentRecord): ManageShip
 export function DashboardHomePage() {
   const { t } = useI18n()
   const navigate = useNavigate()
-  const { data: dashboardData, isLoading: isDashboardLoading } = useGetRecoveryDashboardQuery()
-  const { data: prefs } = useGetRecoveryPreferencesQuery()
-  const { data: shipmentsData } = useGetRecoveryShipmentsListQuery({
-    page: 1,
-    limit: 5,
-    pageSize: 5,
+  // Always hit the API when the dashboard is (re)opened instead of showing the
+  // cached stats from a previous visit.
+  const { data: dashboardData, isFetching: isDashboardFetching } = useGetRecoveryDashboardQuery(
+    undefined,
+    { refetchOnMountOrArgChange: true },
+  )
+  const { data: prefs } = useGetRecoveryPreferencesQuery(undefined, {
+    refetchOnMountOrArgChange: true,
   })
+  const { data: shipmentsData } = useGetRecoveryShipmentsListQuery(
+    {
+      page: 1,
+      limit: 5,
+      pageSize: 5,
+    },
+    { refetchOnMountOrArgChange: true },
+  )
+  // Tracks whether this visit's dashboard fetch has been dispatched yet — see the loader below.
+  const [hasStartedDashboardFetch, setHasStartedDashboardFetch] = useState(false)
+  if (isDashboardFetching && !hasStartedDashboardFetch) {
+    setHasStartedDashboardFetch(true)
+  }
+
   const dashboardStats = dashboardData?.content?.data
   const timeZone = prefs?.content?.timezone ?? null
   const emailsTrend = dashboardStats?.emailsReceivedTrend
@@ -114,7 +130,10 @@ export function DashboardHomePage() {
     [shipmentsData?.content?.data, shipmentsData?.content?.shipments],
   )
 
-  if (isDashboardLoading && !dashboardData) {
+  // Show the loader on every visit, not only the first. On a revisit RTK Query serves the
+  // cached stats on the first render (isFetching is still false until the mount refetch is
+  // dispatched in an effect), so waiting on isFetching alone would flash stale content.
+  if (!hasStartedDashboardFetch || isDashboardFetching) {
     return <CustomLoader />
   }
 

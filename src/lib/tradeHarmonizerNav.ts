@@ -22,6 +22,14 @@ export function getSideBarTitle(pathname: string): string {
   if (path === '/settings' || path.startsWith('/settings/')) {
     return ''
   }
+  // The Imports sub-screens are the only two-level titles in the app: the
+  // section stays in the prefix so the header reads "IMPORTS / <SCREEN>".
+  if (path === '/imports/processable-shipments' || path === '/imports/unprocessed-documents') {
+    return 'Imports /'
+  }
+  if (path === '/imports' || path.startsWith('/imports/')) {
+    return ''
+  }
   if (path === '/dashboard') {
     return 'Recovery'
   }
@@ -47,6 +55,15 @@ export function getHrefLink(pathname: string): string {
   }
   if (path === '/notifications' || path.startsWith('/notifications/')) {
     return 'Notifications'
+  }
+  if (path === '/imports/processable-shipments') {
+    return 'Processable Shipments'
+  }
+  if (path === '/imports/unprocessed-documents') {
+    return 'Unprocessed Documents'
+  }
+  if (path === '/imports' || path.startsWith('/imports/')) {
+    return 'Imports'
   }
   if (path.startsWith('/dashboard')) {
     return 'Platform'

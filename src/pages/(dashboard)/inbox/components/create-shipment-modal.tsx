@@ -7,6 +7,12 @@ export type CreateShipmentSubmitPayload = {
   title: string
   ciRow: InboxUnprocessedShipmentRow
   c88Row: InboxUnprocessedShipmentRow
+  /**
+   * Optional packing list. A shipment is C88 + CI; a PL is a third document that
+   * only contributes fuller line-item descriptions, so `undefined` is the normal
+   * case and never an error.
+   */
+  plRow?: InboxUnprocessedShipmentRow
 }
 
 export type CreateShipmentModalProps = {
@@ -30,10 +36,14 @@ export function CreateShipmentModal({ rows, onClose, onSubmit }: CreateShipmentM
   const titleInputId = useId()
   const ciSelectId = useId()
   const c88SelectId = useId()
+  const plSelectId = useId()
 
   const [title, setTitle] = useState('')
   const [ciIndex, setCiIndex] = useState<string>('')
   const [c88Index, setC88Index] = useState<string>('')
+  // Optional third leg. '' means "no packing list", which is the normal case —
+  // a shipment is complete with just a C88 and a CI.
+  const [plIndex, setPlIndex] = useState<string>('')
   const [formError, setFormError] = useState<string | null>(null)
 
   // Only files with a current s3Key can be safely selected — the backend re-validates it
@@ -71,11 +81,19 @@ export function CreateShipmentModal({ rows, onClose, onSubmit }: CreateShipmentM
       setFormError(t('inbox.createShipment.errorSelectBoth'))
       return
     }
+    // The packing list is optional: an unset or unresolvable pick simply means
+    // the shipment is created without one, never a validation failure.
+    const plRow =
+      plIndex === '' ? undefined : selectableRows.find((row) => String(row.sourceIndex) === plIndex)
+    if (plIndex !== '' && !plRow?.s3Key) {
+      setFormError(t('inbox.createShipment.errorSelectBoth'))
+      return
+    }
 
     // Hand off to the parent and close right away — the request itself keeps running
     // in the background (tracked as an "in processing" row) even though this modal
     // is about to unmount.
-    onSubmit({ title: trimmedTitle, ciRow, c88Row })
+    onSubmit({ title: trimmedTitle, ciRow, c88Row, plRow })
     onClose()
   }
 
@@ -187,6 +205,41 @@ export function CreateShipmentModal({ rows, onClose, onSubmit }: CreateShipmentM
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <label
+                  className="mb-2 block text-xs font-semibold text-black sm:text-sm"
+                  htmlFor={plSelectId}
+                >
+                  {t('inbox.createShipment.plLabel')}
+                </label>
+                <select
+                  id={plSelectId}
+                  value={plIndex}
+                  disabled={selectableRows.length === 0}
+                  onChange={(e) => {
+                    setPlIndex(e.target.value)
+                    setFormError(null)
+                  }}
+                  className={inputClassName}
+                >
+                  <option value="">{t('inbox.createShipment.plNone')}</option>
+                  {selectableRows.map((row) => (
+                    <option
+                      key={row.sourceIndex}
+                      value={row.sourceIndex}
+                      disabled={
+                        String(row.sourceIndex) === ciIndex || String(row.sourceIndex) === c88Index
+                      }
+                    >
+                      {row.fileName}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs font-normal text-greyOne">
+                  {t('inbox.createShipment.plHint')}
+                </p>
               </div>
 
               {selectableRows.length === 0 ? (

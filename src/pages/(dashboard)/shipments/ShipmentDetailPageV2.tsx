@@ -364,6 +364,15 @@ export function ShipmentDetailPageV2() {
       fileName: detail.poFilename ?? undefined,
     })
   }
+  // Optional third leg. Most shipments have no packing list, so this row simply
+  // does not render rather than showing an empty or disabled entry.
+  if (hasDocValue(detail.plS3Key) || hasDocValue(detail.plFilename)) {
+    shipmentDocuments.push({
+      type: 'pl',
+      label: 'Packing List Document',
+      fileName: detail.plFilename ?? undefined,
+    })
+  }
 
   return (
     <>
@@ -500,12 +509,15 @@ export function ShipmentDetailPageV2() {
 
         <div id="shipment-overview" className="flex flex-col gap-5">
           <div className="item-center flex justify-between rounded-lg bg-greyFour px-4 py-2">
-            <div className="flex flex-col">
+            <div className="flex min-w-0 max-w-64 flex-col md:max-w-xs">
               <p className="text-xs font-normal text-lightBlackOne sm:text-sm">
                 {MS.purchaseOrderNumber}
               </p>
-              <div className="flex items-center gap-2 sm:gap-3">
-                <p className="text-sm font-normal text-yellow sm:text-lg">
+              <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+                <p
+                  className="min-w-0 truncate text-sm font-normal text-yellow sm:text-lg"
+                  title={detail.purchaseOrderNumber || undefined}
+                >
                   {detail.purchaseOrderNumber}
                 </p>
                 <button
@@ -516,7 +528,7 @@ export function ShipmentDetailPageV2() {
                     setCopied(true)
                     setTimeout(() => setCopied(false), 2000)
                   }}
-                  className="text-black"
+                  className="shrink-0 text-black"
                 >
                   <span
                     className={`${

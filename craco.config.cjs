@@ -13,6 +13,15 @@ module.exports = {
         ...jestConfig.moduleNameMapper,
         '^@/(.*)$': '<rootDir>/src/$1',
       }
+      // `@reduxjs/toolkit/query`'s dev bundle pulls in `@standard-schema/utils`,
+      // which ships ESM-only (no CJS build, `"type": "module"`). CRA's default
+      // transformIgnorePatterns skips all of node_modules, so Jest tries to run
+      // its `export {...}` syntax as CJS and throws — carve out an exception so
+      // babel-jest transforms just this package, same pattern as the default.
+      jestConfig.transformIgnorePatterns = [
+        '[/\\\\]node_modules[/\\\\](?!@standard-schema).+\\.(js|jsx|mjs|cjs|ts|tsx)$',
+        '^.+\\.module\\.(css|sass|scss)$',
+      ]
       jestConfig.collectCoverageFrom = [
         'src/services/api.ts',
         'src/services/authSession.ts',

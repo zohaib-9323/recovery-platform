@@ -4,8 +4,8 @@ import type { InboxUnprocessedShipmentRow } from '@/pages/(dashboard)/inbox/type
 import { InboxUnprocessedShipmentsTable } from './inbox-unprocessed-shipments-table'
 
 /**
- * Covers Phase 4's Retry UI: the per-row "Retry" action menu item, including
- * its busy/disabled interplay with the pre-existing "Convert to processable"
+ * Covers Phase 4's Retry UI: the per-row Retry button, including its
+ * busy/disabled interplay with the pre-existing "Convert to processable"
  * action on the same row. Bulk "Retry All" was removed from this
  * self-service table — that capability now lives only in the admin panel
  * (trade-harmonizer's admin-recovery-inbox detail page).
@@ -29,13 +29,29 @@ const ROW_B: InboxUnprocessedShipmentRow = {
   s3Key: 'accepted/doc/mid/unprocessable/b.pdf',
 }
 
-function openRowMenu(rowFileName: string) {
+function clickRetry(rowFileName: string) {
   const row = screen.getByText(rowFileName).closest('tr')!
   const trigger = row.querySelector('button')!
   fireEvent.click(trigger)
 }
 
 describe('InboxUnprocessedShipmentsTable', () => {
+  it('renders no retry button when no onRetry handler is supplied', () => {
+    // Callers that scope it out (the import-job detail view) must get no
+    // button at all rather than a dead one.
+    render(<InboxUnprocessedShipmentsTable rows={[ROW_A]} />)
+
+    const row = screen.getByText('a.pdf').closest('tr')!
+    expect(row.querySelector('button')).toBeNull()
+  })
+
+  it('renders the retry button when onRetry is supplied', () => {
+    render(<InboxUnprocessedShipmentsTable rows={[ROW_A]} onRetry={jest.fn()} />)
+
+    const row = screen.getByText('a.pdf').closest('tr')!
+    expect(row.querySelector('button')).not.toBeNull()
+  })
+
   it('renders the empty state when there are no rows', () => {
     render(<InboxUnprocessedShipmentsTable rows={[]} />)
 
@@ -44,13 +60,13 @@ describe('InboxUnprocessedShipmentsTable', () => {
     ).toBeInTheDocument()
   })
 
-  it('calls onRetry with the clicked row from its action menu', () => {
+  it('calls onRetry with the clicked row directly, with no intermediate menu', () => {
     const onRetry = jest.fn()
     render(<InboxUnprocessedShipmentsTable rows={[ROW_A, ROW_B]} onRetry={onRetry} />)
 
-    openRowMenu('a.pdf')
-    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    clickRetry('a.pdf')
 
+    expect(onRetry).toHaveBeenCalledTimes(1)
     expect(onRetry).toHaveBeenCalledWith(ROW_A)
   })
 

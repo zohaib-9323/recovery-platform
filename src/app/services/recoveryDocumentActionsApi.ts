@@ -47,6 +47,9 @@ type CreateManualShipmentArgs = {
   ciS3Key: string
   c88Index: number
   c88S3Key: string
+  /** Optional packing list. Both fields together, or neither — the API rejects a half-pick. */
+  plIndex?: number
+  plS3Key?: string
 }
 
 export const { useRetryUnprocessableMutation, useCreateManualShipmentMutation } =
