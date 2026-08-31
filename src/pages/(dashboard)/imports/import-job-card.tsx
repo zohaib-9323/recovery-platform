@@ -184,11 +184,6 @@ export function ImportJobCard({
         </span>
         <div className="flex items-center gap-3">
           <StatusBadge job={job} />
-          {onViewDetail && !isCompleted && (
-            <Button variant="secondary" size="sm" onClick={onViewDetail}>
-              {t('imports.job.details')}
-            </Button>
-          )}
         </div>
       </div>
 
