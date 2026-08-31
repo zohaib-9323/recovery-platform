@@ -500,12 +500,15 @@ export function ShipmentDetailPageV2() {
 
         <div id="shipment-overview" className="flex flex-col gap-5">
           <div className="item-center flex justify-between rounded-lg bg-greyFour px-4 py-2">
-            <div className="flex flex-col">
+            <div className="flex min-w-0 max-w-64 flex-col md:max-w-xs">
               <p className="text-xs font-normal text-lightBlackOne sm:text-sm">
                 {MS.purchaseOrderNumber}
               </p>
-              <div className="flex items-center gap-2 sm:gap-3">
-                <p className="text-sm font-normal text-yellow sm:text-lg">
+              <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+                <p
+                  className="min-w-0 truncate text-sm font-normal text-yellow sm:text-lg"
+                  title={detail.purchaseOrderNumber || undefined}
+                >
                   {detail.purchaseOrderNumber}
                 </p>
                 <button
@@ -516,7 +519,7 @@ export function ShipmentDetailPageV2() {
                     setCopied(true)
                     setTimeout(() => setCopied(false), 2000)
                   }}
-                  className="text-black"
+                  className="shrink-0 text-black"
                 >
                   <span
                     className={`${
