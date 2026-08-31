@@ -53,6 +53,14 @@ export function SignupStepper({ activeStep, className }: SignupStepperProps) {
 
           return (
             <div key={step.key} className="relative flex flex-1 items-center">
+              {index > 0 ? (
+                <div
+                  className={cn(
+                    'absolute start-0 end-1/2 me-6 -translate-y-1 border-2 sm:me-8 lg:me-10',
+                    isActive || isCompleted ? 'border-primary' : 'border-lightGrey',
+                  )}
+                />
+              ) : null}
               <div className="flex flex-1 cursor-default flex-col items-center gap-0 sm:gap-1 lg:gap-2">
                 {isCompleted ? (
                   <div className="translate flex h-3 min-w-3 translate-x-4 translate-y-3 items-center justify-center rounded-full border border-white bg-lightGreen sm:h-4 sm:min-w-4 sm:translate-x-5 sm:translate-y-4 md:translate-y-5">
@@ -80,7 +88,7 @@ export function SignupStepper({ activeStep, className }: SignupStepperProps) {
               {index < steps.length - 1 ? (
                 <div
                   className={cn(
-                    'translate absolute end-0 w-2/4 flex-1 -translate-y-1 translate-x-6 border-2 sm:translate-x-16',
+                    'absolute start-1/2 end-0 ms-6 -translate-y-1 border-2 sm:ms-8 lg:ms-10',
                     isCompleted ? 'border-primary' : 'border-lightGrey',
                   )}
                 />
