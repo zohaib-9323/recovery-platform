@@ -174,6 +174,7 @@ export const messages: Record<string, string> = {
   'imports.job.status.queued': 'Queued',
   'imports.job.status.running': 'Running',
   'imports.job.status.retrying': 'Retrying',
+  'imports.job.status.pairing': 'Pairing documents',
   'imports.job.status.completed': 'Completed',
   'imports.job.status.completed_with_errors': 'Completed',
   'imports.job.status.failed': 'Failed',

@@ -75,6 +75,16 @@ const FAILURE_REASON_LABELS: Record<string, string> = {
   // pairing counterpart was never found anywhere else in the same email.
   C88_MISSING: 'C88 missing',
   PO_MISSING: 'CI missing',
+  // Nothing was wrong with the file — the AI call for its batch failed, or the
+  // model's response omitted it. Both are retryable, which is why neither is
+  // labelled as a parsing or format problem.
+  AI_CALL_FAILED: 'AI unavailable — retry',
+  AI_NO_CLASSIFICATION: 'Not analysed',
+  // Read correctly, but deliberately set aside.
+  DUPLICATE_DOCUMENT: 'Duplicate document',
+  // Name the document rather than what it is not.
+  PACKING_LIST: 'Packing list',
+  NOT_PAIRABLE_TYPE: 'Not a C88 or invoice',
 }
 
 /**

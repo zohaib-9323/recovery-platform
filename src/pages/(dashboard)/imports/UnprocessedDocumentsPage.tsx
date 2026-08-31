@@ -229,7 +229,7 @@ export function UnprocessedDocumentsPage() {
       {isError ? (
         <p className="text-sm text-redOne">{t('imports.unprocessed.loadError')}</p>
       ) : isFetching ? (
-        <div className="flex flex-1 items-center justify-center py-10">
+        <div className="flex min-h-[440px] flex-1 items-center justify-center rounded-lg border border-[#E0E0E0]">
           <CustomLoader />
         </div>
       ) : rows.length === 0 ? (
@@ -269,7 +269,7 @@ export function UnprocessedDocumentsPage() {
         />
       )}
 
-      {totalPages > 1 ? (
+      {!isFetching && totalPages > 1 ? (
         <CustomPagination
           totalPages={totalPages}
           currentPage={Math.min(page, totalPages)}
