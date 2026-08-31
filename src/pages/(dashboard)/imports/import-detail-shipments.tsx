@@ -119,7 +119,12 @@ export function ImportDetailShipments({ jobId, isJobActive }: ImportDetailShipme
    * request's lifecycle is tracked through `pendingShipments` rather than the
    * mutation hook's loading flag.
    */
-  const handleCreateShipmentSubmit = ({ title, ciRow, c88Row }: CreateShipmentSubmitPayload) => {
+  const handleCreateShipmentSubmit = ({
+    title,
+    ciRow,
+    c88Row,
+    plRow,
+  }: CreateShipmentSubmitPayload) => {
     if (!documentId || !ciRow.s3Key || !c88Row.s3Key) {
       return
     }
@@ -145,6 +150,9 @@ export function ImportDetailShipments({ jobId, isJobActive }: ImportDetailShipme
       ciS3Key: ciRow.s3Key,
       c88Index: c88Row.sourceIndex,
       c88S3Key: c88Row.s3Key,
+      // Sent only when a packing list was actually picked — the API treats a
+      // half-specified pair (index without key, or vice versa) as a bad request.
+      ...(plRow?.s3Key ? { plIndex: plRow.sourceIndex, plS3Key: plRow.s3Key } : {}),
     })
       .unwrap()
       .then(async () => {
@@ -287,7 +295,14 @@ export function ImportDetailShipments({ jobId, isJobActive }: ImportDetailShipme
             </Button>
           ) : null}
         </div>
-        <InboxUnprocessedShipmentsTable rows={visibleUnprocessed} />
+        {/*
+          No Actions column here. The per-row Retry action belongs to the Inbox,
+          which has a retry endpoint for a single email's attachments; an import
+          job has no equivalent, so the column rendered controls that could not
+          do anything. Pairing from this screen happens through Create Shipment
+          above, not per row.
+        */}
+        <InboxUnprocessedShipmentsTable rows={visibleUnprocessed} hideActionsColumn />
       </div>
 
       {isCreateShipmentOpen ? (

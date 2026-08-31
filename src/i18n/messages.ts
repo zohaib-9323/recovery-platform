@@ -420,6 +420,10 @@ export const messages: Record<string, string> = {
   'inbox.createShipment.titlePlaceholder': 'e.g. August Batch',
   'inbox.createShipment.ciLabel': 'CI Document',
   'inbox.createShipment.c88Label': 'C88 Document',
+  'inbox.createShipment.plLabel': 'Packing List (optional)',
+  'inbox.createShipment.plNone': 'None — no packing list',
+  'inbox.createShipment.plHint':
+    'A packing list is optional. When supplied, its fuller item descriptions are used in place of the invoice\u2019s, which classifies to a more accurate HS code. It never changes quantities or prices.',
   'inbox.createShipment.selectPlaceholder': 'Select a file',
   'inbox.createShipment.noFilesAvailable': 'No unprocessable files are available to select.',
   'inbox.createShipment.missingReferenceNotice':

@@ -150,7 +150,12 @@ export function InboxDetailPanel({
    * rather than a mutation-hook loading flag, since no component stays mounted for
    * the mutation's whole lifetime otherwise.
    */
-  const handleCreateShipmentSubmit = ({ title, ciRow, c88Row }: CreateShipmentSubmitPayload) => {
+  const handleCreateShipmentSubmit = ({
+    title,
+    ciRow,
+    c88Row,
+    plRow,
+  }: CreateShipmentSubmitPayload) => {
     if (!email || !ciRow.s3Key || !c88Row.s3Key) return
     const documentId = email.id
     const key = `${documentId}-${Date.now()}-${Math.random().toString(36).slice(2)}`
@@ -175,6 +180,9 @@ export function InboxDetailPanel({
       ciS3Key: ciRow.s3Key,
       c88Index: c88Row.sourceIndex,
       c88S3Key: c88Row.s3Key,
+      // Sent only when a packing list was actually picked — the API treats a
+      // half-specified pair (index without key, or vice versa) as a bad request.
+      ...(plRow?.s3Key ? { plIndex: plRow.sourceIndex, plS3Key: plRow.s3Key } : {}),
     })
       .unwrap()
       .then(async () => {
