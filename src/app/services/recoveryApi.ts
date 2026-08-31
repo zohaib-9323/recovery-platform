@@ -12,8 +12,12 @@ import type {
   FirstLoginVerifyOtpContent,
   LoginRequestBody,
   RecoveryAuthEnvelope,
+  RegisterRecoveryUserBody,
+  RegisterRecoveryUserContent,
   RequestPasswordResetBody,
   ResetPasswordBody,
+  VerifySignupOtpBody,
+  VerifySignupOtpContent,
 } from '@/types/auth-api'
 import type {
   RecoveryApiEnvelope,
@@ -59,6 +63,7 @@ export const recoveryApi = createApi({
     'RecoveryShipments',
     'RecoveryShipment',
     'RecoveryNotifications',
+    'RecoveryCompanyUsers',
     'M365Connection',
     'M365ImportJobs',
     'M365ImportJobDetail',
@@ -90,6 +95,26 @@ export const recoveryApi = createApi({
           reportRuntimeError('recovery-api:login-onQueryStarted', error)
         }
       },
+    }),
+    register: builder.mutation<
+      ApiMessageEnvelope<RegisterRecoveryUserContent>,
+      RegisterRecoveryUserBody
+    >({
+      query: (body) => ({
+        url: '/recovery/auth/register',
+        method: 'POST',
+        body,
+      }),
+    }),
+    verifySignupOtp: builder.mutation<
+      ApiMessageEnvelope<VerifySignupOtpContent>,
+      VerifySignupOtpBody
+    >({
+      query: (body) => ({
+        url: '/recovery/auth/register/verify-otp',
+        method: 'POST',
+        body,
+      }),
     }),
     requestPasswordReset: builder.mutation<ApiMessageEnvelope<null>, RequestPasswordResetBody>({
       query: (body) => ({
@@ -455,6 +480,8 @@ export const recoveryApi = createApi({
 
 export const {
   useLoginMutation,
+  useRegisterMutation,
+  useVerifySignupOtpMutation,
   useRequestPasswordResetMutation,
   useResetPasswordMutation,
   useVerifyFirstLoginOtpMutation,

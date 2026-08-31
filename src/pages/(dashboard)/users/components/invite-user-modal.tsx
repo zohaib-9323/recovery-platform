@@ -20,17 +20,26 @@ export type InviteUserModalProps = {
   open: boolean
   onClose: () => void
   onSubmit: (email: string) => void
+  /** The current owner's own email domain — invites are only accepted server-side
+   * for a matching domain; this is a non-blocking client-side hint only. */
+  ownerDomain?: string
 }
 
 /**
  * Figma frame 2341:1420 — 630×268 card, 20px padding, 590px content column:
  * title block, 20px gap, the email field, then a 40px gap before the footer.
  */
-export function InviteUserModal({ open, onClose, onSubmit }: InviteUserModalProps) {
+export function InviteUserModal({ open, onClose, onSubmit, ownerDomain }: InviteUserModalProps) {
   const [email, setEmail] = useState('')
   const [touched, setTouched] = useState(false)
 
   const emailValid = isValidEmail(email)
+  const enteredDomain = email.split('@')[1]?.toLowerCase()
+  const domainMismatch =
+    emailValid &&
+    ownerDomain !== undefined &&
+    enteredDomain !== undefined &&
+    enteredDomain !== ownerDomain
 
   const close = () => {
     setEmail('')
@@ -66,6 +75,7 @@ export function InviteUserModal({ open, onClose, onSubmit }: InviteUserModalProp
           onBlur={() => setTouched(true)}
           error={touched && !emailValid ? MU.invalidEmail : undefined}
         />
+        {domainMismatch ? <p className="text-xs text-amber-600">{MU.domainMismatchHint}</p> : null}
 
         <div className="mt-5 flex items-center justify-end gap-[10px]">
           <button type="button" onClick={close} className={USER_MODAL_CANCEL_BUTTON_CLASS}>

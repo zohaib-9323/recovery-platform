@@ -50,6 +50,33 @@ export type FirstLoginRequestOtpBody = {
   email: string
 }
 
+export type RegisterRecoveryUserBody = {
+  firstName: string
+  lastName: string
+  email: string
+  phone?: string
+  password: string
+  companyName: string
+  tenant?: string
+  termsAccepted: boolean
+}
+
+export type RegisterRecoveryUserContent = {
+  recoveryUserId: string
+  email: string
+}
+
+export type VerifySignupOtpBody = {
+  email: string
+  otp: string
+}
+
+export type VerifySignupOtpContent = {
+  recoveryUserId: string
+  email: string
+  role: string
+}
+
 export type FirstLoginSetupPasswordBody = {
   setupToken: string
   temporaryPassword: string

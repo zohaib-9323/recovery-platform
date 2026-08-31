@@ -1,20 +1,30 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import {
+  useCreateCompanyUserMutation,
+  useInviteCompanyUserMutation,
+  useListCompanyUsersQuery,
+  useUpdateCompanyUserStatusMutation,
+} from '@/app/services/recoveryCompanyUsersApi'
+import { useAppSelector } from '@/app/redux-hooks'
 import { CsvExportButton } from '@/components/buttons'
 import { CustomCheckboxShipment } from '@/components/fields/preset/custom-checkbox-shipment'
 import { CustomPagination } from '@/components/pagination/custom-pagination'
-import { manageUsersRows, type ManageUserRow } from '@/data/mock/manage-users'
+import type { ManageUserRow } from '@/data/mock/manage-users'
+import { getRtkErrorMessage } from '@/lib/api-errors'
 import { MU } from '@/lib/manage-users-copy'
 import type { UserStatusFilter } from '@/lib/manage-users-table-helper'
 import { showCustomToast } from '@/lib/showCustomToast'
+import { RECOVERY_COMPANY_OWNER } from '@/types/roles'
 
-import { CreateUserModal } from './components/create-user-modal'
+import { CreateUserModal, type CreateUserValues } from './components/create-user-modal'
 import { InviteUserModal } from './components/invite-user-modal'
 import { ManageUsersTable } from './components/manage-users-table'
 import { ManageUsersToolbar } from './components/manage-users-toolbar'
 import type { UserRowAction } from './components/user-row-action-menu'
 import { UserStatusConfirmModal } from './components/user-status-confirm-modal'
+import { toManageUserRow } from './manage-users-mappers'
 
 const PAGE_SIZE = 10
 
@@ -27,8 +37,8 @@ type UserListCsvRow = {
 
 export function ManageUsersPage() {
   const navigate = useNavigate()
+  const currentUser = useAppSelector((s) => s.auth.user)
 
-  const [users, setUsers] = useState<ManageUserRow[]>(manageUsersRows)
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<UserStatusFilter>('all')
@@ -44,27 +54,36 @@ export function ManageUsersPage() {
     return () => clearTimeout(timer)
   }, [searchQuery])
 
-  const filteredUsers = useMemo(() => {
-    const term = debouncedSearch.trim().toLowerCase()
-    return users.filter((user) => {
-      const matchesStatus = statusFilter === 'all' || user.status === statusFilter
-      if (!matchesStatus) {
-        return false
-      }
-      if (!term) {
-        return true
-      }
-      const haystack = `${user.firstName} ${user.lastName} ${user.email}`.toLowerCase()
-      return haystack.includes(term)
-    })
-  }, [users, debouncedSearch, statusFilter])
+  // Owner-only page — a company user landing here (direct link, stale nav state)
+  // is bounced to the dashboard, matching the main platform's client-side gating.
+  useEffect(() => {
+    if (currentUser && currentUser.role !== RECOVERY_COMPANY_OWNER) {
+      showCustomToast({
+        type: 'error',
+        title: MU.notAuthorizedTitle,
+        message: MU.notAuthorizedMessage,
+      })
+      navigate('/dashboard', { replace: true })
+    }
+  }, [currentUser, navigate])
 
-  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE))
-  const safePage = Math.min(Math.max(1, currentPage), totalPages)
-  const pageRows = useMemo(
-    () => filteredUsers.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
-    [filteredUsers, safePage],
+  const { data, isFetching } = useListCompanyUsersQuery(
+    {
+      search: debouncedSearch.trim() || undefined,
+      status: statusFilter === 'all' ? undefined : statusFilter,
+      page: currentPage,
+      pageSize: PAGE_SIZE,
+    },
+    { skip: !currentUser || currentUser.role !== RECOVERY_COMPANY_OWNER },
   )
+
+  const [inviteCompanyUser] = useInviteCompanyUserMutation()
+  const [createCompanyUser] = useCreateCompanyUserMutation()
+  const [updateStatus] = useUpdateCompanyUserStatusMutation()
+
+  const pageRows = (data?.content?.users ?? []).map(toManageUserRow)
+  const totalPages = Math.max(1, data?.content?.pagination.totalPages ?? 1)
+  const safePage = Math.min(Math.max(1, currentPage), totalPages)
 
   const isAllSelected = pageRows.length > 0 && pageRows.every((r) => selectedUserIds.includes(r.id))
 
@@ -87,7 +106,7 @@ export function ManageUsersPage() {
 
   const generateCsv = useCallback(() => {
     setCsvData(
-      filteredUsers
+      pageRows
         .filter((user) => selectedUserIds.includes(user.id))
         .map((user) => ({
           Name: `${user.firstName} ${user.lastName}`,
@@ -96,7 +115,7 @@ export function ManageUsersPage() {
           Status: user.status,
         })),
     )
-  }, [filteredUsers, selectedUserIds])
+  }, [pageRows, selectedUserIds])
 
   const handleRowAction = useCallback(
     (action: UserRowAction, user: ManageUserRow) => {
@@ -109,26 +128,61 @@ export function ManageUsersPage() {
     [navigate],
   )
 
-  const applyStatusChange = useCallback(() => {
+  const applyStatusChange = useCallback(async () => {
     if (!pendingStatusUser) {
       return
     }
     const nextStatus = pendingStatusUser.status === 'active' ? 'suspended' : 'active'
-    setUsers((prev) =>
-      prev.map((user) =>
-        user.id === pendingStatusUser.id ? { ...user, status: nextStatus } : user,
-      ),
-    )
-    setPendingStatusUser(null)
-    showCustomToast({
-      type: 'success',
-      title: 'Success',
-      message:
-        nextStatus === 'suspended'
-          ? 'User has been suspended.'
-          : 'User has been reactivated successfully.',
-    })
-  }, [pendingStatusUser])
+    try {
+      await updateStatus({ id: pendingStatusUser.id, body: { status: nextStatus } }).unwrap()
+      showCustomToast({
+        type: 'success',
+        title: 'Success',
+        message:
+          nextStatus === 'suspended'
+            ? 'User has been suspended.'
+            : 'User has been reactivated successfully.',
+      })
+    } catch (err) {
+      showCustomToast({ type: 'error', title: 'Error', message: getRtkErrorMessage(err) })
+    } finally {
+      setPendingStatusUser(null)
+    }
+  }, [pendingStatusUser, updateStatus])
+
+  const ownerDomain = currentUser?.email?.split('@')[1]?.toLowerCase()
+
+  const handleInvite = async (email: string) => {
+    try {
+      await inviteCompanyUser({ email }).unwrap()
+      showCustomToast({
+        type: 'success',
+        title: 'Success',
+        message: 'Invitation sent successfully.',
+      })
+    } catch (err) {
+      showCustomToast({ type: 'error', title: 'Error', message: getRtkErrorMessage(err) })
+    }
+  }
+
+  const handleCreate = async (values: CreateUserValues) => {
+    try {
+      await createCompanyUser({
+        firstName: values.firstName,
+        lastName: values.lastName,
+        email: values.email,
+        phone: `${values.phoneCode}${values.phone}`.trim() || undefined,
+        password: values.password,
+      }).unwrap()
+      showCustomToast({
+        type: 'success',
+        title: 'Success',
+        message: 'User created and notified successfully.',
+      })
+    } catch (err) {
+      showCustomToast({ type: 'error', title: 'Error', message: getRtkErrorMessage(err) })
+    }
+  }
 
   return (
     <>
@@ -191,7 +245,9 @@ export function ManageUsersPage() {
           <div className="flex min-h-0 w-full flex-1 flex-col items-center justify-center gap-3 rounded-lg border border-bottomBorder p-4">
             <div className="flex w-full max-w-lg flex-col items-center justify-center gap-5">
               <img src="/images/emptybox.svg" alt="" width={200} height={200} />
-              <p className="text-center text-lg font-light text-black">{MU.noUsersAvailable}</p>
+              <p className="text-center text-lg font-light text-black">
+                {isFetching ? MU.loadingUsers : MU.noUsersAvailable}
+              </p>
             </div>
           </div>
         )}
@@ -200,25 +256,18 @@ export function ManageUsersPage() {
       <CreateUserModal
         open={showCreateUser}
         onClose={() => setShowCreateUser(false)}
-        onSubmit={() =>
-          showCustomToast({
-            type: 'success',
-            title: 'Success',
-            message: 'User created and notified successfully.',
-          })
-        }
+        onSubmit={(values) => {
+          void handleCreate(values)
+        }}
       />
 
       <InviteUserModal
         open={showInviteUser}
         onClose={() => setShowInviteUser(false)}
-        onSubmit={() =>
-          showCustomToast({
-            type: 'success',
-            title: 'Success',
-            message: 'Invitation sent successfully.',
-          })
-        }
+        onSubmit={(email) => {
+          void handleInvite(email)
+        }}
+        ownerDomain={ownerDomain}
       />
 
       {pendingStatusUser ? (
@@ -226,7 +275,9 @@ export function ManageUsersPage() {
           open
           intent={pendingStatusUser.status === 'active' ? 'suspend' : 'reactivate'}
           userName={`${pendingStatusUser.firstName} ${pendingStatusUser.lastName}`}
-          onConfirm={applyStatusChange}
+          onConfirm={() => {
+            void applyStatusChange()
+          }}
           onClose={() => setPendingStatusUser(null)}
         />
       ) : null}

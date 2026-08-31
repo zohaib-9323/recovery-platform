@@ -2,10 +2,12 @@ import { type FormEvent, useMemo, useState } from 'react'
 import { ArrowUpRight } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 
+import { useRegisterMutation } from '@/app/services/recoveryApi'
 import { CheckboxField } from '@/components/fields'
 import { LoginButton } from '@/components/buttons'
 import { useI18n } from '@/i18n/useI18n'
 import { isValidEmail, isValidPassword } from '@/lib/validation'
+import { getRtkErrorMessage } from '@/lib/api-errors'
 import { showCustomToast } from '@/lib/showCustomToast'
 import { saveFirstLoginFlowState } from '@/pages/auth/first-login-flow'
 import { CompanyDetailsSection } from '@/pages/auth/signup/components/CompanyDetailsSection'
@@ -29,6 +31,7 @@ export function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isTermsOpen, setIsTermsOpen] = useState(false)
   const [showTermsError, setShowTermsError] = useState(false)
+  const [register, { isLoading: isRegistering }] = useRegisterMutation()
 
   const setField: <K extends SignupFieldName>(field: K, value: SignupFormValues[K]) => void = (
     field,
@@ -79,7 +82,7 @@ export function SignupPage() {
     values.companyPhone.trim().length > 0 &&
     values.termsAccepted
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
 
     setTouched({
@@ -107,8 +110,27 @@ export function SignupPage() {
     }
 
     const email = values.email.trim()
-    saveFirstLoginFlowState({ email, fromSignup: true })
-    navigate('/first-login/verify-otp', { replace: true, state: { email, fromSignup: true } })
+
+    try {
+      await register({
+        firstName: values.firstName.trim(),
+        lastName: values.lastName.trim(),
+        email,
+        phone: values.phone.trim(),
+        password: values.password,
+        companyName: values.companyName.trim(),
+        termsAccepted: values.termsAccepted,
+      }).unwrap()
+
+      saveFirstLoginFlowState({ email, fromSignup: true })
+      navigate('/first-login/verify-otp', { replace: true, state: { email, fromSignup: true } })
+    } catch (err) {
+      showCustomToast({
+        type: 'error',
+        title: t('auth.signup.fixFieldsTitle'),
+        message: getRtkErrorMessage(err),
+      })
+    }
   }
 
   return (
@@ -117,7 +139,9 @@ export function SignupPage() {
         <SignupStepper activeStep="personal-info" />
 
         <form
-          onSubmit={handleSubmit}
+          onSubmit={(e) => {
+            void handleSubmit(e)
+          }}
           className="flex flex-col gap-6 rounded-[22px] bg-white p-4 shadow-[0px_8px_24px_2px_rgba(0,0,0,0.06)] sm:p-5"
         >
           <PersonalInformationSection
@@ -179,7 +203,7 @@ export function SignupPage() {
           </div>
 
           <div className="w-full">
-            <LoginButton type="submit" disabled={!canSubmit}>
+            <LoginButton type="submit" disabled={!canSubmit || isRegistering}>
               {t('auth.signup.submit')}
             </LoginButton>
           </div>

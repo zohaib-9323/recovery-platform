@@ -6,11 +6,12 @@ import {
   useRef,
   useState,
 } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 
 import {
   useRequestFirstLoginOtpMutation,
   useVerifyFirstLoginOtpMutation,
+  useVerifySignupOtpMutation,
 } from '@/app/services/recoveryApi'
 import { LoginButton } from '@/components/buttons'
 import { useI18n } from '@/i18n/useI18n'
@@ -76,8 +77,10 @@ export function FirstLoginVerifyOtpPage() {
   const [error, setError] = useState<string | null>(null)
   const [showSignupVerifiedPopup, setShowSignupVerifiedPopup] = useState(false)
   const inputRefs = useRef<Array<HTMLInputElement | null>>([])
-  const [verifyOtp, { isLoading: isVerifying }] = useVerifyFirstLoginOtpMutation()
+  const [verifyOtp, { isLoading: isVerifyingFirstLogin }] = useVerifyFirstLoginOtpMutation()
   const [requestOtp, { isLoading: isRequesting }] = useRequestFirstLoginOtpMutation()
+  const [verifySignupOtp, { isLoading: isVerifyingSignup }] = useVerifySignupOtpMutation()
+  const isVerifying = isVerifyingFirstLogin || isVerifyingSignup
 
   const flowState = useMemo(() => {
     const fromLocation = getStateFromLocation(location.state)
@@ -138,13 +141,10 @@ export function FirstLoginVerifyOtpPage() {
     // Signup's email-verification step ends here — there is no temporary
     // password to replace (the user already set their real password during
     // signup), so it skips `/first-login/setup-password` entirely and shows
-    // its own success popup instead. No signup-OTP backend endpoint exists
-    // yet (see RECOVERY-SIGNUP-TASKS.md), so this reuses the first-login
-    // mock's OTP check purely as a local UI stand-in — not tied to the
-    // first-login demo account or its `REACT_APP_FIRST_LOGIN_MOCK` flag.
+    // its own success popup instead.
     if (flowState.fromSignup) {
       try {
-        await mockVerifyFirstLoginOtp(otp)
+        await verifySignupOtp({ email: flowState.email, otp }).unwrap()
         clearFirstLoginFlowState()
         setShowSignupVerifiedPopup(true)
       } catch (err) {
@@ -179,9 +179,7 @@ export function FirstLoginVerifyOtpPage() {
     setError(null)
     try {
       // TEMPORARY (REACT_APP_FIRST_LOGIN_MOCK) — see `first-login-mock.ts`.
-      // Signup has no real resend-OTP endpoint yet either, so it always
-      // takes the local mock path regardless of the env flag.
-      if (flowState.fromSignup || isFirstLoginMockEnabled()) {
+      if (isFirstLoginMockEnabled()) {
         await mockRequestFirstLoginOtp()
       } else {
         await requestOtp({ email: flowState.email }).unwrap()
@@ -240,7 +238,17 @@ export function FirstLoginVerifyOtpPage() {
             <span className="text-xsmall font-normal text-lightBlackOne md:text-normal">
               {t('auth.firstLogin.otp.didNotReceive')}
             </span>
-            {timer > 0 ? (
+            {flowState.fromSignup ? (
+              // Signup has no resend-OTP endpoint — re-issuing the code requires
+              // re-submitting the full signup form (password included), which isn't
+              // safely retained across navigation. Point back to signup instead.
+              <Link
+                to="/signup"
+                className="text-sm font-bold text-primary underline underline-offset-1 sm:text-xsmall lg:text-normal"
+              >
+                {t('auth.signup.otp.restartSignup')}
+              </Link>
+            ) : timer > 0 ? (
               <span className="text-sm font-bold text-primary sm:text-xsmall lg:text-normal">
                 {formatTimer(timer)}
               </span>
