@@ -1,3 +1,4 @@
+import { CustomLoader } from '@/components/feedback/custom-loader'
 import { useI18n } from '@/i18n/useI18n'
 import { cn } from '@/lib/utils'
 import type { InboxAttachment, InboxShipmentRow } from '@/pages/(dashboard)/inbox/types'
@@ -23,6 +24,14 @@ export type InboxProcessedShipmentsTableProps = {
   className?: string
   /** Overrides the default fixed-height scroll wrapper (`max-h-[360px] overflow-auto`) — pass e.g. `''` for a full-height list that scrolls with its page instead. */
   scrollWrapperClassName?: string
+  /**
+   * Renders the loader in the table BODY, keeping the header row in place.
+   *
+   * Deliberately not an overlay: a translucent layer over the previous rows left
+   * stale results fully readable underneath, which reads as though they were the
+   * new ones. While this is true the caller's `rows` are not rendered at all.
+   */
+  isLoading?: boolean
 }
 
 export function InboxProcessedShipmentsTable({
@@ -32,9 +41,12 @@ export function InboxProcessedShipmentsTable({
   isViewDisabled,
   className,
   scrollWrapperClassName = 'max-h-[360px] overflow-auto',
+  isLoading = false,
 }: InboxProcessedShipmentsTableProps) {
   const { t } = useI18n()
-  if (rows.length === 0) {
+  // The empty state must not win over loading, or a search that is still in
+  // flight briefly claims there is nothing to show.
+  if (rows.length === 0 && !isLoading) {
     return <p className="text-base font-light text-blackFive">{t('inbox.processed.empty')}</p>
   }
 
@@ -59,54 +71,64 @@ export function InboxProcessedShipmentsTable({
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
-              <tr key={row.id} className="border-b border-bottomBorder">
-                <td className={cn('max-w-[280px] truncate', tdCell)} title={row.title}>
-                  {row.title}
+            {isLoading ? (
+              <tr>
+                <td colSpan={onViewShipment ? 5 : 4} className="px-3 py-16">
+                  <div className="flex items-center justify-center">
+                    <CustomLoader />
+                  </div>
                 </td>
-                <td className={tdCell}>{row.date}</td>
-                <td className={cn('max-w-[220px] truncate', tdCell)} title={row.c88?.name}>
-                  {row.c88 ? (
-                    <button
-                      type="button"
-                      className="max-w-full truncate text-left text-[#0B57D0] underline"
-                      onClick={() => onDownloadAttachment?.(row.c88!)}
-                    >
-                      {row.c88.name}
-                    </button>
-                  ) : (
-                    '-'
-                  )}
-                </td>
-                <td className={cn('max-w-[220px] truncate', tdCell)} title={row.po?.name}>
-                  {row.po ? (
-                    <button
-                      type="button"
-                      className="max-w-full truncate text-left text-[#0B57D0] underline"
-                      onClick={() => onDownloadAttachment?.(row.po!)}
-                    >
-                      {row.po.name}
-                    </button>
-                  ) : (
-                    '-'
-                  )}
-                </td>
-                {onViewShipment ? (
-                  <td className="px-3 py-3 text-right">
-                    <button
-                      type="button"
-                      onClick={() => onViewShipment(row)}
-                      disabled={isViewDisabled?.(row) ?? false}
-                      aria-label={t('inbox.processed.view')}
-                      title={t('inbox.processed.view')}
-                      className="ml-auto flex size-6 items-center justify-center rounded-full border border-bottomBorder bg-white transition disabled:opacity-50"
-                    >
-                      <span className="icon-open-eye text-[12px] text-black transition group-hover:text-yellow" />
-                    </button>
-                  </td>
-                ) : null}
               </tr>
-            ))}
+            ) : null}
+            {!isLoading &&
+              rows.map((row) => (
+                <tr key={row.id} className="border-b border-bottomBorder">
+                  <td className={cn('max-w-[280px] truncate', tdCell)} title={row.title}>
+                    {row.title}
+                  </td>
+                  <td className={tdCell}>{row.date}</td>
+                  <td className={cn('max-w-[220px] truncate', tdCell)} title={row.c88?.name}>
+                    {row.c88 ? (
+                      <button
+                        type="button"
+                        className="max-w-full truncate text-left text-[#0B57D0] underline"
+                        onClick={() => onDownloadAttachment?.(row.c88!)}
+                      >
+                        {row.c88.name}
+                      </button>
+                    ) : (
+                      '-'
+                    )}
+                  </td>
+                  <td className={cn('max-w-[220px] truncate', tdCell)} title={row.po?.name}>
+                    {row.po ? (
+                      <button
+                        type="button"
+                        className="max-w-full truncate text-left text-[#0B57D0] underline"
+                        onClick={() => onDownloadAttachment?.(row.po!)}
+                      >
+                        {row.po.name}
+                      </button>
+                    ) : (
+                      '-'
+                    )}
+                  </td>
+                  {onViewShipment ? (
+                    <td className="px-3 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => onViewShipment(row)}
+                        disabled={isViewDisabled?.(row) ?? false}
+                        aria-label={t('inbox.processed.view')}
+                        title={t('inbox.processed.view')}
+                        className="ml-auto flex size-6 items-center justify-center rounded-full border border-bottomBorder bg-white transition disabled:opacity-50"
+                      >
+                        <span className="icon-open-eye text-[12px] text-black transition group-hover:text-yellow" />
+                      </button>
+                    </td>
+                  ) : null}
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>

@@ -9,6 +9,12 @@ export type CrossImportShipmentSubmitPayload = {
   title: string
   ciRow: M365UnprocessedDocument
   c88Row: M365UnprocessedDocument
+  /**
+   * Optional packing list. A shipment is C88 + CI; a PL is a third document that
+   * only contributes fuller line-item descriptions, so `undefined` is the normal
+   * case and never an error.
+   */
+  plRow?: M365UnprocessedDocument
 }
 
 export type CrossImportCreateShipmentModalProps = {
@@ -45,6 +51,7 @@ export function CrossImportCreateShipmentModal({
   const titleInputId = useId()
   const ciSelectId = useId()
   const c88SelectId = useId()
+  const plSelectId = useId()
 
   // Rows whose bytes were never stored can't be re-read server-side, so they
   // are not offerable here — same rule as the per-job modal.
@@ -70,6 +77,10 @@ export function CrossImportCreateShipmentModal({
   // so a default captured in useState would be stuck on the empty list forever.
   const [ciChoice, setCiChoice] = useState<string | null>(null)
   const [c88Choice, setC88Choice] = useState<string | null>(null)
+  // The packing list is optional and never inferred: an empty string means "no
+  // packing list", which is the normal case, so there is no default to fall back
+  // to the way the two required sides have.
+  const [plId, setPlId] = useState<string>('')
   const ciId = ciChoice ?? defaults.ci
   const c88Id = c88Choice ?? defaults.c88
   const [formError, setFormError] = useState<string | null>(null)
@@ -108,8 +119,15 @@ export function CrossImportCreateShipmentModal({
       setFormError(t('inbox.createShipment.errorSelectBoth'))
       return
     }
+    // Optional: an unset or unresolvable pick means the shipment is created
+    // without a packing list, never a validation failure.
+    const plRow = plId === '' ? undefined : selectableRows.find((row) => row.id === plId)
+    if (plId !== '' && !plRow?.s3Key) {
+      setFormError(t('inbox.createShipment.errorSelectBoth'))
+      return
+    }
 
-    onSubmit({ title: trimmedTitle, ciRow, c88Row })
+    onSubmit({ title: trimmedTitle, ciRow, c88Row, plRow })
     onClose()
   }
 
@@ -200,6 +218,27 @@ export function CrossImportCreateShipmentModal({
                   disabled: row.id === ciId,
                 }))}
               />
+
+              {/* Optional third leg — no RequiredMark, and an explicit "none" option. */}
+              <DropdownField
+                id={plSelectId}
+                label={t('inbox.createShipment.plLabel')}
+                value={plId}
+                disabled={selectableRows.length === 0}
+                onChange={(e) => {
+                  setPlId(e.target.value)
+                  setFormError(null)
+                }}
+                placeholder={t('inbox.createShipment.plNone')}
+                options={selectableRows.map((row) => ({
+                  value: row.id,
+                  label: optionLabel(row),
+                  disabled: row.id === ciId || row.id === c88Id,
+                }))}
+              />
+              <p className="-mt-2 text-xs font-light text-blackFive">
+                {t('inbox.createShipment.plHint')}
+              </p>
 
               {isLoading ? (
                 <p className="text-sm text-blackFive">{t('common.loading')}</p>

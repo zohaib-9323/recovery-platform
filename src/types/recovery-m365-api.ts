@@ -331,6 +331,12 @@ export type M365CreateCrossImportShipmentBody = {
   ci: M365UnprocessedDocumentSelection
   /** The new shipment row is stored on this side's document. */
   c88: M365UnprocessedDocumentSelection
+  /**
+   * Optional packing list. Contributes fuller line-item descriptions only — it
+   * never affects quantities, prices or duty. Omit for the normal two-document
+   * shipment.
+   */
+  pl?: M365UnprocessedDocumentSelection
 }
 
 export type M365UnprocessedDocumentsEnvelope = RecoveryApiEnvelope<M365UnprocessedDocumentsContent>

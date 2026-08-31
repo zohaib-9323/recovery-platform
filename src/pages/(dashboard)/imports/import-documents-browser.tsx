@@ -7,6 +7,7 @@ import type { M365DocumentItem, M365EmailGroup } from '@/types/recovery-m365-api
 
 import { formatReceived, truncate } from './format-utils'
 import { countReportedSkips, ImportSkippedAttachments } from './import-skipped-attachments'
+import { documentTypeLabel } from '@/pages/(dashboard)/inbox/inbox-mappers'
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -242,7 +243,9 @@ function ImportDocumentsPanel({ jobId, group }: { jobId: string; group: M365Emai
                             )}
                           >
                             <span aria-hidden>&bull;</span>
-                            {item.unverified ? 'Needs review' : (item.classifiedType ?? s.label)}
+                            {item.unverified
+                              ? 'Needs review'
+                              : documentTypeLabel(item.classifiedType) || s.label}
                           </span>
                           {item.unverified && (
                             <p className="mt-1 max-w-[200px] text-xs font-light leading-[150%] text-blackFive">

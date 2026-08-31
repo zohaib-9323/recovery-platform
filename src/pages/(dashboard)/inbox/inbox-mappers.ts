@@ -93,6 +93,24 @@ const FAILURE_REASON_LABELS: Record<string, string> = {
  * — the cross-import Unprocessed Documents list, which flattens rows server-side —
  * show the same words for the same code instead of maintaining a second table.
  */
+/**
+ * How a document's type is written in the UI.
+ *
+ * The backend classifies a commercial invoice as `PO` — the same enum the main
+ * shipment pipeline has always used, where a purchase order and a commercial
+ * invoice are the same side of a pair. Users call that document a CI, and every
+ * other label in these screens already does ("CI missing", the CI picker in
+ * Create Shipment), so showing the raw `PO` here was the odd one out.
+ *
+ * Anything unrecognised is passed through untouched rather than mapped to a
+ * guess, so a new backend type shows up as itself instead of silently
+ * displaying as something it is not.
+ */
+export function documentTypeLabel(type?: string | null): string {
+  if (!type) return ''
+  return type.trim().toUpperCase() === 'PO' ? 'CI' : type
+}
+
 export function getUnprocessableStatusLabel(failureReasonCode?: string | null): string {
   return (failureReasonCode && FAILURE_REASON_LABELS[failureReasonCode]) || 'Failed'
 }
