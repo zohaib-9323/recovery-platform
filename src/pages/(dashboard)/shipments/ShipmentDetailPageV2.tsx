@@ -364,6 +364,15 @@ export function ShipmentDetailPageV2() {
       fileName: detail.poFilename ?? undefined,
     })
   }
+  // Optional third leg. Most shipments have no packing list, so this row simply
+  // does not render rather than showing an empty or disabled entry.
+  if (hasDocValue(detail.plS3Key) || hasDocValue(detail.plFilename)) {
+    shipmentDocuments.push({
+      type: 'pl',
+      label: 'Packing List Document',
+      fileName: detail.plFilename ?? undefined,
+    })
+  }
 
   return (
     <>

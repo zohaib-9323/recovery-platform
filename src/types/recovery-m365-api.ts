@@ -134,7 +134,7 @@ export type M365DocumentItem = {
   status: M365FetchedItemStatus
   failureDetail: string | null
   /** Document type resolved by the classifier; null when imported unverified. */
-  classifiedType: 'C88' | 'PO' | null
+  classifiedType: 'C88' | 'PO' | 'PL' | null
   /**
    * Imported WITHOUT its content being verified — an unreadable scan.
    * Kept deliberately (losing a scanned C88 is worse than importing a stray

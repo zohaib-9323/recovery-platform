@@ -199,6 +199,13 @@ export type RecoveryShipmentDetail = RecoveryShipmentRecord & {
   /** Recovery detail: PO stored in S3 — presence means a PO document exists. */
   poS3Key?: string | null
   poFilename?: string | null
+  // Optional packing list — the third leg of a shipment. Null/absent on every
+  // shipment paired without one, which is the common case.
+  plS3Key?: string | null
+  plBucket?: string | null
+  plFilename?: string | null
+  /** How many line descriptions actually came from the packing list. */
+  plDescriptionsApplied?: number | null
   poBucket?: string | null
   additionalDocuments?: string[]
   company?: RecoveryShipmentParty
@@ -264,7 +271,8 @@ export type RecoveryShipmentLogsQuery = {
 
 export type RecoveryShipmentLogsEnvelope = RecoveryApiEnvelope<RecoveryShipmentLogsContent>
 
-export type RecoveryShipmentDownloadFileType = 'c88' | 'po' | 'both'
+/** 'pl' is the optional packing list — present only on shipments paired with one. */
+export type RecoveryShipmentDownloadFileType = 'c88' | 'po' | 'pl' | 'both'
 
 export type RecoveryShipmentDownloadFile = {
   type: RecoveryShipmentDownloadFileType
