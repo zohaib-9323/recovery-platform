@@ -193,7 +193,7 @@ export function LoginPage() {
           </div>
         </form>
 
-        <div className="flex w-full flex-row items-center justify-center gap-1">
+        <div className="flex w-full flex-row items-center justify-start gap-1">
           <span className="text-xs font-normal text-greyThree sm:text-sm">
             {t('auth.login.noAccount')}
           </span>
