@@ -148,15 +148,20 @@ export function UnprocessedDocumentsPage() {
     [allData, pendingIdSet],
   )
 
-  const handleSubmit = ({ title, ciRow, c88Row }: CrossImportShipmentSubmitPayload) => {
+  const handleSubmit = ({ title, ciRow, c88Row, plRow }: CrossImportShipmentSubmitPayload) => {
     if (!ciRow.s3Key || !c88Row.s3Key) return
-    const pair = [ciRow.id, c88Row.id]
+    // The packing list, when picked, is marked pending alongside the pair so all
+    // three rows disappear from the list together rather than the PL lingering.
+    const pair = [ciRow.id, c88Row.id, ...(plRow?.s3Key ? [plRow.id] : [])]
     setPendingIds((prev) => [...prev, ...pair])
 
     createCrossImportShipment({
       title,
       ci: { documentId: ciRow.documentId, index: ciRow.index, s3Key: ciRow.s3Key },
       c88: { documentId: c88Row.documentId, index: c88Row.index, s3Key: c88Row.s3Key },
+      ...(plRow?.s3Key
+        ? { pl: { documentId: plRow.documentId, index: plRow.index, s3Key: plRow.s3Key } }
+        : {}),
     })
       .unwrap()
       .then(() => {

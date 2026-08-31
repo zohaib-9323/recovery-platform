@@ -2,6 +2,7 @@ import { RefreshCw } from 'lucide-react'
 
 import { useI18n } from '@/i18n/useI18n'
 import { cn } from '@/lib/utils'
+import { documentTypeLabel } from '@/pages/(dashboard)/inbox/inbox-mappers'
 import type { InboxUnprocessedShipmentRow } from '@/pages/(dashboard)/inbox/types'
 
 const thCell =
@@ -82,14 +83,20 @@ export function InboxUnprocessedShipmentsTable({
                             {row.status}
                           </span>
                         </td>
-                        <td className={cn('max-w-[140px] truncate', tdCell)} title={row.type}>
-                          {row.type}
+                        <td
+                          className={cn('max-w-[140px] truncate', tdCell)}
+                          title={documentTypeLabel(row.type)}
+                        >
+                          {documentTypeLabel(row.type)}
                         </td>
                       </>
                     ) : (
                       <>
-                        <td className={cn('max-w-[140px] truncate', tdCell)} title={row.type}>
-                          {row.type}
+                        <td
+                          className={cn('max-w-[140px] truncate', tdCell)}
+                          title={documentTypeLabel(row.type)}
+                        >
+                          {documentTypeLabel(row.type)}
                         </td>
                         <td className="px-3 py-3">
                           <span

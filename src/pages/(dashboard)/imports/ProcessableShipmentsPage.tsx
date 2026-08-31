@@ -135,7 +135,24 @@ export function ProcessableShipmentsPage() {
     { refetchOnMountOrArgChange: true },
   )
 
-  const content = data?.content
+  /**
+   * Retain the last loaded page of results.
+   *
+   * RTK Query keys its cache by args, so typing in the search box creates a NEW
+   * cache entry and `data` goes `undefined` until it resolves. Rendering
+   * straight off `data` therefore tore the whole section down on every
+   * keystroke. Keeping the previous content means the table stays on screen and
+   * only its own in-place indicator moves.
+   */
+  type ProcessableContent = NonNullable<typeof data>['content']
+  const lastContentRef = useRef<ProcessableContent | undefined>(undefined)
+  if (data?.content) {
+    lastContentRef.current = data.content
+  }
+
+  const content = data?.content ?? lastContentRef.current
+  /** True only before anything has ever rendered — the one case for a full-section loader. */
+  const isInitialLoad = !content && (isFetching || isShipmentsFetching)
   const rows = useMemo(() => content?.items ?? [], [content])
   const importJobs = content?.importJobs ?? []
   const total = content?.total ?? 0
@@ -269,7 +286,7 @@ export function ProcessableShipmentsPage() {
         </select>
       </div>
 
-      {isFetching || isShipmentsFetching ? (
+      {isInitialLoad ? (
         <div className="flex flex-1 items-center justify-center py-10">
           <CustomLoader />
         </div>
@@ -277,7 +294,7 @@ export function ProcessableShipmentsPage() {
         <>
           {isError ? (
             <p className="text-sm text-redOne">{t('imports.processable.loadError')}</p>
-          ) : rows.length === 0 ? (
+          ) : rows.length === 0 && !isFetching ? (
             <div className="flex items-center justify-center py-10">
               {isFiltered ? (
                 <ImportActionCard
@@ -298,8 +315,16 @@ export function ProcessableShipmentsPage() {
               )}
             </div>
           ) : (
-            <>
+            <div>
+              {/*
+                The loader lives INSIDE the table body (see `isLoading` on
+                InboxProcessedShipmentsTable), so the header row stays put and
+                the previous results are not left readable underneath a
+                translucent layer. The shipments list below is a separate query
+                that search does not affect, so it is untouched either way.
+              */}
               <InboxProcessedShipmentsTable
+                isLoading={isFetching}
                 rows={documentRows}
                 onDownloadAttachment={handleDownloadAttachment}
                 onViewShipment={(row) => {
@@ -321,7 +346,7 @@ export function ProcessableShipmentsPage() {
                   onPageChange={setPage}
                 />
               ) : null}
-            </>
+            </div>
           )}
 
           <div className="mt-2 flex items-center justify-between gap-3">
