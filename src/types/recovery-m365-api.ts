@@ -46,6 +46,8 @@ export type M365ImportJobStatus =
   | 'queued'
   | 'running'
   | 'retrying'
+  /** Emails all fetched; the AI pairing pass that creates shipments is still running. */
+  | 'pairing'
   | 'completed'
   | 'completed_with_errors'
   | 'failed'
