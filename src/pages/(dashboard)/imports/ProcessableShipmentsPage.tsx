@@ -22,7 +22,7 @@ import type {
 
 import { ImportActionCard, NoImportsIcon } from './import-action-card'
 
-const DOCUMENTS_PAGE_SIZE = 10
+const DOCUMENTS_PAGE_SIZE = 6
 const SHIPMENTS_PAGE_SIZE = 10
 const SEARCH_DEBOUNCE_MS = 300
 
@@ -309,6 +309,9 @@ export function ProcessableShipmentsPage() {
                   }
                 }}
                 isViewDisabled={(row) => !shipmentIdByRow.get(row.id)}
+                // Page size is capped to DOCUMENTS_PAGE_SIZE (6), so the inner
+                // scrollbox is unnecessary — let the page itself scroll instead.
+                scrollWrapperClassName="w-full overflow-x-auto"
               />
 
               {totalPages > 1 ? (
