@@ -68,4 +68,13 @@ describe('ManageUsersPage', () => {
     expect(screen.getByText('Jane Doe')).toBeInTheDocument()
     expect(screen.getByText('jane@acmecorp.com')).toBeInTheDocument()
   })
+
+  it('shows the shared loader instead of the list while fetching', () => {
+    mockListCompanyUsers.mockReturnValue({ data: undefined, isFetching: true })
+    const { container } = renderPage('recovery_company_owner')
+
+    expect(container.querySelector('.customLoader')).toBeInTheDocument()
+    expect(screen.queryByText('Jane Doe')).not.toBeInTheDocument()
+    expect(screen.queryByText('No users available')).not.toBeInTheDocument()
+  })
 })
