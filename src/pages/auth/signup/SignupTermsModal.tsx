@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 
 import { CheckboxField } from '@/components/fields'
@@ -12,31 +13,32 @@ type SignupTermsModalProps = {
 }
 
 /**
- * Full-screen "Terms of Use" reader — same content as trade-harmonizer's
- * `TermsModal` (`src/app/_components/terms-modal/index.tsx`), since Recovery
- * Platform is powered by/operated under Trade Harmonizer (see the
- * `AuthLayout` "Powered by Trade Harmonizer" footer). Only the styling
- * tokens are adapted to this repo's `cn()`/Tailwind config; the scroll-to-
- * accept UX and the legal text itself (`SignupTermsContent`) are unchanged.
+ * Full-screen "Terms of Use" reader — same content and scroll-to-accept UX as
+ * trade-harmonizer's `TermsModal` (`src/app/_components/terms-modal/index.tsx`).
+ *
+ * ## Why this is a portal, and why it must stay one
+ *
+ * Opening this modal used to shove the signup form up by half a screen, and
+ * closing it left the form there. Rendered inline, the overlay is a DOM child
+ * of the element that scrolls the signup page, so mounting it moved that
+ * element's scroll position. Three separate attempts to compensate from the
+ * outside (locking `document.body`, locking the page's own root, reworking the
+ * page shell) all failed, because they treated the symptom.
+ *
+ * Rendering into `document.body` removes the cause: the overlay is no longer
+ * inside any scroll container, so mounting and unmounting it cannot move one.
+ * `overscroll-contain` on both the backdrop and the terms panel then stops a
+ * wheel gesture from chaining into the page once the panel hits its scroll end
+ * — which it does every time, because accepting requires scrolling to the
+ * bottom.
+ *
+ * `SignupPage.test.tsx` asserts the portal and the absence of a scroll
+ * container on the page. Do not render this inline.
  */
 export function SignupTermsModal({ open, onAccept, onClose }: SignupTermsModalProps) {
   const { t } = useI18n()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false)
-
-  // The modal is `fixed inset-0`, which does NOT stop the page behind it
-  // from scrolling (e.g. trackpad momentum while the cursor sits over the
-  // overlay). Without this lock, the background scrolls out from under the
-  // modal, and closing it leaves that stray scroll position behind — the
-  // form appears to jump, framed by blank space above/below.
-  useEffect(() => {
-    if (!open) return undefined
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = previousOverflow
-    }
-  }, [open])
 
   if (!open) return null
 
@@ -58,9 +60,14 @@ export function SignupTermsModal({ open, onAccept, onClose }: SignupTermsModalPr
     onAccept()
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="relative flex h-[85vh] w-full max-w-2xl flex-col rounded-2xl bg-white shadow-2xl">
+  const overlay = (
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden overscroll-contain bg-black/50 px-4">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('auth.signup.terms.modalTitle')}
+        className="relative flex h-[85vh] w-full max-w-2xl flex-col rounded-2xl bg-white shadow-2xl"
+      >
         <div className="flex shrink-0 items-center justify-between rounded-t-[20px] border-b border-t border-inputBorder bg-grey px-6 py-4">
           <h2 className="text-base font-bold text-black sm:text-lg">
             {t('auth.signup.terms.modalTitle')}
@@ -78,7 +85,7 @@ export function SignupTermsModal({ open, onAccept, onClose }: SignupTermsModalPr
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="flex-1 overflow-y-auto px-6 py-4 text-xs leading-relaxed text-lightBlackOne sm:text-sm"
+          className="flex-1 overflow-y-auto overscroll-contain px-6 py-4 text-xs leading-relaxed text-lightBlackOne sm:text-sm"
         >
           <SignupTermsContent />
         </div>
@@ -102,4 +109,6 @@ export function SignupTermsModal({ open, onAccept, onClose }: SignupTermsModalPr
       </div>
     </div>
   )
+
+  return createPortal(overlay, document.body)
 }

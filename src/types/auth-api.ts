@@ -59,6 +59,20 @@ export type RegisterRecoveryUserBody = {
   companyName: string
   tenant?: string
   termsAccepted: boolean
+  /**
+   * "Company Details" section. Optional on the wire — the backend DTO keeps
+   * them optional so it does not reject callers that predate them — but the
+   * signup form requires all except website, address2 and status.
+   */
+  companyEmail?: string
+  companyWebsite?: string
+  address1?: string
+  address2?: string
+  country?: string
+  city?: string
+  postalCode?: string
+  companyPhone?: string
+  status?: 'active' | 'inactive'
 }
 
 export type RegisterRecoveryUserContent = {

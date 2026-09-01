@@ -1,25 +1,24 @@
-/**
- * Recovery signup form fields.
- *
- * Deliberately the same set trade-harmonizer's registration collects
- * (`(auth)/(signup)/registration/personal-information.tsx`) — first/last name,
- * email, phone, company name, password, confirm password, terms — because the
- * Recovery journey is that journey minus the subscription/payment step.
- *
- * Every field here is sent to `POST /recovery/auth/register`. Do not add a
- * field without a matching property on `RegisterRecoveryUserDto`: this form
- * previously collected a full company address block that the endpoint had no
- * way to accept, so the values blocked submission and were then discarded.
- */
+export type SignupCompanyStatus = 'active' | 'inactive'
+
 export type SignupFormValues = {
   firstName: string
   lastName: string
   email: string
   phoneCode: string
   phone: string
+  companyEmail: string
   password: string
   confirmPassword: string
   companyName: string
+  companyWebsite: string
+  address1: string
+  address2: string
+  country: string
+  city: string
+  postalCode: string
+  companyPhoneCode: string
+  companyPhone: string
+  status: SignupCompanyStatus
   termsAccepted: boolean
 }
 
@@ -29,9 +28,19 @@ export const EMPTY_SIGNUP_FORM: SignupFormValues = {
   email: '',
   phoneCode: '',
   phone: '',
+  companyEmail: '',
   password: '',
   confirmPassword: '',
   companyName: '',
+  companyWebsite: '',
+  address1: '',
+  address2: '',
+  country: '',
+  city: '',
+  postalCode: '',
+  companyPhoneCode: '',
+  companyPhone: '',
+  status: 'active',
   termsAccepted: false,
 }
 

@@ -1,28 +1,52 @@
-import { type FormEvent, useMemo, useState } from 'react'
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowUpRight } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { useRegisterMutation } from '@/app/services/recoveryApi'
-import { CheckboxField } from '@/components/fields'
 import { LoginButton } from '@/components/buttons'
+import { CheckboxField } from '@/components/fields'
 import { useI18n } from '@/i18n/useI18n'
-import { isValidEmail, isValidPassword } from '@/lib/validation'
 import { getRtkErrorMessage } from '@/lib/api-errors'
+import { findScrollableAncestor } from '@/lib/scrollable-ancestor'
 import { showCustomToast } from '@/lib/showCustomToast'
-import { env } from '@/utils/env'
 import { extractSubdomainFromHostname } from '@/lib/tenantTheme'
+import { isValidEmail, isValidPassword } from '@/lib/validation'
 import { saveFirstLoginFlowState } from '@/pages/auth/first-login-flow'
+import { SignupStepper } from '@/pages/auth/signup/SignupStepper'
+import { SignupTermsModal } from '@/pages/auth/signup/SignupTermsModal'
 import { CompanyDetailsSection } from '@/pages/auth/signup/components/CompanyDetailsSection'
 import { CreatePasswordSection } from '@/pages/auth/signup/components/CreatePasswordSection'
 import { PersonalInformationSection } from '@/pages/auth/signup/components/PersonalInformationSection'
-import { SignupStepper } from '@/pages/auth/signup/SignupStepper'
-import { SignupTermsModal } from '@/pages/auth/signup/SignupTermsModal'
 import {
   EMPTY_SIGNUP_FORM,
   type SignupFieldName,
   type SignupFormValues,
 } from '@/pages/auth/signup/signup-types'
+import { env } from '@/utils/env'
 
+/**
+ * Recovery self-signup — trade-harmonizer's registration journey
+ * (`(auth)/(signup)/registration/`) minus the subscription/payment step.
+ *
+ * ## Two structural rules, both load-bearing
+ *
+ * 1. **This page owns no scroll container.** `AuthLayout`'s signup shell has
+ *    the single `overflow-y-auto`, exactly as trade-harmonizer's
+ *    `(auth)/(signup)/layout.tsx` does. A nested scroller here previously split
+ *    the scrolling between two elements and put the top of a long form out of
+ *    reach.
+ * 2. **The terms modal is portalled to `document.body`** (see
+ *    `SignupTermsModal`). Rendered inline it is a child of whatever scrolls
+ *    this page, and mounting it moved that scroll position.
+ *
+ * `SignupPage.test.tsx` asserts both. Breaking either brings back a bug that
+ * took four attempts to pin down.
+ *
+ * Every field collected here is sent to `POST /recovery/auth/register`; the
+ * backend DTO declares all of them. Do not add a field without adding it to
+ * `RegisterRecoveryUserDto` — the API runs with `forbidNonWhitelisted`, so an
+ * undeclared property fails the whole request rather than being ignored.
+ */
 export function SignupPage() {
   const { t } = useI18n()
   const navigate = useNavigate()
@@ -34,6 +58,45 @@ export function SignupPage() {
   const [isTermsOpen, setIsTermsOpen] = useState(false)
   const [showTermsError, setShowTermsError] = useState(false)
   const [register, { isLoading: isRegistering }] = useRegisterMutation()
+  const rootRef = useRef<HTMLDivElement>(null)
+
+  // Pin the form's scroll position for as long as the terms modal is open.
+  //
+  // The background moving when the modal opened survived four attempts at
+  // finding the mechanism (a body lock, a page-root lock, a shell rewrite, and
+  // portalling the overlay out of the scroller). Rather than keep guessing at
+  // the cause, this enforces the invariant directly: whatever tries to move the
+  // scroller — focus, scroll anchoring, chaining, a layout pass — is undone on
+  // the same frame. A modal should not let the page behind it move anyway.
+  //
+  // Which element scrolls this page is a layout detail that has already moved
+  // twice, so resolve it at runtime rather than assuming document.body, which
+  // does not scroll at all under the auth shell.
+  useEffect(() => {
+    if (!isTermsOpen) return undefined
+    const scroller = findScrollableAncestor(rootRef.current)
+    if (!scroller) return undefined
+
+    const pinnedAt = scroller.scrollTop
+    const hold = () => {
+      if (scroller.scrollTop !== pinnedAt) {
+        scroller.scrollTop = pinnedAt
+      }
+    }
+
+    scroller.addEventListener('scroll', hold)
+    // Catch a jump that happens during the same frame the modal mounts, which
+    // fires no scroll event of its own.
+    const frame = requestAnimationFrame(hold)
+
+    return () => {
+      cancelAnimationFrame(frame)
+      scroller.removeEventListener('scroll', hold)
+      requestAnimationFrame(() => {
+        scroller.scrollTop = pinnedAt
+      })
+    }
+  }, [isTermsOpen])
 
   const setField: <K extends SignupFieldName>(field: K, value: SignupFormValues[K]) => void = (
     field,
@@ -63,29 +126,48 @@ export function SignupPage() {
     values.email.length > 0 && !isValidEmail(values.email)
       ? t('auth.login.enterValidEmail')
       : undefined
+  const companyEmailError =
+    values.companyEmail.length > 0 && !isValidEmail(values.companyEmail)
+      ? t('auth.login.enterValidEmail')
+      : undefined
+
+  /** Every field that blocks submission. `REQUIRED_FIELDS` mirrors it exactly. */
   const canSubmit =
     values.firstName.trim().length > 0 &&
     values.lastName.trim().length > 0 &&
     isValidEmail(values.email) &&
     values.phone.trim().length > 0 &&
+    isValidEmail(values.companyEmail) &&
     isValidPassword(values.password) &&
     passwordsMatch &&
     values.companyName.trim().length > 0 &&
+    values.address1.trim().length > 0 &&
+    values.country.trim().length > 0 &&
+    values.city.trim().length > 0 &&
+    values.postalCode.trim().length > 0 &&
+    values.companyPhone.trim().length > 0 &&
     values.termsAccepted
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
 
-    // Must stay in step with `canSubmit` — a field that blocks submission
-    // without being marked touched shows no error and dead-ends the form.
+    // Must stay in step with `canSubmit`. A field that blocks submission
+    // without being marked touched shows no error, so the form silently
+    // refuses with nothing indicating which field is at fault.
     setTouched({
       firstName: true,
       lastName: true,
       email: true,
       phone: true,
+      companyEmail: true,
       password: true,
       confirmPassword: true,
       companyName: true,
+      address1: true,
+      country: true,
+      city: true,
+      postalCode: true,
+      companyPhone: true,
     })
     setShowTermsError(!values.termsAccepted)
 
@@ -100,8 +182,10 @@ export function SignupPage() {
 
     const email = values.email.trim()
     const phone = values.phone.trim()
-    // Same shape trade-harmonizer sends: dial code and number as one string.
+    const companyPhone = values.companyPhone.trim()
+    // trade-harmonizer sends the dial code and number as one string.
     const phoneWithCode = phone ? `${values.phoneCode}${phone}` : ''
+    const companyPhoneWithCode = companyPhone ? `${values.companyPhoneCode}${companyPhone}` : ''
     // White-label signups must carry their subdomain, or the account is never
     // linked to the tenant and RecoveryTenant.userCount never increments.
     const tenant =
@@ -118,6 +202,15 @@ export function SignupPage() {
         password: values.password,
         companyName: values.companyName.trim(),
         termsAccepted: values.termsAccepted,
+        companyEmail: values.companyEmail.trim(),
+        companyWebsite: values.companyWebsite.trim(),
+        address1: values.address1.trim(),
+        address2: values.address2.trim(),
+        country: values.country.trim(),
+        city: values.city.trim(),
+        postalCode: values.postalCode.trim(),
+        companyPhone: companyPhoneWithCode,
+        status: values.status,
         ...(tenant ? { tenant } : {}),
       }).unwrap()
 
@@ -133,7 +226,8 @@ export function SignupPage() {
   }
 
   return (
-    <div className="h-full w-full overflow-y-auto px-5 py-6 sm:px-7 md:px-10">
+    // No `overflow-*` here on purpose — see rule 1 in the block comment above.
+    <div ref={rootRef} className="w-full px-5 py-6 sm:px-7 md:px-10">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
         <SignupStepper activeStep="personal-info" />
 
@@ -149,6 +243,7 @@ export function SignupPage() {
             touched={touched}
             markTouched={markTouched}
             emailError={emailError}
+            companyEmailError={companyEmailError}
           />
 
           <CreatePasswordSection
@@ -202,7 +297,7 @@ export function SignupPage() {
 
           <div className="w-full">
             <LoginButton type="submit" disabled={!canSubmit || isRegistering}>
-              {t('auth.signup.submit')}
+              {isRegistering ? t('auth.signup.submitting') : t('auth.signup.submit')}
             </LoginButton>
           </div>
 
