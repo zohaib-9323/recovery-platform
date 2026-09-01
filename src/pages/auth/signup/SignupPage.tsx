@@ -11,8 +11,13 @@ import { findScrollableAncestor } from '@/lib/scrollable-ancestor'
 import { showCustomToast } from '@/lib/showCustomToast'
 import { extractSubdomainFromHostname } from '@/lib/tenantTheme'
 import { isValidEmail, isValidPassword } from '@/lib/validation'
-import { saveFirstLoginFlowState } from '@/pages/auth/first-login-flow'
-import { SignupStepper } from '@/pages/auth/signup/SignupStepper'
+import {
+  OtpVerificationForm,
+  type OtpVerifiedResult,
+} from '@/pages/auth/components/OtpVerificationForm'
+import { PasswordSuccessPopup } from '@/pages/auth/components/PasswordSuccessPopup'
+import { clearFirstLoginFlowState, saveFirstLoginFlowState } from '@/pages/auth/first-login-flow'
+import { SignupStepper, type SignupStep } from '@/pages/auth/signup/SignupStepper'
 import { SignupTermsModal } from '@/pages/auth/signup/SignupTermsModal'
 import { CompanyDetailsSection } from '@/pages/auth/signup/components/CompanyDetailsSection'
 import { CreatePasswordSection } from '@/pages/auth/signup/components/CreatePasswordSection'
@@ -50,6 +55,13 @@ import { env } from '@/utils/env'
 export function SignupPage() {
   const { t } = useI18n()
   const navigate = useNavigate()
+
+  // Always starts on step 1 — a leftover `fromSignup` flow state from a
+  // previous, possibly abandoned signup attempt must never hijack a fresh
+  // visit to /signup into the OTP step.
+  const [step, setStep] = useState<SignupStep>('personal-info')
+  const [otpEmail, setOtpEmail] = useState('')
+  const [showSignupVerifiedPopup, setShowSignupVerifiedPopup] = useState(false)
 
   const [values, setValues] = useState<SignupFormValues>(EMPTY_SIGNUP_FORM)
   const [touched, setTouched] = useState<Partial<Record<SignupFieldName, boolean>>>({})
@@ -215,7 +227,8 @@ export function SignupPage() {
       }).unwrap()
 
       saveFirstLoginFlowState({ email, fromSignup: true })
-      navigate('/first-login/verify-otp', { replace: true, state: { email, fromSignup: true } })
+      setOtpEmail(email)
+      setStep('email-verification')
     } catch (err) {
       showCustomToast({
         type: 'error',
@@ -225,95 +238,121 @@ export function SignupPage() {
     }
   }
 
+  const handleRestartSignup = () => {
+    clearFirstLoginFlowState()
+    setValues(EMPTY_SIGNUP_FORM)
+    setTouched({})
+    setShowTermsError(false)
+    setOtpEmail('')
+    setStep('personal-info')
+  }
+
+  const handleOtpVerified = (result: OtpVerifiedResult) => {
+    if (!result.fromSignup) return
+    clearFirstLoginFlowState()
+    setShowSignupVerifiedPopup(true)
+  }
+
   return (
     // No `overflow-*` here on purpose — see rule 1 in the block comment above.
     <div ref={rootRef} className="w-full px-5 py-6 sm:px-7 md:px-10">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
-        <SignupStepper activeStep="personal-info" />
+        <SignupStepper activeStep={step} />
 
-        <form
-          onSubmit={(e) => {
-            void handleSubmit(e)
-          }}
-          className="flex flex-col gap-6 rounded-[22px] bg-white p-4 shadow-[0px_8px_24px_2px_rgba(0,0,0,0.06)] sm:p-5"
-        >
-          <PersonalInformationSection
-            values={values}
-            setField={setField}
-            touched={touched}
-            markTouched={markTouched}
-            emailError={emailError}
-            companyEmailError={companyEmailError}
-          />
+        {step === 'email-verification' ? (
+          <div className="flex flex-col gap-2 rounded-[22px] bg-white p-4 shadow-[0px_8px_24px_2px_rgba(0,0,0,0.06)] sm:p-5">
+            <OtpVerificationForm
+              email={otpEmail}
+              fromSignup
+              onVerified={handleOtpVerified}
+              onRestartSignup={handleRestartSignup}
+            />
+          </div>
+        ) : (
+          <form
+            onSubmit={(e) => {
+              void handleSubmit(e)
+            }}
+            className="flex flex-col gap-6 rounded-[22px] bg-white p-4 shadow-[0px_8px_24px_2px_rgba(0,0,0,0.06)] sm:p-5"
+          >
+            <PersonalInformationSection
+              values={values}
+              setField={setField}
+              touched={touched}
+              markTouched={markTouched}
+              emailError={emailError}
+              companyEmailError={companyEmailError}
+            />
 
-          <CreatePasswordSection
-            values={values}
-            setField={setField}
-            touched={touched}
-            markTouched={markTouched}
-            checks={checks}
-            passwordsMatch={passwordsMatch}
-            showPassword={showPassword}
-            onTogglePassword={() => setShowPassword((prev) => !prev)}
-            showConfirmPassword={showConfirmPassword}
-            onToggleConfirmPassword={() => setShowConfirmPassword((prev) => !prev)}
-          />
+            <CreatePasswordSection
+              values={values}
+              setField={setField}
+              touched={touched}
+              markTouched={markTouched}
+              checks={checks}
+              passwordsMatch={passwordsMatch}
+              showPassword={showPassword}
+              onTogglePassword={() => setShowPassword((prev) => !prev)}
+              showConfirmPassword={showConfirmPassword}
+              onToggleConfirmPassword={() => setShowConfirmPassword((prev) => !prev)}
+            />
 
-          <CompanyDetailsSection
-            values={values}
-            setField={setField}
-            touched={touched}
-            markTouched={markTouched}
-          />
+            <CompanyDetailsSection
+              values={values}
+              setField={setField}
+              touched={touched}
+              markTouched={markTouched}
+            />
 
-          <div className="flex flex-col gap-1">
-            <div className="flex flex-row items-center gap-3">
-              <CheckboxField
-                id="signup-terms"
-                checked={values.termsAccepted}
-                onChange={() => {
-                  if (values.termsAccepted) {
-                    setField('termsAccepted', false)
-                  } else {
-                    setIsTermsOpen(true)
-                  }
-                }}
-              />
-              <p className="text-xs text-lightBlackOne sm:text-sm">
-                {t('auth.signup.termsPrefix')}{' '}
-                <button
-                  type="button"
-                  onClick={() => setIsTermsOpen(true)}
-                  className="font-semibold text-primary underline underline-offset-2 hover:opacity-80"
-                >
-                  {t('auth.signup.termsLink')}
-                </button>
-              </p>
+            <div className="flex flex-col gap-1">
+              <div className="flex flex-row items-center gap-3">
+                <CheckboxField
+                  id="signup-terms"
+                  checked={values.termsAccepted}
+                  onChange={() => {
+                    if (values.termsAccepted) {
+                      setField('termsAccepted', false)
+                    } else {
+                      setIsTermsOpen(true)
+                    }
+                  }}
+                />
+                <p className="text-xs text-lightBlackOne sm:text-sm">
+                  {t('auth.signup.termsPrefix')}{' '}
+                  <button
+                    type="button"
+                    onClick={() => setIsTermsOpen(true)}
+                    className="font-semibold text-primary underline underline-offset-2 hover:opacity-80"
+                  >
+                    {t('auth.signup.termsLink')}
+                  </button>
+                </p>
+              </div>
+              {showTermsError && !values.termsAccepted ? (
+                <p className="text-xs text-red-500">{t('auth.signup.termsRequired')}</p>
+              ) : null}
             </div>
-            {showTermsError && !values.termsAccepted ? (
-              <p className="text-xs text-red-500">{t('auth.signup.termsRequired')}</p>
-            ) : null}
-          </div>
 
-          <div className="w-full">
-            <LoginButton type="submit" disabled={!canSubmit || isRegistering}>
-              {isRegistering ? t('auth.signup.submitting') : t('auth.signup.submit')}
-            </LoginButton>
-          </div>
+            <div className="w-full">
+              <LoginButton type="submit" disabled={!canSubmit || isRegistering}>
+                {isRegistering ? t('auth.signup.submitting') : t('auth.signup.submit')}
+              </LoginButton>
+            </div>
 
-          <div className="flex w-full flex-row items-center justify-center gap-1">
-            <span className="text-xs font-normal text-greyThree sm:text-sm">
-              {t('auth.signup.alreadyHaveAccount')}
-            </span>
-            <Link
-              to="/login"
-              className="flex flex-row items-center text-xs font-normal text-black sm:text-sm"
-            >
-              {t('auth.signup.loginLink')}
-              <ArrowUpRight className="h-5 w-5 text-black" strokeWidth={2} />
-            </Link>
-          </div>
-        </form>
+            <div className="flex w-full flex-row items-center justify-center gap-1">
+              <span className="text-xs font-normal text-greyThree sm:text-sm">
+                {t('auth.signup.alreadyHaveAccount')}
+              </span>
+              <Link
+                to="/login"
+                className="flex flex-row items-center text-xs font-normal text-black sm:text-sm"
+              >
+                {t('auth.signup.loginLink')}
+                <ArrowUpRight className="h-5 w-5 text-black" strokeWidth={2} />
+              </Link>
+            </div>
+          </form>
+        )}
       </div>
 
       <SignupTermsModal
@@ -325,6 +364,15 @@ export function SignupPage() {
         }}
         onClose={() => setIsTermsOpen(false)}
       />
+
+      {showSignupVerifiedPopup ? (
+        <PasswordSuccessPopup
+          title={t('auth.signup.otp.successTitle')}
+          description={t('auth.signup.otp.successDescription')}
+          actionLabel={t('auth.signup.otp.successAction')}
+          onAction={() => navigate('/login', { replace: true })}
+        />
+      ) : null}
     </div>
   )
 }

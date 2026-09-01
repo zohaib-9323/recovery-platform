@@ -6,9 +6,15 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { SignupPage } from './SignupPage'
 
 const mockRegister = jest.fn()
+const mockVerifySignupOtp = jest.fn()
+const mockVerifyFirstLoginOtp = jest.fn()
+const mockRequestFirstLoginOtp = jest.fn()
 
 jest.mock('@/app/services/recoveryApi', () => ({
   useRegisterMutation: () => [mockRegister, { isLoading: false }],
+  useVerifySignupOtpMutation: () => [mockVerifySignupOtp, { isLoading: false }],
+  useVerifyFirstLoginOtpMutation: () => [mockVerifyFirstLoginOtp, { isLoading: false }],
+  useRequestFirstLoginOtpMutation: () => [mockRequestFirstLoginOtp, { isLoading: false }],
 }))
 
 // CountryDropdown/CityDropdown are react-select components backed by a
@@ -86,6 +92,10 @@ function acceptTerms() {
 describe('SignupPage', () => {
   beforeEach(() => {
     mockRegister.mockReset()
+    mockVerifySignupOtp.mockReset()
+    mockVerifyFirstLoginOtp.mockReset()
+    mockRequestFirstLoginOtp.mockReset()
+    sessionStorage.clear()
   })
 
   describe('structure — these two rules are what keep the form from jumping', () => {
@@ -133,7 +143,10 @@ describe('SignupPage', () => {
       fillValidForm()
       fireEvent.click(screen.getByRole('button', { name: 'Proceed' }))
 
-      expect(await screen.findByText('Verify OTP Route')).toBeInTheDocument()
+      // The OTP step now renders in place on the same /signup screen instead
+      // of navigating to /first-login/verify-otp.
+      expect(await screen.findAllByLabelText(/code \d/i)).toHaveLength(6)
+      expect(screen.queryByText('Verify OTP Route')).not.toBeInTheDocument()
       expect(mockRegister).toHaveBeenCalledWith(
         expect.objectContaining({
           firstName: 'Jane',
@@ -176,7 +189,7 @@ describe('SignupPage', () => {
       expect(mockRegister.mock.calls[0][0].phone).toMatch(/5551234567$/)
     })
 
-    it('does not navigate when registration fails', async () => {
+    it('does not advance to the OTP step when registration fails', async () => {
       mockRegister.mockReturnValue({
         unwrap: jest.fn().mockRejectedValue({ data: { message: 'Email already registered' } }),
       })
@@ -186,7 +199,53 @@ describe('SignupPage', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Proceed' }))
 
       await Promise.resolve()
-      expect(screen.queryByText('Verify OTP Route')).not.toBeInTheDocument()
+      expect(screen.queryByLabelText(/code \d/i)).not.toBeInTheDocument()
+      expect(screen.getByLabelText('First Name')).toBeInTheDocument()
+    })
+  })
+
+  describe('email-verification step', () => {
+    async function registerAndReachOtpStep() {
+      mockRegister.mockReturnValue({ unwrap: jest.fn().mockResolvedValue({ status: true }) })
+      renderSignup()
+      fillValidForm()
+      fireEvent.click(screen.getByRole('button', { name: 'Proceed' }))
+      await screen.findAllByLabelText(/code \d/i)
+    }
+
+    it('renders the OTP step in place, without navigating away from /signup', async () => {
+      await registerAndReachOtpStep()
+
+      // No separate route for the OTP step — the signup form's fields are
+      // gone and the OTP digit grid takes their place on the same screen.
+      expect(screen.queryByLabelText('First Name')).not.toBeInTheDocument()
+      expect(screen.getAllByLabelText(/code \d/i)).toHaveLength(6)
+    })
+
+    it('verifies via verifySignupOtp and shows the success popup', async () => {
+      mockVerifySignupOtp.mockReturnValue({ unwrap: jest.fn().mockResolvedValue({ status: true }) })
+      await registerAndReachOtpStep()
+
+      const digitInputs = screen.getAllByLabelText(/code \d/i)
+      '123456'.split('').forEach((digit, i) => {
+        fireEvent.change(digitInputs[i], { target: { value: digit } })
+      })
+      fireEvent.click(screen.getByRole('button', { name: /verify/i }))
+
+      expect(await screen.findByText('Email Verified Successfully!')).toBeInTheDocument()
+      expect(mockVerifySignupOtp).toHaveBeenCalledWith({
+        email: 'jane@acmecorp.com',
+        otp: '123456',
+      })
+    })
+
+    it('restart signup returns to the personal-info step', async () => {
+      await registerAndReachOtpStep()
+
+      fireEvent.click(screen.getByRole('button', { name: 'Restart signup' }))
+
+      expect(screen.getByLabelText('First Name')).toBeInTheDocument()
+      expect(screen.queryByLabelText(/code \d/i)).not.toBeInTheDocument()
     })
   })
 })
