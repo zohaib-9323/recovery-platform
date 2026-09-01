@@ -22,17 +22,15 @@ export type PersonalInformationSectionProps = {
   touched: Partial<Record<keyof SignupFormValues, boolean>>
   markTouched: (field: keyof SignupFormValues) => void
   emailError?: string
-  companyEmailError?: string
 }
 
-/** Figma "Personal Information" block: name/email/phone + company email. */
+/** "Personal Information" block: name, email, phone — matching trade-harmonizer. */
 export function PersonalInformationSection({
   values,
   setField,
   touched,
   markTouched,
   emailError,
-  companyEmailError,
 }: PersonalInformationSectionProps) {
   const { t } = useI18n()
 
@@ -133,24 +131,6 @@ export function PersonalInformationSection({
           />
         </div>
       </div>
-
-      <InputField
-        fieldType="email"
-        id="signup-company-email"
-        name="companyEmail"
-        label={t('auth.signup.companyEmailLabel')}
-        labelClassName={SIGNUP_LABEL_CLASS}
-        containerClassName={SIGNUP_FIELD_CONTAINER_CLASS}
-        className={SIGNUP_FIELD_SHELL_CLASS}
-        inputClassName={SIGNUP_INPUT_CLASS}
-        leftIcon={MAIL_ICON}
-        placeholder={t('auth.signup.companyEmailPlaceholder')}
-        value={values.companyEmail}
-        onChange={(e) => setField('companyEmail', e.target.value.replace(/\s/g, ''))}
-        onBlur={() => markTouched('companyEmail')}
-        error={touched.companyEmail ? companyEmailError : undefined}
-        aria-invalid={Boolean(touched.companyEmail && companyEmailError)}
-      />
     </div>
   )
 }

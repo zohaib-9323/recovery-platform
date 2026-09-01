@@ -11,22 +11,6 @@ jest.mock('@/app/services/recoveryApi', () => ({
   useRegisterMutation: () => [mockRegister, { isLoading: false }],
 }))
 
-// CountryDropdown/CityDropdown are react-select components backed by a
-// country/city dataset — stand in with plain inputs so the form's own
-// register-wiring can be exercised without driving a real react-select menu.
-jest.mock('@/components/fields', () => {
-  const actual = jest.requireActual('@/components/fields')
-  return {
-    ...actual,
-    CountryDropdown: ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
-      <input aria-label="Country" value={value} onChange={(e) => onChange(e.target.value)} />
-    ),
-    CityDropdown: ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
-      <input aria-label="City" value={value} onChange={(e) => onChange(e.target.value)} />
-    ),
-  }
-})
-
 // SignupTermsModal gates its own accept button behind a scroll-to-bottom
 // check that isn't meaningful to simulate in jsdom — stand in with a single
 // button so the terms-acceptance step itself (covered by the modal's own
@@ -59,6 +43,11 @@ function renderSignup() {
   )
 }
 
+/**
+ * The full field set the signup form collects. Every field here is sent to
+ * the register endpoint — the company address block this form used to require
+ * was removed because `RegisterRecoveryUserDto` cannot accept it.
+ */
 function fillValidForm() {
   fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Jane' } })
   fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Doe' } })
@@ -66,21 +55,11 @@ function fillValidForm() {
     target: { value: 'jane@acmecorp.com' },
   })
   fireEvent.change(screen.getByLabelText('Phone Number'), { target: { value: '5551234567' } })
-  fireEvent.change(screen.getByLabelText('Company Email'), {
-    target: { value: 'jane@acmecorp.com' },
-  })
   fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'TradeHarmony1!' } })
   fireEvent.change(screen.getByLabelText('Confirm Password'), {
     target: { value: 'TradeHarmony1!' },
   })
   fireEvent.change(screen.getByLabelText('Company Name'), { target: { value: 'Acme Corp' } })
-  fireEvent.change(screen.getByLabelText('Address 1'), { target: { value: '1 Main St' } })
-  fireEvent.change(screen.getByLabelText('Country'), { target: { value: 'United Kingdom' } })
-  fireEvent.change(screen.getByLabelText('City'), { target: { value: 'London' } })
-  fireEvent.change(screen.getByLabelText('Postal code'), { target: { value: 'SW1A 1AA' } })
-  fireEvent.change(screen.getByLabelText('Company Phone'), {
-    target: { value: '5559876543' },
-  })
   fireEvent.click(screen.getByRole('checkbox'))
   fireEvent.click(screen.getByRole('button', { name: 'Accept Terms' }))
 }
@@ -108,6 +87,41 @@ describe('SignupPage', () => {
         termsAccepted: true,
       }),
     )
+  })
+
+  it('sends only fields the register endpoint accepts', () => {
+    mockRegister.mockReturnValue({ unwrap: jest.fn().mockResolvedValue({ status: true }) })
+
+    renderSignup()
+    fillValidForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Proceed' }))
+
+    // Regression guard: the form used to require a company address block and
+    // then drop it, because the endpoint has no property for any of it.
+    const body = mockRegister.mock.calls[0][0]
+    expect(Object.keys(body).sort()).toEqual(
+      [
+        'companyName',
+        'email',
+        'firstName',
+        'lastName',
+        'password',
+        'phone',
+        'termsAccepted',
+      ].sort(),
+    )
+  })
+
+  it('sends the phone number with its dial code, like trade-harmonizer does', () => {
+    mockRegister.mockReturnValue({ unwrap: jest.fn().mockResolvedValue({ status: true }) })
+
+    renderSignup()
+    fillValidForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Proceed' }))
+
+    // The dial code used to be collected and then dropped, storing every
+    // Recovery signup's number with no country code.
+    expect(mockRegister.mock.calls[0][0].phone).toMatch(/5551234567$/)
   })
 
   it('does not navigate when registration fails', async () => {

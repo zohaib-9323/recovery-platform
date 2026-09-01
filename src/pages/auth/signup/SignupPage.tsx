@@ -9,6 +9,8 @@ import { useI18n } from '@/i18n/useI18n'
 import { isValidEmail, isValidPassword } from '@/lib/validation'
 import { getRtkErrorMessage } from '@/lib/api-errors'
 import { showCustomToast } from '@/lib/showCustomToast'
+import { env } from '@/utils/env'
+import { extractSubdomainFromHostname } from '@/lib/tenantTheme'
 import { saveFirstLoginFlowState } from '@/pages/auth/first-login-flow'
 import { CompanyDetailsSection } from '@/pages/auth/signup/components/CompanyDetailsSection'
 import { CreatePasswordSection } from '@/pages/auth/signup/components/CreatePasswordSection'
@@ -61,42 +63,29 @@ export function SignupPage() {
     values.email.length > 0 && !isValidEmail(values.email)
       ? t('auth.login.enterValidEmail')
       : undefined
-  const companyEmailError =
-    values.companyEmail.length > 0 && !isValidEmail(values.companyEmail)
-      ? t('auth.login.enterValidEmail')
-      : undefined
-
   const canSubmit =
     values.firstName.trim().length > 0 &&
     values.lastName.trim().length > 0 &&
     isValidEmail(values.email) &&
     values.phone.trim().length > 0 &&
-    isValidEmail(values.companyEmail) &&
     isValidPassword(values.password) &&
     passwordsMatch &&
     values.companyName.trim().length > 0 &&
-    values.address1.trim().length > 0 &&
-    values.country.trim().length > 0 &&
-    values.city.trim().length > 0 &&
-    values.postalCode.trim().length > 0 &&
-    values.companyPhone.trim().length > 0 &&
     values.termsAccepted
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
 
+    // Must stay in step with `canSubmit` — a field that blocks submission
+    // without being marked touched shows no error and dead-ends the form.
     setTouched({
       firstName: true,
       lastName: true,
       email: true,
       phone: true,
-      companyEmail: true,
       password: true,
       confirmPassword: true,
       companyName: true,
-      address1: true,
-      postalCode: true,
-      companyPhone: true,
     })
     setShowTermsError(!values.termsAccepted)
 
@@ -110,16 +99,26 @@ export function SignupPage() {
     }
 
     const email = values.email.trim()
+    const phone = values.phone.trim()
+    // Same shape trade-harmonizer sends: dial code and number as one string.
+    const phoneWithCode = phone ? `${values.phoneCode}${phone}` : ''
+    // White-label signups must carry their subdomain, or the account is never
+    // linked to the tenant and RecoveryTenant.userCount never increments.
+    const tenant =
+      typeof window === 'undefined'
+        ? null
+        : extractSubdomainFromHostname(window.location.hostname, env.mainSiteUrl)
 
     try {
       await register({
         firstName: values.firstName.trim(),
         lastName: values.lastName.trim(),
         email,
-        phone: values.phone.trim(),
+        phone: phoneWithCode,
         password: values.password,
         companyName: values.companyName.trim(),
         termsAccepted: values.termsAccepted,
+        ...(tenant ? { tenant } : {}),
       }).unwrap()
 
       saveFirstLoginFlowState({ email, fromSignup: true })
@@ -150,7 +149,6 @@ export function SignupPage() {
             touched={touched}
             markTouched={markTouched}
             emailError={emailError}
-            companyEmailError={companyEmailError}
           />
 
           <CreatePasswordSection
