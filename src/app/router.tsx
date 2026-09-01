@@ -14,6 +14,8 @@ import { FirstLoginVerifyOtpPage } from '@/pages/auth/FirstLoginVerifyOtpPage'
 import { InvalidSubdomainPage } from '@/pages/auth/InvalidSubdomainPage'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
+import { SignupPage } from '@/pages/auth/signup/SignupPage'
+import { AcceptInvitePage } from '@/pages/auth/AcceptInvitePage'
 import { DashboardHomePage } from '@/pages/(dashboard)/home/DashboardHomePage'
 import { InboxPage } from '@/pages/(dashboard)/inbox/InboxPage'
 import { ImportsPage } from '@/pages/(dashboard)/imports/ImportsPage'
@@ -25,6 +27,8 @@ import { AllShipmentsPage } from '@/pages/(dashboard)/shipments/AllShipmentsPage
 import { ShipmentDetailPageV2 as ShipmentDetailPage } from '@/pages/(dashboard)/shipments/ShipmentDetailPageV2'
 import { ShipmentLogsPage } from '@/pages/(dashboard)/shipments/ShipmentLogsPage'
 import { SettingsPage } from '@/pages/(dashboard)/settings/SettingsPage'
+import { ManageUsersPage } from '@/pages/(dashboard)/users/ManageUsersPage'
+import { UserDetailPage } from '@/pages/(dashboard)/users/UserDetailPage'
 
 function SessionRefreshBoundary({ children }: { children: ReactNode }) {
   useSessionRefresh()
@@ -44,6 +48,8 @@ export function AppRouter() {
             <Route element={<GuestRoute />}>
               <Route element={<AuthLayout />}>
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignupPage />} />
+                <Route path="/accept-invite" element={<AcceptInvitePage />} />
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/first-login/verify-otp" element={<FirstLoginVerifyOtpPage />} />
@@ -63,6 +69,8 @@ export function AppRouter() {
                 <Route path="/shipments/:id/logs" element={<ShipmentLogsPage />} />
                 <Route path="/shipments/:id" element={<ShipmentDetailPage />} />
                 <Route path="/inbox" element={<InboxPage />} />
+                <Route path="/users" element={<ManageUsersPage />} />
+                <Route path="/users/:id" element={<UserDetailPage />} />
                 <Route path="/imports" element={<ImportsPage />} />
                 {/* Listed before /imports/:id for readability. React Router v6
                     ranks static segments above dynamic ones regardless of

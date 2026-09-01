@@ -22,6 +22,7 @@ export function AppSidebar() {
   const pathname = useLocation().pathname
   const dispatch = useAppDispatch()
   const expanded = useAppSelector((s) => s.sideBar.sideBarExpanded)
+  const role = useAppSelector((s) => s.auth.user?.role)
   const isMobile = useMediaQuery(MOBILE_QUERY)
 
   // On phones the sidebar is a drawer, not a rail — it should start closed
@@ -122,93 +123,97 @@ export function AppSidebar() {
         </nav>
         <div className="flex h-full flex-col p-5">
           <div className="flex flex-col gap-5">
-            {recoverySidebarItems.map((item) => {
-              const menuActive = isActive(item.link)
-              // Children only render in the expanded sidebar — the collapsed rail
-              // has no room, so there the parent keeps its original
-              // navigate-on-click behaviour unchanged.
-              const children = expanded ? item.children : undefined
-              const groupOpen = children ? (openGroups[item.key] ?? menuActive) : false
-              const activeChild = children ? activeChildKey(children) : null
-              return (
-                <div key={item.key} className="group relative">
-                  <button
-                    type="button"
-                    onClick={() => (children ? toggleGroup(item.key, groupOpen) : go(item.link))}
-                    aria-expanded={children ? groupOpen : undefined}
-                    className={`flex w-full cursor-pointer items-center justify-between truncate rounded p-2.5 text-left transition-all ${
-                      menuActive
-                        ? 'bg-yellow text-white'
-                        : 'text-rp-fg hover:bg-[var(--hover-color)] hover:text-yellow'
-                    }`}
-                  >
-                    <div className="absolute bottom-0 right-0 top-0 -mr-6 w-6 group-hover:bg-transparent" />
-                    <div className="flex flex-1 items-center gap-2">
-                      {item.iconSrc ? (
-                        <span
-                          aria-hidden
-                          className="h-5 w-5 flex-shrink-0 bg-current"
-                          style={{
-                            WebkitMaskImage: `url(${item.iconSrc})`,
-                            maskImage: `url(${item.iconSrc})`,
-                            WebkitMaskRepeat: 'no-repeat',
-                            maskRepeat: 'no-repeat',
-                            WebkitMaskSize: 'contain',
-                            maskSize: 'contain',
-                            WebkitMaskPosition: 'center',
-                            maskPosition: 'center',
-                          }}
-                        />
-                      ) : (
-                        <span className={`${item.icon} text-large`} aria-hidden />
-                      )}
-                      {expanded && <span className="truncate text-sm font-bold">{item.label}</span>}
-                    </div>
-                    {children ? (
-                      groupOpen ? (
-                        <ChevronUp className="ml-2 size-4 flex-shrink-0" aria-hidden />
-                      ) : (
-                        <ChevronDown className="ml-2 size-4 flex-shrink-0" aria-hidden />
-                      )
-                    ) : null}
-                  </button>
-
-                  {children && groupOpen ? (
-                    <div className="mt-1 flex flex-col">
-                      {children.map((child) => {
-                        const childActive = activeChild === child.key
-                        return (
-                          <button
-                            key={child.key}
-                            type="button"
-                            onClick={() => go(child.link)}
-                            className={`w-full truncate rounded px-3 py-2.5 text-left text-sm transition-all ${
-                              childActive
-                                ? 'bg-lightYellowThree font-bold text-yellow'
-                                : 'text-rp-fg hover:bg-[var(--hover-color)] hover:text-yellow'
-                            }`}
-                          >
-                            {child.label}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  ) : null}
-
-                  {!expanded && (
-                    <div
-                      role="presentation"
-                      onClick={() => go(item.link)}
-                      className={`pointer-events-none absolute left-[58px] top-1/2 z-10 w-52 origin-left -translate-y-1/2 cursor-pointer whitespace-nowrap rounded-br-lg rounded-tr-lg bg-[var(--hover-color)] p-2 text-sm opacity-0 shadow-[0px_8px_8px_0px_#00000024] transition-opacity duration-200 hover:text-yellow group-hover:pointer-events-auto group-hover:opacity-100 ${
-                        menuActive ? 'font-bold text-yellow' : 'text-rp-fg'
+            {recoverySidebarItems
+              .filter((item) => !item.visibleFor || (role && item.visibleFor.includes(role)))
+              .map((item) => {
+                const menuActive = isActive(item.link)
+                // Children only render in the expanded sidebar — the collapsed rail
+                // has no room, so there the parent keeps its original
+                // navigate-on-click behaviour unchanged.
+                const children = expanded ? item.children : undefined
+                const groupOpen = children ? (openGroups[item.key] ?? menuActive) : false
+                const activeChild = children ? activeChildKey(children) : null
+                return (
+                  <div key={item.key} className="group relative">
+                    <button
+                      type="button"
+                      onClick={() => (children ? toggleGroup(item.key, groupOpen) : go(item.link))}
+                      aria-expanded={children ? groupOpen : undefined}
+                      className={`flex w-full cursor-pointer items-center justify-between truncate rounded p-2.5 text-left transition-all ${
+                        menuActive
+                          ? 'bg-yellow text-white'
+                          : 'text-rp-fg hover:bg-[var(--hover-color)] hover:text-yellow'
                       }`}
                     >
-                      {item.label}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+                      <div className="absolute bottom-0 right-0 top-0 -mr-6 w-6 group-hover:bg-transparent" />
+                      <div className="flex flex-1 items-center gap-2">
+                        {item.iconSrc ? (
+                          <span
+                            aria-hidden
+                            className="h-5 w-5 flex-shrink-0 bg-current"
+                            style={{
+                              WebkitMaskImage: `url(${item.iconSrc})`,
+                              maskImage: `url(${item.iconSrc})`,
+                              WebkitMaskRepeat: 'no-repeat',
+                              maskRepeat: 'no-repeat',
+                              WebkitMaskSize: 'contain',
+                              maskSize: 'contain',
+                              WebkitMaskPosition: 'center',
+                              maskPosition: 'center',
+                            }}
+                          />
+                        ) : (
+                          <span className={`${item.icon} text-large`} aria-hidden />
+                        )}
+                        {expanded && (
+                          <span className="truncate text-sm font-bold">{item.label}</span>
+                        )}
+                      </div>
+                      {children ? (
+                        groupOpen ? (
+                          <ChevronUp className="ml-2 size-4 flex-shrink-0" aria-hidden />
+                        ) : (
+                          <ChevronDown className="ml-2 size-4 flex-shrink-0" aria-hidden />
+                        )
+                      ) : null}
+                    </button>
+
+                    {children && groupOpen ? (
+                      <div className="mt-1 flex flex-col">
+                        {children.map((child) => {
+                          const childActive = activeChild === child.key
+                          return (
+                            <button
+                              key={child.key}
+                              type="button"
+                              onClick={() => go(child.link)}
+                              className={`w-full truncate rounded px-3 py-2.5 text-left text-sm transition-all ${
+                                childActive
+                                  ? 'bg-lightYellowThree font-bold text-yellow'
+                                  : 'text-rp-fg hover:bg-[var(--hover-color)] hover:text-yellow'
+                              }`}
+                            >
+                              {child.label}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    ) : null}
+
+                    {!expanded && (
+                      <div
+                        role="presentation"
+                        onClick={() => go(item.link)}
+                        className={`pointer-events-none absolute left-[58px] top-1/2 z-10 w-52 origin-left -translate-y-1/2 cursor-pointer whitespace-nowrap rounded-br-lg rounded-tr-lg bg-[var(--hover-color)] p-2 text-sm opacity-0 shadow-[0px_8px_8px_0px_#00000024] transition-opacity duration-200 hover:text-yellow group-hover:pointer-events-auto group-hover:opacity-100 ${
+                          menuActive ? 'font-bold text-yellow' : 'text-rp-fg'
+                        }`}
+                      >
+                        {item.label}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
           </div>
         </div>
       </div>

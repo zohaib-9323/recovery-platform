@@ -9,11 +9,20 @@ import { AppSidebar } from './app-sidebar'
  * Covers the expandable "Imports" group. The open/closed rule is the fiddly part:
  * the active route only supplies a DEFAULT, and gating open-ness on it instead
  * made the menu impossible to open from anywhere outside /imports.
+ *
+ * Also covers the one role-gated nav item ("Manage Users") added for the
+ * owner-invite feature — every other item stays visible to any authenticated
+ * user, unchanged.
  */
 
-function renderSidebar(path: string, sideBarExpanded = true) {
+function renderSidebar(path: string, sideBarExpanded = true, role?: string) {
   const store = configureStore({
-    reducer: (state = { sideBar: { sideBarExpanded } }) => state,
+    reducer: (
+      state = {
+        auth: { user: role ? { id: '1', email: 'a@b.com', role } : null },
+        sideBar: { sideBarExpanded },
+      },
+    ) => state,
   })
   return render(
     <Provider store={store}>
@@ -78,5 +87,26 @@ describe('AppSidebar — Imports group', () => {
     expect(screen.queryByRole('button', { name: 'Import Jobs' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Processable Shipments' })).not.toBeInTheDocument()
     expect(document.querySelector('[aria-expanded]')).toBeNull()
+  })
+})
+
+describe('AppSidebar — role-gated items', () => {
+  it('hides Manage Users from a company user', () => {
+    renderSidebar('/dashboard', true, 'recovery_company_user')
+
+    expect(screen.queryByText('Manage Users')).not.toBeInTheDocument()
+    expect(screen.getByText('Dashboard')).toBeInTheDocument()
+  })
+
+  it('shows Manage Users to a company owner', () => {
+    renderSidebar('/dashboard', true, 'recovery_company_owner')
+
+    expect(screen.getByText('Manage Users')).toBeInTheDocument()
+  })
+
+  it('hides Manage Users when role is not yet known (e.g. still loading)', () => {
+    renderSidebar('/dashboard')
+
+    expect(screen.queryByText('Manage Users')).not.toBeInTheDocument()
   })
 })
