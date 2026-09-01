@@ -56,7 +56,7 @@ export function AuthLayout() {
   // then a single scrolling region containing the form and the footer.
   if (hideMarketingPanel) {
     return (
-      <div className="fixed inset-0 flex flex-col  bg-bgColor">
+      <div className="fixed inset-0 flex flex-col bg-bgColor">
         <div className="flex shrink-0 flex-row items-center justify-between p-3 pl-5 sm:p-5 sm:pl-7 md:pl-10">
           <AppLogo size="sm" />
         </div>
