@@ -7,6 +7,16 @@ import { SignupPage } from './SignupPage'
 
 const mockRegister = jest.fn()
 
+// jsdom's hostname is always "localhost", which correctly resolves to no
+// tenant — so the white-label path has to be driven through this helper.
+const mockExtractSubdomain = jest.fn<string | null, [string, string?]>(() => null)
+
+jest.mock('@/lib/tenantTheme', () => ({
+  ...jest.requireActual('@/lib/tenantTheme'),
+  extractSubdomainFromHostname: (host: string, mainSiteUrl?: string) =>
+    mockExtractSubdomain(host, mainSiteUrl),
+}))
+
 jest.mock('@/app/services/recoveryApi', () => ({
   useRegisterMutation: () => [mockRegister, { isLoading: false }],
 }))
@@ -67,6 +77,8 @@ function fillValidForm() {
 describe('SignupPage', () => {
   beforeEach(() => {
     mockRegister.mockReset()
+    mockExtractSubdomain.mockReset()
+    mockExtractSubdomain.mockReturnValue(null)
   })
 
   it('calls the real register mutation (not a mock) with the collected fields', async () => {
@@ -122,6 +134,31 @@ describe('SignupPage', () => {
     // The dial code used to be collected and then dropped, storing every
     // Recovery signup's number with no country code.
     expect(mockRegister.mock.calls[0][0].phone).toMatch(/5551234567$/)
+  })
+
+  it('sends the tenant when signing up on a white-label subdomain', () => {
+    mockExtractSubdomain.mockReturnValue('acme-recovery')
+    mockRegister.mockReturnValue({ unwrap: jest.fn().mockResolvedValue({ status: true }) })
+
+    renderSignup()
+    fillValidForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Proceed' }))
+
+    // Without this the account is never linked to the tenant and
+    // RecoveryTenant.userCount never increments.
+    expect(mockRegister.mock.calls[0][0].tenant).toBe('acme-recovery')
+  })
+
+  it('omits tenant entirely on the main domain', () => {
+    mockExtractSubdomain.mockReturnValue(null)
+    mockRegister.mockReturnValue({ unwrap: jest.fn().mockResolvedValue({ status: true }) })
+
+    renderSignup()
+    fillValidForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Proceed' }))
+
+    // Sending tenant: undefined would fail the DTO's @IsString on some clients.
+    expect('tenant' in mockRegister.mock.calls[0][0]).toBe(false)
   })
 
   it('does not navigate when registration fails', async () => {
