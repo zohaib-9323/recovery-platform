@@ -47,7 +47,7 @@ export function Popup({
         role="dialog"
         aria-modal="true"
         className={cn(
-          'relative z-10 w-full max-w-[560px] rounded-2xl border border-rp-border bg-white p-6 shadow-xl',
+          'relative z-10 max-h-[90vh] w-full max-w-[560px] overflow-x-hidden overflow-y-auto rounded-2xl border border-rp-border bg-white p-6 shadow-xl',
           className,
         )}
       >

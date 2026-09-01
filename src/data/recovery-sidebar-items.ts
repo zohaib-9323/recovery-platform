@@ -1,5 +1,11 @@
 import { RECOVERY_COMPANY_OWNER, type RecoveryUserRole } from '@/types/roles'
 
+export type RecoverySidebarChild = {
+  key: string
+  label: string
+  link: string
+}
+
 export type RecoverySidebarItem = {
   key: string
   label: string
@@ -8,11 +14,19 @@ export type RecoverySidebarItem = {
   /** Image asset path, takes precedence over icon when set. */
   iconSrc?: string
   link: string
+  /**
+   * Sub-routes rendered as an expandable group under this item. When present,
+   * clicking the parent toggles the group open/closed instead of navigating —
+   * `link` is still used to decide whether the group counts as active, and is
+   * still navigated to when the sidebar is collapsed and there is no room to
+   * show children.
+   */
+  children?: RecoverySidebarChild[]
   /** Omit to show to every authenticated user; set to restrict by role. */
   visibleFor?: RecoveryUserRole[]
 }
 
-/** Flat nav — matches Recovery dashboard reference (Dashboard, All Shipments, Inbox, Imports). */
+/** Nav — matches the Recovery dashboard reference. Imports is an expandable group. */
 export const recoverySidebarItems: RecoverySidebarItem[] = [
   { key: 'dashboard', label: 'Dashboard', icon: 'icon-home', link: '/dashboard' },
   { key: 'shipments', label: 'All Shipments', icon: 'icon-box', link: '/shipments' },
@@ -24,6 +38,24 @@ export const recoverySidebarItems: RecoverySidebarItem[] = [
     link: '/users',
     visibleFor: [RECOVERY_COMPANY_OWNER],
   },
-  { key: 'imports', label: 'Imports', iconSrc: '/images/importIcon.svg', link: '/imports' },
+  {
+    key: 'imports',
+    label: 'Imports',
+    iconSrc: '/images/importIcon.svg',
+    link: '/imports',
+    children: [
+      { key: 'import-jobs', label: 'Import Jobs', link: '/imports' },
+      {
+        key: 'processable-shipments',
+        label: 'Processable Shipments',
+        link: '/imports/processable-shipments',
+      },
+      {
+        key: 'unprocessed-documents',
+        label: 'Unprocessed Documents',
+        link: '/imports/unprocessed-documents',
+      },
+    ],
+  },
   { key: 'settings', label: 'Settings', icon: 'icon-settings', link: '/settings' },
 ]

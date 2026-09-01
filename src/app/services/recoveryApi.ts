@@ -68,6 +68,9 @@ export const recoveryApi = createApi({
     'M365ImportJobs',
     'M365ImportJobDetail',
     'M365ImportJobItems',
+    'M365ImportJobShipments',
+    'M365UnprocessedDocuments',
+    'M365ProcessableShipments',
   ],
   endpoints: (builder) => ({
     login: builder.mutation<RecoveryAuthEnvelope, LoginRequestBody>({
@@ -279,6 +282,7 @@ export const recoveryApi = createApi({
           pageSize: params?.pageSize ?? 10,
           ...(params?.messageId ? { messageId: params.messageId } : {}),
           ...(params?.shipmentKey ? { shipmentKey: params.shipmentKey } : {}),
+          ...(params?.source ? { source: params.source } : {}),
           ...(params?.status ? { status: params.status } : {}),
           ...(params?.search ? { search: params.search } : {}),
           ...(params?.dateFrom ? { dateFrom: params.dateFrom } : {}),

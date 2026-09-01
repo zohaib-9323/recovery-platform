@@ -104,7 +104,7 @@ export function AppHeader() {
         <div className="">
           <div className="flex h-20">
             <div className="flex w-full flex-row items-center justify-between px-3 md:px-5">
-              <div className="flex flex-row items-center gap-2 md:gap-5">
+              <div className="flex min-w-0 flex-row items-center gap-2 md:gap-5">
                 <button
                   type="button"
                   onClick={() => dispatch(setSideBarExpanded(!expanded))}
@@ -120,11 +120,11 @@ export function AppHeader() {
                     } text-base text-humburgerIcon`}
                   />
                 </button>
-                <div className="flex flex-grow items-center justify-start gap-1 font-lexend text-[34px] font-bold leading-[33px] tracking-normal text-[#000000]">
+                <div className="flex min-w-0 flex-grow items-center justify-start gap-1 font-lexend text-sm font-bold leading-tight tracking-normal text-[#000000] sm:text-2xl md:text-[34px] md:leading-[33px]">
                   <span className={`text-nowrap capitalize ${!prefix && 'hidden'} sm:flex`}>
                     {prefix.toUpperCase()}
                   </span>
-                  <span className="capitalize">{suffix.toUpperCase()}</span>
+                  <span className="min-w-0 truncate capitalize">{suffix.toUpperCase()}</span>
                 </div>
               </div>
 

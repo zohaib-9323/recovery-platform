@@ -20,6 +20,8 @@ import { DashboardHomePage } from '@/pages/(dashboard)/home/DashboardHomePage'
 import { InboxPage } from '@/pages/(dashboard)/inbox/InboxPage'
 import { ImportsPage } from '@/pages/(dashboard)/imports/ImportsPage'
 import { ImportJobDetailPage } from '@/pages/(dashboard)/imports/ImportJobDetailPage'
+import { ProcessableShipmentsPage } from '@/pages/(dashboard)/imports/ProcessableShipmentsPage'
+import { UnprocessedDocumentsPage } from '@/pages/(dashboard)/imports/UnprocessedDocumentsPage'
 import { NotificationsPage } from '@/pages/(dashboard)/notifications/NotificationsPage'
 import { AllShipmentsPage } from '@/pages/(dashboard)/shipments/AllShipmentsPage'
 import { ShipmentDetailPageV2 as ShipmentDetailPage } from '@/pages/(dashboard)/shipments/ShipmentDetailPageV2'
@@ -70,6 +72,17 @@ export function AppRouter() {
                 <Route path="/users" element={<ManageUsersPage />} />
                 <Route path="/users/:id" element={<UserDetailPage />} />
                 <Route path="/imports" element={<ImportsPage />} />
+                {/* Listed before /imports/:id for readability. React Router v6
+                    ranks static segments above dynamic ones regardless of
+                    order, so these are not shadowed by the :id route. */}
+                <Route
+                  path="/imports/processable-shipments"
+                  element={<ProcessableShipmentsPage />}
+                />
+                <Route
+                  path="/imports/unprocessed-documents"
+                  element={<UnprocessedDocumentsPage />}
+                />
                 <Route path="/imports/:id" element={<ImportJobDetailPage />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
                 <Route path="/settings" element={<SettingsPage />} />

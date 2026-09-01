@@ -27,19 +27,6 @@ jest.mock('@/components/fields', () => {
   }
 })
 
-// SignupTermsModal gates its own accept button behind a scroll-to-bottom
-// check that isn't meaningful to simulate in jsdom — stand in with a single
-// button so the terms-acceptance step itself (covered by the modal's own
-// tests) doesn't block exercising the register-wiring this test is about.
-jest.mock('@/pages/auth/signup/SignupTermsModal', () => ({
-  SignupTermsModal: ({ open, onAccept }: { open: boolean; onAccept: () => void }) =>
-    open ? (
-      <button type="button" onClick={onAccept}>
-        Accept Terms
-      </button>
-    ) : null,
-}))
-
 function makeTestStore() {
   return configureStore({
     reducer: (state = { tenantTheme: { tenant: null } }) => state,
@@ -59,6 +46,7 @@ function renderSignup() {
   )
 }
 
+/** Every field the form collects. All of them are sent to the register endpoint. */
 function fillValidForm() {
   fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Jane' } })
   fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Doe' } })
@@ -78,11 +66,21 @@ function fillValidForm() {
   fireEvent.change(screen.getByLabelText('Country'), { target: { value: 'United Kingdom' } })
   fireEvent.change(screen.getByLabelText('City'), { target: { value: 'London' } })
   fireEvent.change(screen.getByLabelText('Postal code'), { target: { value: 'SW1A 1AA' } })
-  fireEvent.change(screen.getByLabelText('Company Phone'), {
-    target: { value: '5559876543' },
-  })
+  fireEvent.change(screen.getByLabelText('Company Phone'), { target: { value: '5559876543' } })
   fireEvent.click(screen.getByRole('checkbox'))
-  fireEvent.click(screen.getByRole('button', { name: 'Accept Terms' }))
+  acceptTerms()
+}
+
+function acceptTerms() {
+  // The terms modal gates its accept checkbox behind scrolling the legal text
+  // to the bottom, which jsdom cannot measure — drive the scroll handler with
+  // dimensions that satisfy the check.
+  const panel = document.querySelector('[role="dialog"] .overflow-y-auto') as HTMLElement
+  Object.defineProperty(panel, 'scrollTop', { value: 1000, configurable: true })
+  Object.defineProperty(panel, 'clientHeight', { value: 500, configurable: true })
+  Object.defineProperty(panel, 'scrollHeight', { value: 1400, configurable: true })
+  fireEvent.scroll(panel)
+  fireEvent.click(screen.getByLabelText(/I have read/i))
 }
 
 describe('SignupPage', () => {
@@ -90,37 +88,105 @@ describe('SignupPage', () => {
     mockRegister.mockReset()
   })
 
-  it('calls the real register mutation (not a mock) with the collected fields', async () => {
-    mockRegister.mockReturnValue({ unwrap: jest.fn().mockResolvedValue({ status: true }) })
+  describe('structure — these two rules are what keep the form from jumping', () => {
+    it('owns no scroll container of its own', () => {
+      const { container } = renderSignup()
 
-    renderSignup()
-    fillValidForm()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Proceed' }))
-
-    expect(await screen.findByText('Verify OTP Route')).toBeInTheDocument()
-    expect(mockRegister).toHaveBeenCalledWith(
-      expect.objectContaining({
-        firstName: 'Jane',
-        lastName: 'Doe',
-        email: 'jane@acmecorp.com',
-        companyName: 'Acme Corp',
-        termsAccepted: true,
-      }),
-    )
-  })
-
-  it('does not navigate when registration fails', async () => {
-    mockRegister.mockReturnValue({
-      unwrap: jest.fn().mockRejectedValue({ data: { message: 'Email already registered' } }),
+      // AuthLayout's signup shell has the single scroller, matching
+      // trade-harmonizer. A second one here previously split the scrolling
+      // between two elements and put the top of the form out of reach.
+      const scrollers = container.querySelectorAll(
+        '.overflow-y-auto, .overflow-auto, .overflow-y-scroll',
+      )
+      expect(scrollers).toHaveLength(0)
     })
 
-    renderSignup()
-    fillValidForm()
+    it('renders the terms modal outside its own DOM subtree', () => {
+      const { container } = renderSignup()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Proceed' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Terms' }))
 
-    await Promise.resolve()
-    expect(screen.queryByText('Verify OTP Route')).not.toBeInTheDocument()
+      // Portalled to document.body. Inline, the overlay is a child of whatever
+      // scrolls this page, and mounting it moved that scroll position.
+      const dialog = screen.getByRole('dialog')
+      expect(container.contains(dialog)).toBe(false)
+      expect(document.body.contains(dialog)).toBe(true)
+    })
+
+    it('does not freeze or otherwise touch document.body when the modal opens', () => {
+      const before = document.body.style.overflow
+      renderSignup()
+
+      fireEvent.click(screen.getByRole('button', { name: 'Terms' }))
+
+      // An earlier fix locked document.body, which never scrolls under the auth
+      // shell — it achieved nothing and reset scroll positions as a side effect.
+      expect(document.body.style.overflow).toBe(before)
+    })
+  })
+
+  describe('submission', () => {
+    it('calls the register mutation with the collected fields', async () => {
+      mockRegister.mockReturnValue({ unwrap: jest.fn().mockResolvedValue({ status: true }) })
+
+      renderSignup()
+      fillValidForm()
+      fireEvent.click(screen.getByRole('button', { name: 'Proceed' }))
+
+      expect(await screen.findByText('Verify OTP Route')).toBeInTheDocument()
+      expect(mockRegister).toHaveBeenCalledWith(
+        expect.objectContaining({
+          firstName: 'Jane',
+          lastName: 'Doe',
+          email: 'jane@acmecorp.com',
+          companyName: 'Acme Corp',
+          termsAccepted: true,
+        }),
+      )
+    })
+
+    it('sends every Company Details field the form collects', () => {
+      mockRegister.mockReturnValue({ unwrap: jest.fn().mockResolvedValue({ status: true }) })
+
+      renderSignup()
+      fillValidForm()
+      fireEvent.click(screen.getByRole('button', { name: 'Proceed' }))
+
+      // These were once collected, required, and then dropped, because
+      // RegisterRecoveryUserDto had no property for any of them.
+      expect(mockRegister).toHaveBeenCalledWith(
+        expect.objectContaining({
+          companyEmail: 'jane@acmecorp.com',
+          address1: '1 Main St',
+          country: 'United Kingdom',
+          city: 'London',
+          postalCode: 'SW1A 1AA',
+        }),
+      )
+      expect(mockRegister.mock.calls[0][0].companyPhone).toMatch(/5559876543$/)
+    })
+
+    it('sends the phone number with its dial code, like trade-harmonizer does', () => {
+      mockRegister.mockReturnValue({ unwrap: jest.fn().mockResolvedValue({ status: true }) })
+
+      renderSignup()
+      fillValidForm()
+      fireEvent.click(screen.getByRole('button', { name: 'Proceed' }))
+
+      expect(mockRegister.mock.calls[0][0].phone).toMatch(/5551234567$/)
+    })
+
+    it('does not navigate when registration fails', async () => {
+      mockRegister.mockReturnValue({
+        unwrap: jest.fn().mockRejectedValue({ data: { message: 'Email already registered' } }),
+      })
+
+      renderSignup()
+      fillValidForm()
+      fireEvent.click(screen.getByRole('button', { name: 'Proceed' }))
+
+      await Promise.resolve()
+      expect(screen.queryByText('Verify OTP Route')).not.toBeInTheDocument()
+    })
   })
 })

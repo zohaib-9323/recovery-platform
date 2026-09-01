@@ -13,17 +13,13 @@ import { Button } from '@/components/ui/button'
 import type { M365EmailGroup } from '@/types/recovery-m365-api'
 
 import { formatShortDateRange } from './date-range-utils'
-import { ImportDetailStaticShipments } from './import-detail-static-shipments'
+import { ImportDetailShipments } from './import-detail-shipments'
 import { ImportDocumentsBrowser } from './import-documents-browser'
 import { ACTIVE_STATUSES, FailedTable, StatBox, StatusBadge } from './import-job-status'
 import { InfoBanner } from './info-banner'
 import { formatFolders } from './format-utils'
 
 // ── Constants ──────────────────────────────────────────────────────────────────
-
-// Flip on once the backend returns processable/in-processing/unprocessable shipment
-// data for an import job — the UI is already built in import-detail-static-shipments.
-const SHOW_STATIC_SHIPMENT_SECTIONS = false
 
 const DEFAULT_AVATAR = `${process.env.PUBLIC_URL}/images/no-profile.png`
 
@@ -98,7 +94,7 @@ export function ImportJobDetailPage() {
     Boolean(id) && !isRealtimeRefreshing && (!hasStartedJobFetch || isJobFetching)
 
   const { data: itemsData, isFetching: isItemsFetching } = useGetM365ImportJobItemsQuery(
-    { id: id ?? '', page: itemPage, limit: 10 },
+    { id: id ?? '', page: itemPage, limit: 6 },
     { skip: !id || !job || isActive, refetchOnMountOrArgChange: true },
   )
 
@@ -237,6 +233,12 @@ export function ImportJobDetailPage() {
               A temporary error occurred. The import will retry shortly.
             </InfoBanner>
           )}
+          {job.status === 'pairing' && (
+            <InfoBanner tone="blue">
+              All {job.stats.added} email(s) imported. Matching C88s to their invoices — shipments
+              and documents will appear here shortly. This page updates automatically.
+            </InfoBanner>
+          )}
           {isCompleted && (
             <InfoBanner tone="success" icon={Check}>
               {job.stats.failed > 0
@@ -261,7 +263,7 @@ export function ImportJobDetailPage() {
       {/* Documents */}
       <section className="rounded-[10px] border border-rp-border bg-rp-page p-5">
         <h2 className="mb-4 text-sm font-bold uppercase tracking-wide text-rp-heading">
-          Fetched Documents
+          Fetched Emails
         </h2>
 
         {isActive ? (
@@ -285,9 +287,10 @@ export function ImportJobDetailPage() {
         ) : null}
       </section>
 
-      {/* Processable / In Processable / Unprocessable Shipments — hidden until the
-          backend provides this data; see import-detail-static-shipments.tsx */}
-      {SHOW_STATIC_SHIPMENT_SECTIONS && <ImportDetailStaticShipments />}
+      {/* Processable / In Processing / Unprocessable Shipments, unified across
+          every email in this import — see import-detail-shipments.tsx for why
+          one fetch is enough. */}
+      <ImportDetailShipments jobId={id ?? ''} isJobActive={isActive} />
 
       {/* Per-email processing failures recorded by the import worker */}
       {!isActive && hasJobFailures && (
