@@ -171,4 +171,28 @@ describe('CreateUserModal', () => {
       password: 'Str0ng!Pass',
     })
   })
+
+  it('shows the loading spinner and disables the footer while submitting', () => {
+    const onClose = jest.fn()
+    render(<CreateUserModal open isSubmitting onClose={onClose} onSubmit={jest.fn()} />)
+
+    const submit = screen.getByRole('button', { name: '' })
+    expect(submit).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('stays open on submit so the caller can close it once the create call resolves', () => {
+    const onClose = jest.fn()
+    const onSubmit = jest.fn()
+    render(<CreateUserModal open onClose={onClose} onSubmit={onSubmit} />)
+
+    fillValidForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Create & Notify' }))
+
+    expect(onSubmit).toHaveBeenCalled()
+    expect(onClose).not.toHaveBeenCalled()
+  })
 })

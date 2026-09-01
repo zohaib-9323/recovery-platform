@@ -32,6 +32,7 @@ export type CreateUserModalProps = {
   open: boolean
   onClose: () => void
   onSubmit: (values: CreateUserValues) => void
+  isSubmitting?: boolean
 }
 
 const EMPTY_FORM = {
@@ -66,11 +67,31 @@ function PasswordToggle({ shown, onToggle }: { shown: boolean; onToggle: () => v
  * Blocks are 20px apart, label→control is 10px, controls are 40px tall, and the
  * footer sits 40px below the last field.
  */
-export function CreateUserModal({ open, onClose, onSubmit }: CreateUserModalProps) {
+export function CreateUserModal({
+  open,
+  onClose,
+  onSubmit,
+  isSubmitting = false,
+}: CreateUserModalProps) {
   const [form, setForm] = useState(EMPTY_FORM)
   const [touched, setTouched] = useState<Record<string, boolean>>({})
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  // Modal stays mounted across opens (parent toggles `open`), so reset the
+  // form once it closes rather than on every submit — closing now happens
+  // only after the create mutation actually succeeds. Reset happens during
+  // render (rather than in an effect) to avoid an extra cascading render.
+  const [prevOpen, setPrevOpen] = useState(open)
+  if (open !== prevOpen) {
+    setPrevOpen(open)
+    if (!open) {
+      setForm(EMPTY_FORM)
+      setTouched({})
+      setShowPassword(false)
+      setShowConfirmPassword(false)
+    }
+  }
 
   const setField = (field: keyof typeof EMPTY_FORM, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -100,10 +121,7 @@ export function CreateUserModal({ open, onClose, onSubmit }: CreateUserModalProp
     passwordsMatch
 
   const close = () => {
-    setForm(EMPTY_FORM)
-    setTouched({})
-    setShowPassword(false)
-    setShowConfirmPassword(false)
+    if (isSubmitting) return
     onClose()
   }
 
@@ -111,6 +129,7 @@ export function CreateUserModal({ open, onClose, onSubmit }: CreateUserModalProp
     <Popup
       open={open}
       onClose={close}
+      closeOnBackdrop={!isSubmitting}
       className="max-h-[90vh] max-w-[518px] overflow-y-auto rounded-[20px] border-0 p-5"
     >
       <div className="flex flex-col gap-5">
@@ -270,12 +289,17 @@ export function CreateUserModal({ open, onClose, onSubmit }: CreateUserModalProp
         />
 
         <div className="mt-5 flex items-center justify-end gap-[10px]">
-          <button type="button" onClick={close} className={USER_MODAL_CANCEL_BUTTON_CLASS}>
+          <button
+            type="button"
+            disabled={isSubmitting}
+            onClick={close}
+            className={USER_MODAL_CANCEL_BUTTON_CLASS}
+          >
             {MU.cancel}
           </button>
           <button
             type="button"
-            disabled={!canSubmit}
+            disabled={!canSubmit || isSubmitting}
             onClick={() => {
               onSubmit({
                 firstName: form.firstName.trim(),
@@ -285,11 +309,14 @@ export function CreateUserModal({ open, onClose, onSubmit }: CreateUserModalProp
                 phone: form.phone,
                 password: form.password,
               })
-              close()
             }}
             className={USER_MODAL_SUBMIT_BUTTON_CLASS}
           >
-            {MU.createAndNotify}
+            {isSubmitting ? (
+              <div className="flex h-5 w-5 animate-spin items-center justify-center rounded-full border-2 border-white border-t-transparent" />
+            ) : (
+              MU.createAndNotify
+            )}
           </button>
         </div>
       </div>

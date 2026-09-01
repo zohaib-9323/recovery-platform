@@ -9,6 +9,7 @@ import {
 } from '@/app/services/recoveryCompanyUsersApi'
 import { useAppSelector } from '@/app/redux-hooks'
 import { CsvExportButton } from '@/components/buttons'
+import { CustomLoader } from '@/components/feedback/custom-loader'
 import { CustomCheckboxShipment } from '@/components/fields/preset/custom-checkbox-shipment'
 import { CustomPagination } from '@/components/pagination/custom-pagination'
 import type { ManageUserRow } from '@/data/mock/manage-users'
@@ -74,11 +75,14 @@ export function ManageUsersPage() {
       page: currentPage,
       pageSize: PAGE_SIZE,
     },
-    { skip: !currentUser || currentUser.role !== RECOVERY_COMPANY_OWNER },
+    {
+      skip: !currentUser || currentUser.role !== RECOVERY_COMPANY_OWNER,
+      refetchOnMountOrArgChange: true,
+    },
   )
 
   const [inviteCompanyUser] = useInviteCompanyUserMutation()
-  const [createCompanyUser] = useCreateCompanyUserMutation()
+  const [createCompanyUser, { isLoading: isCreatingUser }] = useCreateCompanyUserMutation()
   const [updateStatus] = useUpdateCompanyUserStatusMutation()
 
   const pageRows = (data?.content?.users ?? []).map(toManageUserRow)
@@ -179,6 +183,7 @@ export function ManageUsersPage() {
         title: 'Success',
         message: 'User created and notified successfully.',
       })
+      setShowCreateUser(false)
     } catch (err) {
       showCustomToast({ type: 'error', title: 'Error', message: getRtkErrorMessage(err) })
     }
@@ -203,7 +208,11 @@ export function ManageUsersPage() {
           onInviteUser={() => setShowInviteUser(true)}
         />
 
-        {pageRows.length > 0 ? (
+        {isFetching ? (
+          <div className="flex min-h-0 flex-1 items-center justify-center">
+            <CustomLoader />
+          </div>
+        ) : pageRows.length > 0 ? (
           <div className="flex min-h-0 w-full flex-1 flex-col gap-3 rounded-lg border border-bottomBorder p-4">
             <div className="flex flex-row items-center justify-between">
               <div className="flex items-center gap-[10px]">
@@ -245,9 +254,7 @@ export function ManageUsersPage() {
           <div className="flex min-h-0 w-full flex-1 flex-col items-center justify-center gap-3 rounded-lg border border-bottomBorder p-4">
             <div className="flex w-full max-w-lg flex-col items-center justify-center gap-5">
               <img src="/images/emptybox.svg" alt="" width={200} height={200} />
-              <p className="text-center text-lg font-light text-black">
-                {isFetching ? MU.loadingUsers : MU.noUsersAvailable}
-              </p>
+              <p className="text-center text-lg font-light text-black">{MU.noUsersAvailable}</p>
             </div>
           </div>
         )}
@@ -255,6 +262,7 @@ export function ManageUsersPage() {
 
       <CreateUserModal
         open={showCreateUser}
+        isSubmitting={isCreatingUser}
         onClose={() => setShowCreateUser(false)}
         onSubmit={(values) => {
           void handleCreate(values)
