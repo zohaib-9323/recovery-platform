@@ -1,17 +1,23 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react'
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Check, Eye, EyeOff, KeyRound } from 'lucide-react'
 
 import { logout } from '@/app/features/auth/authSlice'
 import { useAppDispatch } from '@/app/redux-hooks'
 import { useSetupFirstLoginPasswordMutation } from '@/app/services/recoveryApi'
-import { AppLogo } from '@/components/brand/app-logo'
 import { LoginButton } from '@/components/buttons'
 import { InputField } from '@/components/fields'
-import { SuccessPopup } from '@/components/popup'
-import { Card, CardContent } from '@/components/ui/card'
 import { useI18n } from '@/i18n/useI18n'
 import { isValidPassword } from '@/lib/validation'
+import {
+  AUTH_FIELD_SHELL_CLASS,
+  AUTH_HEADING_CLASS,
+  AUTH_INPUT_CLASS,
+  AUTH_LABEL_CLASS,
+} from '@/pages/auth/authFieldStyles'
+import { AuthBackToLogin } from '@/pages/auth/components/AuthBackToLogin'
+import { PasswordRules } from '@/pages/auth/components/PasswordRules'
+import { PasswordSuccessPopup } from '@/pages/auth/components/PasswordSuccessPopup'
 import {
   clearFirstLoginFlowState,
   readFirstLoginFlowState,
@@ -33,42 +39,34 @@ function readApiMessage(error: unknown, fallback: string): string {
 function getStateFromLocation(locationState: unknown): FirstLoginFlowState | null {
   if (!locationState || typeof locationState !== 'object') return null
   const email = (locationState as { email?: unknown }).email
-  const temporaryPassword = (locationState as { temporaryPassword?: unknown }).temporaryPassword
   const setupToken = (locationState as { setupToken?: unknown }).setupToken
 
   if (typeof email !== 'string' || email.trim().length === 0) return null
-  if (typeof temporaryPassword !== 'string' || temporaryPassword.length === 0) return null
   if (typeof setupToken !== 'string' || setupToken.trim().length === 0) return null
 
   return {
     email: email.trim(),
-    temporaryPassword,
     setupToken: setupToken.trim(),
   }
 }
 
-function RuleItem({ ok, text }: { ok: boolean; text: string }) {
-  return (
-    <span
-      className={`flex items-center gap-1 text-xs ${ok ? 'text-[#22A45D]' : 'text-rp-description'}`}
-    >
-      <Check className="h-3.5 w-3.5" />
-      {text}
-    </span>
-  )
-}
+/** Seconds the success popup waits before sending the user to login. */
+const AUTO_REDIRECT_SECONDS = 5
 
 export function FirstLoginSetupPasswordPage() {
   const { t } = useI18n()
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const location = useLocation()
+  const [temporaryPassword, setTemporaryPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [showTemporaryPassword, setShowTemporaryPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [redirectIn, setRedirectIn] = useState(AUTO_REDIRECT_SECONDS)
   const [setupPassword, { isLoading }] = useSetupFirstLoginPasswordMutation()
 
   const flowState = useMemo(() => {
@@ -83,11 +81,33 @@ export function FirstLoginSetupPasswordPage() {
     if (flowState) saveFirstLoginFlowState(flowState)
   }, [flowState])
 
+  /**
+   * Once the password is set the account is usable, so the popup counts down
+   * and sends them to login on its own. The button stays for anyone who does
+   * not want to wait — the timer is a convenience, never the only way out.
+   */
+  useEffect(() => {
+    if (!showSuccess) return
+
+    const tick = window.setInterval(() => {
+      setRedirectIn((seconds) => (seconds > 0 ? seconds - 1 : 0))
+    }, 1000)
+    const redirect = window.setTimeout(() => {
+      navigate('/login', { replace: true })
+    }, AUTO_REDIRECT_SECONDS * 1000)
+
+    return () => {
+      window.clearInterval(tick)
+      window.clearTimeout(redirect)
+    }
+  }, [showSuccess, navigate])
+
   if (!flowState?.setupToken) {
     return <Navigate to="/first-login/verify-otp" replace />
   }
   const setupToken = flowState.setupToken
 
+  const temporaryPasswordTrimmed = temporaryPassword.trim()
   const newPasswordTrimmed = newPassword.trim()
   const confirmPasswordTrimmed = confirmPassword.trim()
   const matches = newPasswordTrimmed.length > 0 && newPasswordTrimmed === confirmPasswordTrimmed
@@ -98,30 +118,37 @@ export function FirstLoginSetupPasswordPage() {
     special: /[^A-Za-z0-9]/.test(newPasswordTrimmed),
     digit: /\d/.test(newPasswordTrimmed),
   }
+  const passwordsReady = isValidPassword(newPasswordTrimmed) && matches
 
-  const newPasswordError =
-    newPasswordTrimmed.length > 0 && !isValidPassword(newPasswordTrimmed)
-      ? t('auth.firstLogin.setup.rulesError')
-      : undefined
-  const confirmPasswordError =
-    confirmPasswordTrimmed.length > 0 && !matches
-      ? t('auth.firstLogin.setup.passwordMismatch')
-      : undefined
-  const canSubmit = isValidPassword(newPasswordTrimmed) && matches
+  /**
+   * Why the button is not disabled on validation: it used to be, and a click
+   * with any field unfinished did nothing at all — no request, no message,
+   * nothing to react to. Submitting always runs the checks and says which
+   * field is wrong; only an in-flight request disables it.
+   */
+  const validationError = (): string | null => {
+    if (temporaryPasswordTrimmed.length === 0) {
+      return t('auth.firstLogin.setup.temporaryPasswordRequired')
+    }
+    if (!isValidPassword(newPasswordTrimmed)) return t('auth.firstLogin.setup.rulesError')
+    if (!matches) return t('auth.firstLogin.setup.passwordMismatch')
+    return null
+  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError(null)
 
-    if (!canSubmit) {
-      setError(t('auth.firstLogin.setup.fixFields'))
+    const invalid = validationError()
+    if (invalid) {
+      setError(invalid)
       return
     }
 
     try {
       await setupPassword({
         setupToken,
-        temporaryPassword: flowState.temporaryPassword,
+        temporaryPassword: temporaryPasswordTrimmed,
         newPassword: newPasswordTrimmed,
         confirmPassword: confirmPasswordTrimmed,
       }).unwrap()
@@ -136,42 +163,77 @@ export function FirstLoginSetupPasswordPage() {
 
   return (
     <>
-      <Card
-        padding="none"
-        className="box-border w-full max-w-[584px] rounded-[10px] border-0 bg-white p-5 shadow-[0_8px_24px_2px_rgba(0,0,0,0.059)]"
-      >
-        <CardContent className="flex flex-col gap-4 p-0">
-          <div className="flex flex-col items-center gap-3 text-center">
-            <AppLogo size="lg" />
-            <h1 className="text-4xl font-bold leading-tight text-rp-heading">
-              {t('auth.firstLogin.setup.title')}
-            </h1>
-            <p className="max-w-[430px] text-base text-rp-description">
-              {t('auth.firstLogin.setup.description')}
-            </p>
-          </div>
+      <div className="h-full w-full px-5 sm:px-7 md:px-10">
+        <div className="flex h-full w-full flex-col justify-center gap-2">
+          <h1 className={AUTH_HEADING_CLASS}>{t('auth.firstLogin.setup.title')}</h1>
+          <p className="text-xs font-normal text-lightBlackOne sm:text-sm lg:text-base">
+            {t('auth.firstLogin.setup.description')}
+          </p>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <div className="space-y-2">
+          <form
+            onSubmit={handleSubmit}
+            className="no-scrollbar h-fit overflow-hidden overflow-y-scroll"
+          >
+            <div className="mt-5 flex w-full flex-col gap-2">
+              <InputField
+                fieldType="password"
+                id="first-login-temporary-password"
+                name="first-login-temporary-password"
+                label={t('auth.firstLogin.setup.temporaryPasswordLabel')}
+                labelClassName={AUTH_LABEL_CLASS}
+                className={AUTH_FIELD_SHELL_CLASS}
+                inputClassName={AUTH_INPUT_CLASS}
+                type={showTemporaryPassword ? 'text' : 'password'}
+                autoComplete="current-password"
+                leftIcon={<KeyRound className="h-5 w-5 text-primary" strokeWidth={2} />}
+                placeholder={t('auth.firstLogin.setup.temporaryPasswordPlaceholder')}
+                value={temporaryPassword}
+                onChange={(e) => {
+                  setTemporaryPassword(e.target.value)
+                  setError(null)
+                }}
+                rightSlot={
+                  <button
+                    type="button"
+                    className="rounded p-1 text-primary hover:bg-lightGrey"
+                    onClick={() => setShowTemporaryPassword((s) => !s)}
+                    aria-label={
+                      showTemporaryPassword ? t('common.hidePassword') : t('common.showPassword')
+                    }
+                  >
+                    {showTemporaryPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                }
+              />
+            </div>
+
+            <div className="mt-5 flex w-full flex-col gap-2">
               <InputField
                 fieldType="password"
                 id="first-login-new-password"
                 name="first-login-new-password"
                 label={t('auth.firstLogin.setup.newPasswordLabel')}
+                labelClassName={AUTH_LABEL_CLASS}
+                className={AUTH_FIELD_SHELL_CLASS}
+                inputClassName={AUTH_INPUT_CLASS}
                 type={showNewPassword ? 'text' : 'password'}
                 autoComplete="new-password"
-                leftIcon={<KeyRound strokeWidth={2} />}
+                leftIcon={<KeyRound className="h-5 w-5 text-primary" strokeWidth={2} />}
+                placeholder={t('auth.firstLogin.setup.newPasswordPlaceholder')}
                 value={newPassword}
                 onChange={(e) => {
                   setNewPassword(e.target.value.trim())
                   setError(null)
                 }}
-                error={newPasswordError}
-                aria-invalid={Boolean(newPasswordError)}
+                aria-invalid={newPasswordTrimmed.length > 0 && !isValidPassword(newPasswordTrimmed)}
                 rightSlot={
                   <button
                     type="button"
-                    className="rounded p-1 text-rp-icon hover:bg-rp-accent/10"
+                    className="rounded p-1 text-primary hover:bg-lightGrey"
                     onClick={() => setShowNewPassword((s) => !s)}
                     aria-label={
                       showNewPassword ? t('common.hidePassword') : t('common.showPassword')
@@ -181,35 +243,33 @@ export function FirstLoginSetupPasswordPage() {
                   </button>
                 }
               />
-              <div className="grid grid-cols-2 gap-x-2 gap-y-1 sm:grid-cols-5">
-                <RuleItem ok={checks.length} text={t('auth.firstLogin.setup.rule.length')} />
-                <RuleItem ok={checks.lower} text={t('auth.firstLogin.setup.rule.lower')} />
-                <RuleItem ok={checks.upper} text={t('auth.firstLogin.setup.rule.upper')} />
-                <RuleItem ok={checks.special} text={t('auth.firstLogin.setup.rule.special')} />
-                <RuleItem ok={checks.digit} text={t('auth.firstLogin.setup.rule.digit')} />
-              </div>
             </div>
 
-            <div className="space-y-2">
+            <PasswordRules checks={checks} />
+
+            <div className="my-8 flex w-full flex-col gap-2">
               <InputField
                 fieldType="password"
                 id="first-login-confirm-password"
                 name="first-login-confirm-password"
                 label={t('auth.firstLogin.setup.confirmPasswordLabel')}
+                labelClassName={AUTH_LABEL_CLASS}
+                className={AUTH_FIELD_SHELL_CLASS}
+                inputClassName={AUTH_INPUT_CLASS}
                 type={showConfirmPassword ? 'text' : 'password'}
                 autoComplete="new-password"
-                leftIcon={<KeyRound strokeWidth={2} />}
+                leftIcon={<KeyRound className="h-5 w-5 text-primary" strokeWidth={2} />}
+                placeholder={t('auth.firstLogin.setup.confirmPasswordPlaceholder')}
                 value={confirmPassword}
                 onChange={(e) => {
                   setConfirmPassword(e.target.value.trim())
                   setError(null)
                 }}
-                error={confirmPasswordError}
-                aria-invalid={Boolean(confirmPasswordError)}
+                aria-invalid={confirmPasswordTrimmed.length > 0 && !matches}
                 rightSlot={
                   <button
                     type="button"
-                    className="rounded p-1 text-rp-icon hover:bg-rp-accent/10"
+                    className="rounded p-1 text-primary hover:bg-lightGrey"
                     onClick={() => setShowConfirmPassword((s) => !s)}
                     aria-label={
                       showConfirmPassword ? t('common.hidePassword') : t('common.showPassword')
@@ -223,45 +283,54 @@ export function FirstLoginSetupPasswordPage() {
                   </button>
                 }
               />
-              {confirmPasswordTrimmed ? (
-                <p className={`text-xs ${matches ? 'text-[#22A45D]' : 'text-rp-description'}`}>
-                  {matches
-                    ? t('auth.firstLogin.setup.matched')
-                    : t('auth.firstLogin.setup.notMatchedYet')}
+              {passwordsReady ? (
+                <div className="flex flex-row items-center gap-2">
+                  <Check className="h-3 w-3 text-greenOne" strokeWidth={3} />
+                  <p className="text-tiny font-normal text-greenOne">
+                    {t('auth.firstLogin.setup.matched')}
+                  </p>
+                </div>
+              ) : null}
+              {confirmPasswordTrimmed && !passwordsReady ? (
+                <p className="text-tiny font-normal text-lightBlackOne">
+                  {t('auth.firstLogin.setup.notMatchedYet')}
                 </p>
               ) : null}
             </div>
 
             {error ? (
-              <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+              <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
                 {error}
               </p>
             ) : null}
 
-            <LoginButton type="submit" disabled={!canSubmit || isLoading}>
-              {isLoading
-                ? t('auth.firstLogin.setup.submitting')
-                : t('auth.firstLogin.setup.submit')}
-            </LoginButton>
+            <div className="w-full">
+              <LoginButton type="submit" disabled={isLoading}>
+                {isLoading
+                  ? t('auth.firstLogin.setup.submitting')
+                  : t('auth.firstLogin.setup.submit')}
+              </LoginButton>
+            </div>
           </form>
 
-          <p className="text-sm text-rp-description">
-            {t('auth.firstLogin.setup.backToLogin')}{' '}
-            <Link to="/login" className="font-semibold text-rp-heading hover:underline">
-              {t('auth.firstLogin.setup.loginLink')}
-            </Link>
-          </p>
-        </CardContent>
-      </Card>
+          <AuthBackToLogin
+            prompt={t('auth.firstLogin.setup.backToLogin')}
+            linkLabel={t('auth.firstLogin.setup.loginLink')}
+          />
+        </div>
+      </div>
 
-      <SuccessPopup
-        open={showSuccess}
-        title={t('auth.firstLogin.setup.popupTitle')}
-        description={t('auth.firstLogin.setup.popupDescription')}
-        actionLabel={t('auth.firstLogin.setup.popupAction')}
-        onAction={() => navigate('/login', { replace: true })}
-        onClose={() => setShowSuccess(false)}
-      />
+      {showSuccess ? (
+        <PasswordSuccessPopup
+          title={t('auth.firstLogin.setup.popupTitle')}
+          description={`${t('auth.firstLogin.setup.popupDescription')} ${t(
+            'auth.firstLogin.setup.redirecting',
+            { seconds: String(redirectIn) },
+          )}`}
+          actionLabel={t('auth.firstLogin.setup.popupAction')}
+          onAction={() => navigate('/login', { replace: true })}
+        />
+      ) : null}
     </>
   )
 }
