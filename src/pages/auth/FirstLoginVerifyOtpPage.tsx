@@ -13,6 +13,7 @@ import {
   saveFirstLoginFlowState,
   type FirstLoginFlowState,
 } from '@/pages/auth/first-login-flow'
+import { SignupStepper } from '@/pages/auth/signup/SignupStepper'
 
 function getStateFromLocation(locationState: unknown): FirstLoginFlowState | null {
   if (!locationState || typeof locationState !== 'object') return null
@@ -36,6 +37,9 @@ function getStateFromLocation(locationState: unknown): FirstLoginFlowState | nul
  * anyone who lands here directly with a signup flow already saved in
  * `sessionStorage`. The signup flow itself no longer navigates here: its OTP
  * step renders in place on `SignupPage` using the same `OtpVerificationForm`.
+ *
+ * Renders the same "Personal Information → Email Verification" `SignupStepper`
+ * as the in-page signup OTP step, for visual parity between the two routes.
  */
 export function FirstLoginVerifyOtpPage() {
   const { t } = useI18n()
@@ -71,19 +75,16 @@ export function FirstLoginVerifyOtpPage() {
 
   return (
     <>
-      {/*
-        A standalone card, not a signup step: this route is reached from login
-        (an unverified or one-time-password account), where there is no
-        "Personal Information → Email Verification" journey to show progress
-        through. The stepper that used to sit here implied one.
-      */}
       <div className="flex w-full items-center justify-center px-5 py-10 sm:px-7 md:px-10">
-        <div className="w-full max-w-2xl rounded-[22px] bg-white p-5 shadow-[0px_8px_24px_2px_rgba(0,0,0,0.06)] sm:p-7">
-          <OtpVerificationForm
-            email={flowState.email}
-            fromSignup={flowState.fromSignup === true}
-            onVerified={handleVerified}
-          />
+        <div className="flex w-full max-w-2xl flex-col gap-5">
+          <SignupStepper activeStep="email-verification" />
+          <div className="rounded-[22px] bg-white p-5 shadow-[0px_8px_24px_2px_rgba(0,0,0,0.06)] sm:p-7">
+            <OtpVerificationForm
+              email={flowState.email}
+              fromSignup={flowState.fromSignup === true}
+              onVerified={handleVerified}
+            />
+          </div>
         </div>
       </div>
 

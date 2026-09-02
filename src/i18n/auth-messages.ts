@@ -80,8 +80,6 @@ export const authMessages: Record<string, string> = {
   'auth.firstLogin.otp.resent': 'A new OTP has been sent to {{email}}.',
   'auth.firstLogin.otp.verifyFailed': 'Failed to verify OTP.',
   'auth.firstLogin.otp.resendFailed': 'Failed to request OTP again.',
-  'auth.firstLogin.otp.backToLogin': 'Go back to login?',
-  'auth.firstLogin.otp.loginLink': 'Login',
   'auth.firstLogin.setup.title': 'Set New Password',
   'auth.firstLogin.setup.description':
     'Enter the temporary password from your email and create a new secure password.',
