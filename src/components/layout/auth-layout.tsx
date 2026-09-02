@@ -27,25 +27,29 @@ import { useI18n } from '@/i18n/useI18n'
  * Nesting a second `overflow-y-auto` inside an `overflow-hidden` parent made it
  * worse by splitting the scroll between two elements.
  *
- * THE SIGNUP SHELL MUST PRODUCE EXACTLY ONE SCROLLBAR. Three classes do that
- * and all three are load-bearing:
- *   - `overflow-hidden` on the `h-dvh` shell, so the document itself can never
- *     scroll;
+ * THE SIGNUP SHELL MUST PRODUCE EXACTLY ONE SCROLLBAR. Two classes do that:
  *   - `min-h-0` on the scrolling child — a flex item defaults to
  *     `min-height: auto`, which refuses to shrink below its content, so without
  *     this the child grows to the full height of the form instead of the space
- *     left over, the shell overflows, and the browser adds a SECOND scrollbar
- *     for the document on top of the intended inner one;
+ *     left over, and the browser adds a SECOND scrollbar for the document on
+ *     top of the intended inner one;
  *   - `shrink-0` on the logo row, so it is never squeezed to make room.
+ * With those two, the scroller's own height is fixed by flex math (shell height
+ * minus the logo row) regardless of content, so its `overflow-y-auto` already
+ * contains everything within the shell's own bounds — nothing paints past it,
+ * so the shell doesn't need `overflow-hidden` as a backstop.
  * Two scrollbars is the bug that made the signup form jump when the terms modal
- * opened: the page and the form scrolled independently.
+ * opened: the page and the form scrolled independently. That was fixed at the
+ * cause, not patched here — `SignupTermsModal` now portals into
+ * `document.body`, so it is never a DOM child of the scroller and can't move
+ * its scroll position.
  *
- * The shell is `fixed inset-0` rather than `h-dvh` for that reason. Global CSS
- * sets `min-height: 100vh` on BOTH `body` and `#root`, so an in-flow
- * full-height shell can push the document past the viewport and earn it a
- * second scrollbar. Taking the shell out of flow means it contributes no height
- * to those elements at all, and the document has nothing to scroll — leaving
- * the inner `overflow-y-auto` as the only scroller that can exist.
+ * The shell is `fixed inset-0` rather than `h-dvh`. Global CSS sets
+ * `min-height: 100vh` on BOTH `body` and `#root`, so an in-flow full-height
+ * shell can push the document past the viewport and earn it a second
+ * scrollbar. Taking the shell out of flow means it contributes no height to
+ * those elements at all, and the document has nothing to scroll — leaving the
+ * inner `overflow-y-auto` as the only scroller that can exist.
  */
 export function AuthLayout() {
   const { t } = useI18n()
