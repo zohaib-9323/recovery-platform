@@ -87,3 +87,57 @@ export type UpdateCompanyUserStatusBody = {
   reason?: string
   description?: string
 }
+
+/** One row in the owner's delete-request queue. */
+export type CompanyDeleteRequest = {
+  _id: string
+  firstName: string
+  lastName: string
+  email: string
+  phone?: string
+  status: string
+  deletionRequestStatus: 'pending' | 'approved' | 'rejected'
+  deletionRequestReason?: string
+  deletionRequestedAt?: string | null
+}
+
+export type CompanyDeleteRequestsContent = {
+  data: CompanyDeleteRequest[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
+
+/** Matches the admin Connections row so both screens render the same table. */
+export type CompanyConnectionStatusValue =
+  | 'connected'
+  | 'auth_expired'
+  | 'needs_reconnect'
+  | 'not_connected'
+
+/**
+ * A teammate's Microsoft connection, as the owner sees it.
+ *
+ * Deliberately narrow: whether they are connected, which mailbox, and when it
+ * last synced — never a token, and never their import data, which stays
+ * private to each user.
+ */
+export type CompanyM365Status = {
+  recoveryUserId: string
+  userName: string
+  userEmail: string
+  connectedAccount: string | null
+  connectionStatus: CompanyConnectionStatusValue
+  connectedSince: string | null
+  lastSync: string | null
+  lastError?: string | null
+}
+
+export type CompanyM365StatusContent = {
+  items: CompanyM365Status[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}

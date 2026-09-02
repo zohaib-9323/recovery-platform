@@ -23,6 +23,17 @@ export type PersonalInformationSectionProps = {
   markTouched: (field: keyof SignupFormValues) => void
   emailError?: string
   companyEmailError?: string
+  /**
+   * Invite variant: the address is fixed by the invite token, so it is shown
+   * but not editable — typing a different one would only desync the form from
+   * the token the server validates against.
+   */
+  emailReadOnly?: boolean
+  /**
+   * Invited users join the inviting owner's company, so they are never asked
+   * for a company email. Defaults to the self-signup behaviour.
+   */
+  showCompanyEmail?: boolean
 }
 
 /** Figma "Personal Information" block: name/email/phone + company email. */
@@ -33,6 +44,8 @@ export function PersonalInformationSection({
   markTouched,
   emailError,
   companyEmailError,
+  emailReadOnly = false,
+  showCompanyEmail = true,
 }: PersonalInformationSectionProps) {
   const { t } = useI18n()
 
@@ -99,6 +112,8 @@ export function PersonalInformationSection({
         autoComplete="email"
         placeholder={t('auth.signup.emailPlaceholder')}
         value={values.email}
+        readOnly={emailReadOnly}
+        disabled={emailReadOnly}
         onChange={(e) => setField('email', e.target.value.replace(/\s/g, ''))}
         onBlur={() => markTouched('email')}
         error={touched.email ? emailError : undefined}
@@ -134,23 +149,25 @@ export function PersonalInformationSection({
         </div>
       </div>
 
-      <InputField
-        fieldType="email"
-        id="signup-company-email"
-        name="companyEmail"
-        label={t('auth.signup.companyEmailLabel')}
-        labelClassName={SIGNUP_LABEL_CLASS}
-        containerClassName={SIGNUP_FIELD_CONTAINER_CLASS}
-        className={SIGNUP_FIELD_SHELL_CLASS}
-        inputClassName={SIGNUP_INPUT_CLASS}
-        leftIcon={MAIL_ICON}
-        placeholder={t('auth.signup.companyEmailPlaceholder')}
-        value={values.companyEmail}
-        onChange={(e) => setField('companyEmail', e.target.value.replace(/\s/g, ''))}
-        onBlur={() => markTouched('companyEmail')}
-        error={touched.companyEmail ? companyEmailError : undefined}
-        aria-invalid={Boolean(touched.companyEmail && companyEmailError)}
-      />
+      {showCompanyEmail ? (
+        <InputField
+          fieldType="email"
+          id="signup-company-email"
+          name="companyEmail"
+          label={t('auth.signup.companyEmailLabel')}
+          labelClassName={SIGNUP_LABEL_CLASS}
+          containerClassName={SIGNUP_FIELD_CONTAINER_CLASS}
+          className={SIGNUP_FIELD_SHELL_CLASS}
+          inputClassName={SIGNUP_INPUT_CLASS}
+          leftIcon={MAIL_ICON}
+          placeholder={t('auth.signup.companyEmailPlaceholder')}
+          value={values.companyEmail}
+          onChange={(e) => setField('companyEmail', e.target.value.replace(/\s/g, ''))}
+          onBlur={() => markTouched('companyEmail')}
+          error={touched.companyEmail ? companyEmailError : undefined}
+          aria-invalid={Boolean(touched.companyEmail && companyEmailError)}
+        />
+      ) : null}
     </div>
   )
 }

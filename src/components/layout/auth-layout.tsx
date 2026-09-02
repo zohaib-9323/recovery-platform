@@ -50,7 +50,16 @@ import { useI18n } from '@/i18n/useI18n'
 export function AuthLayout() {
   const { t } = useI18n()
   const { pathname } = useLocation()
-  const hideMarketingPanel = pathname.startsWith('/signup')
+  // Accept-invite runs the same long, stepper-driven form as signup, so it
+  // needs signup's single-scroller shell. The split marketing shell below is
+  // sized for short forms; a tall child in it is what produced the
+  // second-scrollbar bug these tests guard against.
+  // `/first-login/verify-otp` only — its sibling `/first-login/setup-password`
+  // keeps the split marketing shell, per the design.
+  const hideMarketingPanel =
+    pathname.startsWith('/signup') ||
+    pathname.startsWith('/accept-invite') ||
+    pathname.startsWith('/first-login/verify-otp')
 
   // trade-harmonizer's registration shell, matched structurally: logo row,
   // then a single scrolling region containing the form and the footer.

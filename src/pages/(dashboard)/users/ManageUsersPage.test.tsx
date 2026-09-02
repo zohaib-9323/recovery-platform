@@ -15,6 +15,11 @@ jest.mock('@/app/services/recoveryCompanyUsersApi', () => ({
   useUpdateCompanyUserStatusMutation: () => [mockUpdateStatus, { isLoading: false }],
   useInviteCompanyUserMutation: () => [mockInvite, { isLoading: false }],
   useCreateCompanyUserMutation: () => [mockCreate, { isLoading: false }],
+  // The owner-only cards mounted above the table. Empty by default so these
+  // cases stay about the user list.
+  useListCompanyDeleteRequestsQuery: () => ({ data: undefined, isLoading: false }),
+  useDecideCompanyDeleteRequestMutation: () => [jest.fn(), { isLoading: false }],
+  useListCompanyM365StatusQuery: () => ({ data: undefined, isLoading: false }),
 }))
 
 function renderPage(role: string) {

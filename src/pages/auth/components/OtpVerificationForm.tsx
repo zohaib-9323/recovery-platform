@@ -11,11 +11,6 @@ import { useI18n } from '@/i18n/useI18n'
 import { showCustomToast } from '@/lib/showCustomToast'
 import { AUTH_HEADING_CLASS } from '@/pages/auth/authFieldStyles'
 import { AuthBackToLogin } from '@/pages/auth/components/AuthBackToLogin'
-import {
-  isFirstLoginMockEnabled,
-  mockRequestFirstLoginOtp,
-  mockVerifyFirstLoginOtp,
-} from '@/pages/auth/first-login-mock'
 
 const OTP_LENGTH = 6
 const RESEND_TIMER_SECONDS = 300
@@ -129,10 +124,7 @@ export function OtpVerificationForm({
     }
 
     try {
-      // TEMPORARY (REACT_APP_FIRST_LOGIN_MOCK) — see `first-login-mock.ts`.
-      const setupToken = isFirstLoginMockEnabled()
-        ? (await mockVerifyFirstLoginOtp(otp)).setupToken
-        : (await verifyOtp({ email, otp }).unwrap()).content?.setupToken
+      const setupToken = (await verifyOtp({ email, otp }).unwrap()).content?.setupToken
 
       if (!setupToken) {
         setError(t('auth.firstLogin.otp.verifyFailed'))
@@ -148,12 +140,7 @@ export function OtpVerificationForm({
   const handleResendOtp = async () => {
     setError(null)
     try {
-      // TEMPORARY (REACT_APP_FIRST_LOGIN_MOCK) — see `first-login-mock.ts`.
-      if (isFirstLoginMockEnabled()) {
-        await mockRequestFirstLoginOtp()
-      } else {
-        await requestOtp({ email }).unwrap()
-      }
+      await requestOtp({ email }).unwrap()
       setTimer(RESEND_TIMER_SECONDS)
       setDigits(Array<string>(OTP_LENGTH).fill(''))
       inputRefs.current[0]?.focus()

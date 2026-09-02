@@ -16,9 +16,6 @@ jest.mock('@/utils/env', () => ({
     mainSiteUrl: 'https://recovery.test/login',
     tenantValidatePath: '/tenants/validate',
     recoveryTenantValidatePath: '/recovery/tenants/validate',
-    firstLoginMock: false,
-    firstLoginMockEmail: '',
-    firstLoginMockPassword: '',
     firebase: {},
   },
 }))

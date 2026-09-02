@@ -13,7 +13,6 @@ import {
   saveFirstLoginFlowState,
   type FirstLoginFlowState,
 } from '@/pages/auth/first-login-flow'
-import { SignupStepper } from '@/pages/auth/signup/SignupStepper'
 
 function getStateFromLocation(locationState: unknown): FirstLoginFlowState | null {
   if (!locationState || typeof locationState !== 'object') return null
@@ -72,9 +71,14 @@ export function FirstLoginVerifyOtpPage() {
 
   return (
     <>
-      <div className="h-full w-full px-5 sm:px-7 md:px-10">
-        <div className="flex h-full w-full flex-col justify-center gap-2">
-          <SignupStepper activeStep="email-verification" className="mb-4" />
+      {/*
+        A standalone card, not a signup step: this route is reached from login
+        (an unverified or one-time-password account), where there is no
+        "Personal Information → Email Verification" journey to show progress
+        through. The stepper that used to sit here implied one.
+      */}
+      <div className="flex w-full items-center justify-center px-5 py-10 sm:px-7 md:px-10">
+        <div className="w-full max-w-2xl rounded-[22px] bg-white p-5 shadow-[0px_8px_24px_2px_rgba(0,0,0,0.06)] sm:p-7">
           <OtpVerificationForm
             email={flowState.email}
             fromSignup={flowState.fromSignup === true}

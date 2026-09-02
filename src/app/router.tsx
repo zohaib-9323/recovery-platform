@@ -27,6 +27,8 @@ import { AllShipmentsPage } from '@/pages/(dashboard)/shipments/AllShipmentsPage
 import { ShipmentDetailPageV2 as ShipmentDetailPage } from '@/pages/(dashboard)/shipments/ShipmentDetailPageV2'
 import { ShipmentLogsPage } from '@/pages/(dashboard)/shipments/ShipmentLogsPage'
 import { SettingsPage } from '@/pages/(dashboard)/settings/SettingsPage'
+import { CompanyConnectionsPage } from '@/pages/(dashboard)/users/CompanyConnectionsPage'
+import { CompanyDeleteRequestsPage } from '@/pages/(dashboard)/users/CompanyDeleteRequestsPage'
 import { ManageUsersPage } from '@/pages/(dashboard)/users/ManageUsersPage'
 import { UserDetailPage } from '@/pages/(dashboard)/users/UserDetailPage'
 
@@ -70,6 +72,13 @@ export function AppRouter() {
                 <Route path="/shipments/:id" element={<ShipmentDetailPage />} />
                 <Route path="/inbox" element={<InboxPage />} />
                 <Route path="/users" element={<ManageUsersPage />} />
+                {/*
+                  Registered before "/users/:id" so the literal paths win — a
+                  param route placed first would swallow them and try to load a
+                  user whose id is "connections".
+                */}
+                <Route path="/users/connections" element={<CompanyConnectionsPage />} />
+                <Route path="/users/deletion-requests" element={<CompanyDeleteRequestsPage />} />
                 <Route path="/users/:id" element={<UserDetailPage />} />
                 <Route path="/imports" element={<ImportsPage />} />
                 {/* Listed before /imports/:id for readability. React Router v6

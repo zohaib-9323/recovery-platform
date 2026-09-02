@@ -61,9 +61,12 @@ export const authMessages: Record<string, string> = {
   'auth.reset.popupTitle': 'Password Reset Successfully!',
   'auth.reset.popupDescription': 'Login to your account with your new password.',
   'auth.reset.popupAction': 'Login',
-  'auth.firstLogin.otp.title': 'Email Verification',
-  'auth.firstLogin.otp.description': 'We sent a verification code to {{email}}.',
-  'auth.firstLogin.otp.descriptionSuffix': 'Enter the 6-digit code below.',
+  'auth.firstLogin.otp.title': 'OTP Verification',
+  'auth.firstLogin.otp.description':
+    'Secure your account with a quick OTP verification. Simple, fast, and essential for your safety.',
+  // The Figma copy carries the whole message, so the suffix is now empty
+  // rather than removed — the key is interpolated in several places.
+  'auth.firstLogin.otp.descriptionSuffix': '',
   'auth.firstLogin.otp.emailLabel': 'Email Address',
   'auth.firstLogin.otp.codeLabel': 'OTP Code',
   'auth.firstLogin.otp.codePlaceholder': 'Enter 6-digit OTP',
@@ -72,7 +75,7 @@ export const authMessages: Record<string, string> = {
   'auth.firstLogin.otp.submit': 'Verify and Proceed',
   'auth.firstLogin.otp.verifying': 'Verifying...',
   'auth.firstLogin.otp.didNotReceive': 'Didn’t receive code?',
-  'auth.firstLogin.otp.resend': 'Resend Code',
+  'auth.firstLogin.otp.resend': 'Resend code',
   'auth.firstLogin.otp.resending': 'Requesting...',
   'auth.firstLogin.otp.resent': 'A new OTP has been sent to {{email}}.',
   'auth.firstLogin.otp.verifyFailed': 'Failed to verify OTP.',
@@ -91,6 +94,9 @@ export const authMessages: Record<string, string> = {
   'auth.firstLogin.setup.rulesError': 'Password must satisfy all rules below.',
   'auth.firstLogin.setup.passwordMismatch': 'Passwords do not match.',
   'auth.firstLogin.setup.fixFields': 'Please fix the highlighted fields.',
+  'auth.firstLogin.setup.temporaryPasswordRequired':
+    'Enter the temporary password from your account email.',
+  'auth.firstLogin.setup.redirecting': 'Taking you to login in {{seconds}}s…',
   'auth.firstLogin.setup.failed': 'Failed to set password.',
   'auth.firstLogin.setup.rule.length': 'Length 8+',
   'auth.firstLogin.setup.rule.lower': '1 small letter',

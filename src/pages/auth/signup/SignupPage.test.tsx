@@ -135,6 +135,55 @@ describe('SignupPage', () => {
     })
   })
 
+  describe('claimed company domain', () => {
+    const reject409 = (message: string) => ({
+      unwrap: jest.fn().mockRejectedValue({ status: 409, data: { message } }),
+    })
+
+    it('pins the server conflict under the email field so it outlives the toast', async () => {
+      // The backend rejects a second signup on an already-claimed company
+      // domain. The instruction it returns is the whole recovery path for the
+      // user, so it must not vanish with the toast.
+      mockRegister.mockReturnValue(
+        reject409(
+          'An account already exists for this company domain. Please ask your company owner to invite you.',
+        ),
+      )
+
+      renderSignup()
+      fillValidForm()
+      fireEvent.click(screen.getByRole('button', { name: 'Proceed' }))
+
+      expect(await screen.findByText(/ask your company owner to invite you/i)).toBeInTheDocument()
+    })
+
+    it('stays on the form rather than advancing to OTP', async () => {
+      mockRegister.mockReturnValue(reject409('This company domain is already registered.'))
+
+      renderSignup()
+      fillValidForm()
+      fireEvent.click(screen.getByRole('button', { name: 'Proceed' }))
+
+      expect(await screen.findByText(/already registered/i)).toBeInTheDocument()
+      expect(screen.queryAllByLabelText(/code \d/i)).toHaveLength(0)
+    })
+
+    it('clears the conflict once the email is edited', async () => {
+      mockRegister.mockReturnValue(reject409('This company domain is already registered.'))
+
+      renderSignup()
+      fillValidForm()
+      fireEvent.click(screen.getByRole('button', { name: 'Proceed' }))
+      expect(await screen.findByText(/already registered/i)).toBeInTheDocument()
+
+      fireEvent.change(screen.getByLabelText(/^email/i), {
+        target: { value: 'someone@othercorp.com' },
+      })
+
+      expect(screen.queryByText(/already registered/i)).not.toBeInTheDocument()
+    })
+  })
+
   describe('submission', () => {
     it('calls the register mutation with the collected fields', async () => {
       mockRegister.mockReturnValue({ unwrap: jest.fn().mockResolvedValue({ status: true }) })

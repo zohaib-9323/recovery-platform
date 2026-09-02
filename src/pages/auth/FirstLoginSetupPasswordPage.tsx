@@ -24,7 +24,6 @@ import {
   saveFirstLoginFlowState,
   type FirstLoginFlowState,
 } from '@/pages/auth/first-login-flow'
-import { isFirstLoginMockEnabled, mockSetupFirstLoginPassword } from '@/pages/auth/first-login-mock'
 
 function readApiMessage(error: unknown, fallback: string): string {
   if (error && typeof error === 'object' && 'data' in error) {
@@ -51,6 +50,9 @@ function getStateFromLocation(locationState: unknown): FirstLoginFlowState | nul
   }
 }
 
+/** Seconds the success popup waits before sending the user to login. */
+const AUTO_REDIRECT_SECONDS = 5
+
 export function FirstLoginSetupPasswordPage() {
   const { t } = useI18n()
   const dispatch = useAppDispatch()
@@ -64,6 +66,7 @@ export function FirstLoginSetupPasswordPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [redirectIn, setRedirectIn] = useState(AUTO_REDIRECT_SECONDS)
   const [setupPassword, { isLoading }] = useSetupFirstLoginPasswordMutation()
 
   const flowState = useMemo(() => {
@@ -77,6 +80,27 @@ export function FirstLoginSetupPasswordPage() {
   useEffect(() => {
     if (flowState) saveFirstLoginFlowState(flowState)
   }, [flowState])
+
+  /**
+   * Once the password is set the account is usable, so the popup counts down
+   * and sends them to login on its own. The button stays for anyone who does
+   * not want to wait — the timer is a convenience, never the only way out.
+   */
+  useEffect(() => {
+    if (!showSuccess) return
+
+    const tick = window.setInterval(() => {
+      setRedirectIn((seconds) => (seconds > 0 ? seconds - 1 : 0))
+    }, 1000)
+    const redirect = window.setTimeout(() => {
+      navigate('/login', { replace: true })
+    }, AUTO_REDIRECT_SECONDS * 1000)
+
+    return () => {
+      window.clearInterval(tick)
+      window.clearTimeout(redirect)
+    }
+  }, [showSuccess, navigate])
 
   if (!flowState?.setupToken) {
     return <Navigate to="/first-login/verify-otp" replace />
@@ -95,29 +119,39 @@ export function FirstLoginSetupPasswordPage() {
     digit: /\d/.test(newPasswordTrimmed),
   }
   const passwordsReady = isValidPassword(newPasswordTrimmed) && matches
-  const canSubmit = passwordsReady && temporaryPasswordTrimmed.length > 0
+
+  /**
+   * Why the button is not disabled on validation: it used to be, and a click
+   * with any field unfinished did nothing at all — no request, no message,
+   * nothing to react to. Submitting always runs the checks and says which
+   * field is wrong; only an in-flight request disables it.
+   */
+  const validationError = (): string | null => {
+    if (temporaryPasswordTrimmed.length === 0) {
+      return t('auth.firstLogin.setup.temporaryPasswordRequired')
+    }
+    if (!isValidPassword(newPasswordTrimmed)) return t('auth.firstLogin.setup.rulesError')
+    if (!matches) return t('auth.firstLogin.setup.passwordMismatch')
+    return null
+  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError(null)
 
-    if (!canSubmit) {
-      setError(t('auth.firstLogin.setup.fixFields'))
+    const invalid = validationError()
+    if (invalid) {
+      setError(invalid)
       return
     }
 
     try {
-      // TEMPORARY (REACT_APP_FIRST_LOGIN_MOCK) — see `first-login-mock.ts`.
-      if (isFirstLoginMockEnabled()) {
-        await mockSetupFirstLoginPassword(temporaryPasswordTrimmed)
-      } else {
-        await setupPassword({
-          setupToken,
-          temporaryPassword: temporaryPasswordTrimmed,
-          newPassword: newPasswordTrimmed,
-          confirmPassword: confirmPasswordTrimmed,
-        }).unwrap()
-      }
+      await setupPassword({
+        setupToken,
+        temporaryPassword: temporaryPasswordTrimmed,
+        newPassword: newPasswordTrimmed,
+        confirmPassword: confirmPasswordTrimmed,
+      }).unwrap()
 
       clearFirstLoginFlowState()
       dispatch(logout())
@@ -271,7 +305,7 @@ export function FirstLoginSetupPasswordPage() {
             ) : null}
 
             <div className="w-full">
-              <LoginButton type="submit" disabled={!canSubmit || isLoading}>
+              <LoginButton type="submit" disabled={isLoading}>
                 {isLoading
                   ? t('auth.firstLogin.setup.submitting')
                   : t('auth.firstLogin.setup.submit')}
@@ -289,7 +323,10 @@ export function FirstLoginSetupPasswordPage() {
       {showSuccess ? (
         <PasswordSuccessPopup
           title={t('auth.firstLogin.setup.popupTitle')}
-          description={t('auth.firstLogin.setup.popupDescription')}
+          description={`${t('auth.firstLogin.setup.popupDescription')} ${t(
+            'auth.firstLogin.setup.redirecting',
+            { seconds: String(redirectIn) },
+          )}`}
           actionLabel={t('auth.firstLogin.setup.popupAction')}
           onAction={() => navigate('/login', { replace: true })}
         />

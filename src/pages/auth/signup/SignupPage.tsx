@@ -7,6 +7,7 @@ import { LoginButton } from '@/components/buttons'
 import { CheckboxField } from '@/components/fields'
 import { useI18n } from '@/i18n/useI18n'
 import { getRtkErrorMessage } from '@/lib/api-errors'
+import { isConflictError } from '@/lib/api-error'
 import { findScrollableAncestor } from '@/lib/scrollable-ancestor'
 import { showCustomToast } from '@/lib/showCustomToast'
 import { extractSubdomainFromHostname } from '@/lib/tenantTheme'
@@ -110,10 +111,24 @@ export function SignupPage() {
     }
   }, [isTermsOpen])
 
+  /**
+   * A 409 from /register — the address is taken, or its company domain is
+   * already claimed by someone else. Held separately from the client-side
+   * validation errors because only the server can know it, and it has to
+   * survive the toast disappearing: "ask your company owner to invite you" is
+   * an instruction the user needs to still be able to read.
+   */
+  const [emailServerError, setEmailServerError] = useState<string | undefined>(undefined)
+
   const setField: <K extends SignupFieldName>(field: K, value: SignupFormValues[K]) => void = (
     field,
     value,
   ) => {
+    // Editing the email invalidates whatever the server said about the old
+    // one; leaving it up would keep a resolved error pinned to a valid field.
+    if (field === 'email') {
+      setEmailServerError(undefined)
+    }
     setValues((prev) => ({ ...prev, [field]: value }))
   }
 
@@ -135,9 +150,10 @@ export function SignupPage() {
   const passwordsMatch = values.password.length > 0 && values.password === values.confirmPassword
 
   const emailError =
-    values.email.length > 0 && !isValidEmail(values.email)
+    emailServerError ??
+    (values.email.length > 0 && !isValidEmail(values.email)
       ? t('auth.login.enterValidEmail')
-      : undefined
+      : undefined)
   const companyEmailError =
     values.companyEmail.length > 0 && !isValidEmail(values.companyEmail)
       ? t('auth.login.enterValidEmail')
@@ -230,10 +246,14 @@ export function SignupPage() {
       setOtpEmail(email)
       setStep('email-verification')
     } catch (err) {
+      const message = getRtkErrorMessage(err)
+      if (isConflictError(err)) {
+        setEmailServerError(message)
+      }
       showCustomToast({
         type: 'error',
         title: t('auth.signup.fixFieldsTitle'),
-        message: getRtkErrorMessage(err),
+        message,
       })
     }
   }

@@ -26,6 +26,20 @@ function renderAt(path: string) {
 }
 
 describe('AuthLayout — signup shell', () => {
+  it('gives accept-invite the signup shell, not the centred login one', () => {
+    // Accept-invite runs the same long stepper form as signup. In the split
+    // login shell its `items-center` overflow puts the top of the form out of
+    // scroll reach — the bug the rules below exist to prevent.
+    const { container } = renderAt('/accept-invite')
+
+    const shell = container.firstElementChild as HTMLElement
+    expect(shell.className).toContain('fixed')
+    expect(container.querySelector('.md\\:w-3\\/5')).toBeNull()
+    expect(
+      container.querySelectorAll('.overflow-y-auto, .overflow-auto, .overflow-y-scroll'),
+    ).toHaveLength(1)
+  })
+
   it('has exactly one scrolling element', () => {
     const { container } = renderAt('/signup')
 

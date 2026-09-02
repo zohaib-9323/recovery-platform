@@ -8,14 +8,20 @@ import { FirstLoginVerifyOtpPage } from './FirstLoginVerifyOtpPage'
 import { LoginPage } from './LoginPage'
 
 /**
- * Covers the demo (`REACT_APP_FIRST_LOGIN_MOCK`) path end to end: login with the
- * demo account → OTP → set new password → success popup. Delete alongside
- * `first-login-mock.ts` once the real endpoints exist, and re-point these cases
- * at the RTK Query hooks.
+ * The owner-created account's first login, end to end through the real
+ * endpoints: login → OTP → set new password → success popup.
+ *
+ * This file used to drive `first-login-mock.ts`, a client-side stand-in from
+ * before the API existed. That mock defaulted ON under `NODE_ENV=development`
+ * and — unlike the login page's demo short-circuit — was not scoped to the
+ * demo account, so on localhost *no* user's OTP verification or password setup
+ * ever reached the backend. It is deleted; these cases now assert against the
+ * RTK Query hooks, which is what the screens actually call.
  */
-const MOCK_EMAIL = 'demo-user@example.com'
-const MOCK_TEMP_PASSWORD = 'Test@123'
+const EMAIL = 'ali.khan@devexcelit.com'
+const TEMP_PASSWORD = 'Temp@1234'
 const NEW_PASSWORD = 'TradeHarmony1!'
+const SETUP_TOKEN = 'setup-token-abc'
 
 jest.mock('@/utils/env', () => ({
   env: {
@@ -24,20 +30,20 @@ jest.mock('@/utils/env', () => ({
     mainSiteUrl: 'https://recovery.test/login',
     tenantValidatePath: '/tenants/validate',
     recoveryTenantValidatePath: '/recovery/tenants/validate',
-    firstLoginMock: true,
-    firstLoginMockEmail: 'demo-user@example.com',
-    firstLoginMockPassword: 'Test@123',
     firebase: {},
   },
 }))
 
 const mockLogin = jest.fn()
+const mockVerifyFirstLoginOtp = jest.fn()
+const mockRequestFirstLoginOtp = jest.fn()
+const mockSetupPassword = jest.fn()
 
 jest.mock('@/app/services/recoveryApi', () => ({
   useLoginMutation: () => [mockLogin, { isLoading: false }],
-  useVerifyFirstLoginOtpMutation: () => [jest.fn(), { isLoading: false }],
-  useRequestFirstLoginOtpMutation: () => [jest.fn(), { isLoading: false }],
-  useSetupFirstLoginPasswordMutation: () => [jest.fn(), { isLoading: false }],
+  useVerifyFirstLoginOtpMutation: () => [mockVerifyFirstLoginOtp, { isLoading: false }],
+  useRequestFirstLoginOtpMutation: () => [mockRequestFirstLoginOtp, { isLoading: false }],
+  useSetupFirstLoginPasswordMutation: () => [mockSetupPassword, { isLoading: false }],
   useVerifySignupOtpMutation: () => [jest.fn(), { isLoading: false }],
 }))
 
@@ -61,9 +67,9 @@ function renderFlow() {
   )
 }
 
-function submitLogin(password: string) {
-  fireEvent.change(screen.getByLabelText('Email Address'), { target: { value: MOCK_EMAIL } })
-  fireEvent.change(screen.getByLabelText('Password'), { target: { value: password } })
+function submitLogin() {
+  fireEvent.change(screen.getByLabelText('Email Address'), { target: { value: EMAIL } })
+  fireEvent.change(screen.getByLabelText('Password'), { target: { value: TEMP_PASSWORD } })
   fireEvent.click(screen.getByRole('button', { name: 'Login' }))
 }
 
@@ -74,35 +80,105 @@ function typeOtp(otp: string) {
   })
 }
 
-describe('first-login mock flow', () => {
+/** The 403 the API returns for an account still holding a one-time password. */
+function loginNeedsPasswordSetup() {
+  mockLogin.mockReturnValue({
+    unwrap: jest.fn().mockRejectedValue({
+      status: 403,
+      data: {
+        statusCode: 403,
+        message: 'First login password setup required',
+        status: false,
+        content: { passwordResetRequired: true, otpRequired: true, email: EMAIL },
+      },
+    }),
+  })
+}
+
+describe('first-login flow (real endpoints)', () => {
   beforeEach(() => {
     mockLogin.mockReset()
+    mockVerifyFirstLoginOtp.mockReset()
+    mockRequestFirstLoginOtp.mockReset()
+    mockSetupPassword.mockReset()
     window.sessionStorage.clear()
   })
 
-  it('sends the demo account to the OTP screen without calling the login API', async () => {
+  it('routes a 403 password-setup login to the OTP screen', async () => {
+    loginNeedsPasswordSetup()
     renderFlow()
-    submitLogin(MOCK_TEMP_PASSWORD)
+    submitLogin()
 
-    expect(await screen.findByRole('heading', { name: 'Email Verification' })).toBeInTheDocument()
-    expect(mockLogin).not.toHaveBeenCalled()
+    expect(await screen.findByRole('heading', { name: 'OTP Verification' })).toBeInTheDocument()
+    expect(mockLogin).toHaveBeenCalledWith({ email: EMAIL, password: TEMP_PASSWORD })
   })
 
-  it('keeps the demo account on the login screen when the password is wrong', async () => {
+  it('actually calls the verify-otp endpoint', async () => {
+    // The regression this file exists for: the mock used to answer here, so
+    // the request never left the browser on localhost.
+    loginNeedsPasswordSetup()
+    mockVerifyFirstLoginOtp.mockReturnValue({
+      unwrap: jest.fn().mockResolvedValue({ content: { setupToken: SETUP_TOKEN } }),
+    })
     renderFlow()
-    submitLogin('WrongPassword1!')
+    submitLogin()
+    await screen.findByRole('heading', { name: 'OTP Verification' })
+
+    typeOtp('123456')
+    fireEvent.click(screen.getByRole('button', { name: 'Verify and Proceed' }))
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Login' })).toBeInTheDocument()
+      expect(mockVerifyFirstLoginOtp).toHaveBeenCalledWith({ email: EMAIL, otp: '123456' })
     })
-    expect(screen.queryByRole('heading', { name: 'Email Verification' })).not.toBeInTheDocument()
-    expect(mockLogin).not.toHaveBeenCalled()
   })
 
-  it('rejects the 000000 demo OTP and shows the error state', async () => {
+  it('runs OTP → set new password → success popup', async () => {
+    loginNeedsPasswordSetup()
+    mockVerifyFirstLoginOtp.mockReturnValue({
+      unwrap: jest.fn().mockResolvedValue({ content: { setupToken: SETUP_TOKEN } }),
+    })
+    mockSetupPassword.mockReturnValue({ unwrap: jest.fn().mockResolvedValue({ status: true }) })
+
     renderFlow()
-    submitLogin(MOCK_TEMP_PASSWORD)
-    await screen.findByRole('heading', { name: 'Email Verification' })
+    submitLogin()
+    await screen.findByRole('heading', { name: 'OTP Verification' })
+
+    typeOtp('123456')
+    fireEvent.click(screen.getByRole('button', { name: 'Verify and Proceed' }))
+    expect(
+      await screen.findByText('Set New Password', undefined, { timeout: 3000 }),
+    ).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Temporary Password'), {
+      target: { value: TEMP_PASSWORD },
+    })
+    fireEvent.change(screen.getByLabelText('New Password'), { target: { value: NEW_PASSWORD } })
+    fireEvent.change(screen.getByLabelText('Confirm Password'), { target: { value: NEW_PASSWORD } })
+    fireEvent.click(screen.getByRole('button', { name: 'Set Password' }))
+
+    await waitFor(() => {
+      expect(mockSetupPassword).toHaveBeenCalledWith({
+        setupToken: SETUP_TOKEN,
+        temporaryPassword: TEMP_PASSWORD,
+        newPassword: NEW_PASSWORD,
+        confirmPassword: NEW_PASSWORD,
+      })
+    })
+    expect(
+      await screen.findByText('Password Set Successfully!', undefined, { timeout: 3000 }),
+    ).toBeInTheDocument()
+  })
+
+  it('shows the API error when the OTP is rejected', async () => {
+    loginNeedsPasswordSetup()
+    mockVerifyFirstLoginOtp.mockReturnValue({
+      unwrap: jest
+        .fn()
+        .mockRejectedValue({ data: { message: 'Invalid or expired OTP. Please try again.' } }),
+    })
+    renderFlow()
+    submitLogin()
+    await screen.findByRole('heading', { name: 'OTP Verification' })
 
     typeOtp('000000')
     fireEvent.click(screen.getByRole('button', { name: 'Verify and Proceed' }))
@@ -114,38 +190,18 @@ describe('first-login mock flow', () => {
     ).toBeInTheDocument()
   })
 
-  it('runs OTP → set new password → success popup', async () => {
-    renderFlow()
-    submitLogin(MOCK_TEMP_PASSWORD)
-    await screen.findByRole('heading', { name: 'Email Verification' })
-
-    typeOtp('123456')
-    fireEvent.click(screen.getByRole('button', { name: 'Verify and Proceed' }))
-
-    expect(
-      await screen.findByText('Set New Password', undefined, { timeout: 3000 }),
-    ).toBeInTheDocument()
-
-    fireEvent.change(screen.getByLabelText('Temporary Password'), {
-      target: { value: MOCK_TEMP_PASSWORD },
+  it('shows the API error when the temporary password is wrong', async () => {
+    loginNeedsPasswordSetup()
+    mockVerifyFirstLoginOtp.mockReturnValue({
+      unwrap: jest.fn().mockResolvedValue({ content: { setupToken: SETUP_TOKEN } }),
     })
-    fireEvent.change(screen.getByLabelText('New Password'), { target: { value: NEW_PASSWORD } })
-    fireEvent.change(screen.getByLabelText('Confirm Password'), { target: { value: NEW_PASSWORD } })
-    fireEvent.click(screen.getByRole('button', { name: 'Set Password' }))
+    mockSetupPassword.mockReturnValue({
+      unwrap: jest.fn().mockRejectedValue({ data: { message: 'Temporary password is incorrect' } }),
+    })
 
-    expect(
-      await screen.findByText('Password Set Successfully!', undefined, { timeout: 3000 }),
-    ).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Go to Login' }))
-    expect(await screen.findByRole('button', { name: 'Login' })).toBeInTheDocument()
-  })
-
-  it('rejects a wrong temporary password on the set-password screen', async () => {
     renderFlow()
-    submitLogin(MOCK_TEMP_PASSWORD)
-    await screen.findByRole('heading', { name: 'Email Verification' })
-
+    submitLogin()
+    await screen.findByRole('heading', { name: 'OTP Verification' })
     typeOtp('123456')
     fireEvent.click(screen.getByRole('button', { name: 'Verify and Proceed' }))
     await screen.findByText('Set New Password', undefined, { timeout: 3000 })
@@ -158,7 +214,7 @@ describe('first-login mock flow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Set Password' }))
 
     expect(
-      await screen.findByText('Temporary password is incorrect.', undefined, { timeout: 3000 }),
+      await screen.findByText('Temporary password is incorrect', undefined, { timeout: 3000 }),
     ).toBeInTheDocument()
   })
 })

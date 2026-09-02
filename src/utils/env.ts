@@ -19,35 +19,6 @@ export const env = {
   recoveryTenantValidatePath:
     process.env.REACT_APP_RECOVERY_TENANT_VALIDATE_PATH ?? '/recovery/tenants/validate',
   /**
-   * First-login (OTP → set password) UI demo mode. The backend endpoints for
-   * this flow don't exist yet, so when this is on the demo account below is
-   * served entirely client-side by `src/pages/auth/first-login-mock.ts` — no
-   * network calls. Every other email still hits the real login API.
-   *
-   * Defaults ON under `npm start` (NODE_ENV=development) so the flow is
-   * clickable with no setup, and OFF in `npm run build` (NODE_ENV=production)
-   * so it can never reach a deployed environment. `REACT_APP_FIRST_LOGIN_MOCK`
-   * overrides both directions — set it to `false` locally to exercise the real
-   * login API against this account instead.
-   *
-   * Delete this flag (and the mock module) once the API ships.
-   */
-  firstLoginMock: process.env.REACT_APP_FIRST_LOGIN_MOCK
-    ? process.env.REACT_APP_FIRST_LOGIN_MOCK === 'true'
-    : process.env.NODE_ENV === 'development',
-  /**
-   * The demo credentials are written as inline `NODE_ENV` ternaries so the
-   * minifier folds them away entirely in a production build — a hardcoded
-   * email/password pair should not sit in a shipped bundle even as dead code.
-   * Empty in production, which also stops the mock matching anything.
-   */
-  firstLoginMockEmail:
-    process.env.REACT_APP_FIRST_LOGIN_MOCK_EMAIL ??
-    (process.env.NODE_ENV === 'development' ? 'shahzad.abbas@devexcelit.com' : ''),
-  firstLoginMockPassword:
-    process.env.REACT_APP_FIRST_LOGIN_MOCK_PASSWORD ??
-    (process.env.NODE_ENV === 'development' ? 'Test@123' : ''),
-  /**
    * Firebase (Cloud Messaging) config — same project as trade-harmonizer's frontend.
    * Optional: when unset, `src/lib/firebase.ts` skips init and real-time updates
    * (e.g. the Imports page) fall back to their safety-net poll only.

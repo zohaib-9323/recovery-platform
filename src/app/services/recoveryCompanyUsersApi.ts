@@ -8,6 +8,8 @@ import type {
   InviteDetailsContent,
   ListCompanyUsersContent,
   ListCompanyUsersQuery,
+  CompanyDeleteRequestsContent,
+  CompanyM365StatusContent,
   CompanyUserDetail,
   UpdateCompanyUserStatusBody,
 } from '@/types/recovery-company-users-api'
@@ -84,6 +86,51 @@ const recoveryCompanyUsersApi = recoveryApi.injectEndpoints({
       }),
       invalidatesTags: ['RecoveryCompanyUsers'],
     }),
+
+    /**
+     * Delete requests raised by the owner's own team. A Company Owner's own
+     * request goes to the platform admin instead, so it never appears here.
+     */
+    listCompanyDeleteRequests: builder.query<
+      ApiMessageEnvelope<CompanyDeleteRequestsContent>,
+      { page?: number; limit?: number } | void
+    >({
+      query: (params) => ({
+        url: '/recovery/company-users/delete-requests',
+        method: 'GET',
+        params: params ?? undefined,
+      }),
+      providesTags: ['RecoveryCompanyUsers'],
+    }),
+
+    decideCompanyDeleteRequest: builder.mutation<
+      ApiMessageEnvelope<{ userId: string; status: string }>,
+      { id: string; decision: 'approve' | 'reject' }
+    >({
+      query: ({ id, decision }) => ({
+        url: `/recovery/company-users/delete-requests/${id}/${decision}`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: ['RecoveryCompanyUsers'],
+    }),
+
+    /**
+     * Microsoft connection status for every teammate. Import jobs stay private
+     * per user; this only reports whether each account is connected, so an
+     * owner can spot a lapsed connection that has quietly stopped that
+     * person's shipments arriving.
+     */
+    listCompanyM365Status: builder.query<
+      ApiMessageEnvelope<CompanyM365StatusContent>,
+      { page?: number; limit?: number; status?: string; search?: string } | void
+    >({
+      query: (params) => ({
+        url: '/recovery/m365/company-status',
+        method: 'GET',
+        params: params ?? undefined,
+      }),
+      providesTags: ['RecoveryCompanyUsers'],
+    }),
   }),
 })
 
@@ -95,4 +142,7 @@ export const {
   useListCompanyUsersQuery,
   useGetCompanyUserDetailQuery,
   useUpdateCompanyUserStatusMutation,
+  useListCompanyDeleteRequestsQuery,
+  useDecideCompanyDeleteRequestMutation,
+  useListCompanyM365StatusQuery,
 } = recoveryCompanyUsersApi

@@ -17,7 +17,6 @@ import {
   AUTH_LABEL_CLASS,
 } from '@/pages/auth/authFieldStyles'
 import { saveFirstLoginFlowState } from '@/pages/auth/first-login-flow'
-import { isMockFirstLoginAccount, isMockFirstLoginEmail } from '@/pages/auth/first-login-mock'
 
 function getErrorMessage(err: unknown, fallback: string): string {
   if (err && typeof err === 'object' && 'data' in err) {
@@ -31,13 +30,64 @@ function getErrorMessage(err: unknown, fallback: string): string {
   return fallback
 }
 
-function isFirstLoginSetupError(err: unknown): boolean {
-  if (!err || typeof err !== 'object' || !('data' in err)) return false
-  const data = (err as { data?: unknown }).data
-  if (!data || typeof data !== 'object') return false
-  const statusCode = (data as { statusCode?: unknown }).statusCode
-  const message = (data as { message?: unknown }).message
-  return statusCode === 403 && typeof message === 'string' && /first login/i.test(message)
+/**
+ * What a 403 from `POST /recovery/auth/login` is actually asking for.
+ *
+ * The backend rejects a *correct* password with 403 in two different
+ * situations, and they need different screens:
+ *
+ * - `password-setup` — an owner-created account whose one-time password still
+ *   has to be replaced. OTP, then set a new password.
+ * - `email-verification` — an account that already has a password the user
+ *   chose, but never verified their email. This is the abandoned-signup and
+ *   abandoned-invite case: they filled in the form, closed the tab before
+ *   entering the code, and came back to log in. They need to verify only —
+ *   sending them through password setup would make them replace a password
+ *   they deliberately chose.
+ *
+ * Read from the structured flags rather than the message text: a reworded
+ * message must not silently turn a valid login into "invalid credentials",
+ * which is what a `/first login/i` match on the prose used to do to the
+ * email-verification case.
+ */
+function readLoginBlock(err: unknown): 'password-setup' | 'email-verification' | null {
+  if (!err || typeof err !== 'object') return null
+
+  // Look at the RTK Query envelope's `data` and at the error object itself:
+  // depending on where the failure is raised the body arrives as
+  // `{ status, data: body }` or as the body directly, and a wrong guess here
+  // silently downgrades a valid login to "invalid credentials".
+  const candidates = [(err as { data?: unknown }).data, err].filter(
+    (candidate): candidate is Record<string, unknown> =>
+      Boolean(candidate) && typeof candidate === 'object',
+  )
+
+  for (const body of candidates) {
+    const code = body.statusCode ?? body.status
+    if (code !== 403) continue
+
+    // The API's exception filter rebuilds every error body as
+    // {statusCode, message, status, content}, so the flags arrive nested in
+    // `content` rather than at the top level. Check both.
+    const flagSources = [body.content, body].filter(
+      (source): source is Record<string, unknown> => Boolean(source) && typeof source === 'object',
+    )
+    for (const source of flagSources) {
+      if (source.passwordResetRequired === true) return 'password-setup'
+      if (source.otpRequired === true) return 'email-verification'
+    }
+
+    // Last resort: the message text. Older builds — and any throw that forgets
+    // to nest its flags — lose the flags entirely at the filter, and stranding
+    // a correct password behind "invalid credentials" is the worse failure.
+    const { message } = body
+    if (typeof message === 'string') {
+      if (/password setup/i.test(message)) return 'password-setup'
+      if (/verification required/i.test(message)) return 'email-verification'
+    }
+  }
+
+  return null
 }
 
 export function LoginPage() {
@@ -79,30 +129,23 @@ export function LoginPage() {
       return
     }
 
-    // TEMPORARY (REACT_APP_FIRST_LOGIN_MOCK) — the first-login API doesn't
-    // exist yet, so the demo account skips the network entirely and drops
-    // straight into the OTP screen. Remove with `first-login-mock.ts`.
-    if (isMockFirstLoginEmail(trimmedEmail)) {
-      if (!isMockFirstLoginAccount(trimmedEmail, password)) {
-        showCustomToast({
-          type: 'error',
-          title: t('auth.login.invalidCredentials'),
-          message: t('auth.login.invalidCredentials'),
-        })
-        return
-      }
-      saveFirstLoginFlowState({ email: trimmedEmail })
-      navigate('/first-login/verify-otp', { replace: true })
-      return
-    }
-
     try {
       await login({ email: trimmedEmail, password }).unwrap()
       navigate('/dashboard', { replace: true })
     } catch (err) {
-      if (isFirstLoginSetupError(err)) {
-        saveFirstLoginFlowState({ email: trimmedEmail })
-        navigate('/first-login/verify-otp', { replace: true })
+      const block = readLoginBlock(err)
+      if (block) {
+        // The backend has already emailed a fresh code by the time it throws,
+        // so both branches land straight on the OTP screen.
+        saveFirstLoginFlowState({
+          email: trimmedEmail,
+          // Verify-only: skip the set-password step they don't need.
+          ...(block === 'email-verification' ? { fromSignup: true } : {}),
+        })
+        navigate('/first-login/verify-otp', {
+          replace: true,
+          state: { fromSignup: block === 'email-verification' },
+        })
         return
       }
 

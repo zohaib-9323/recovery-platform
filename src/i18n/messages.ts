@@ -119,7 +119,12 @@ export const messages: Record<string, string> = {
   'imports.job.contactSupport': 'Contact support',
   'settings.delete.requestReceived': 'Deletion request received',
   'settings.delete.requestReceivedDescription':
-    'Your request will be reviewed. You will be contacted if we need more information.',
+    'Your request has been sent for review. You will be contacted if we need more information.',
+  // Who reviews it depends on the account: a Company User answers to their
+  // owner, a Company Owner to the platform admin. Saying so up front avoids
+  // someone waiting on the wrong person.
+  'settings.delete.reviewedByOwner': 'Your company owner will review this request.',
+  'settings.delete.reviewedByAdmin': 'The Trade Harmonizer team will review this request.',
   'settings.delete.title': 'Delete account',
   'settings.delete.summaryPrefix': 'This will request deletion of the account for',
   'settings.delete.summaryFallbackEmail': 'your email',

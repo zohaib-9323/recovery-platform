@@ -8,6 +8,28 @@ export const MU = {
   search: 'Search',
   selectStatus: 'Select status',
   createUser: 'Create User',
+
+  /* Delete requests — a Company User's request is reviewed by their owner. */
+  deleteRequestsTitle: 'Account Deletion Requests',
+  deleteRequestsDescription:
+    'Requests from your team. Your own deletion request is reviewed by the platform admin.',
+  deleteRequestsEmpty: 'No pending deletion requests.',
+  deleteRequestReason: 'Reason',
+  deleteRequestApprove: 'Approve',
+  deleteRequestReject: 'Reject',
+  deleteRequestApproved: 'Request approved. The account has been suspended.',
+  deleteRequestRejected: 'Request rejected.',
+
+  /* Microsoft connections — status only; import data stays private per user. */
+  connectionsTitle: 'Microsoft Connections',
+  connectionsDescription:
+    "Whether each teammate's mailbox is connected. Import jobs stay private to each user.",
+  connectionsEmpty: 'No team members yet.',
+  connectionsFailed: 'Could not load connection status. Please try again.',
+  deleteRequestsFailed: 'Could not load deletion requests. Please try again.',
+  retry: 'Retry',
+  connectionConnected: 'Connected',
+  connectionNotConnected: 'Not connected',
   inviteUser: 'Invite User',
 
   /* Bulk actions */
