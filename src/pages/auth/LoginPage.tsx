@@ -242,10 +242,10 @@ export function LoginPage() {
           </span>
           <Link
             to="/signup"
-            className="flex flex-row items-center text-xs font-normal text-black sm:text-sm"
+            className="flex flex-row items-center text-xs font-normal text-primary sm:text-sm"
           >
             {t('auth.login.signupLink')}
-            <ArrowUpRight className="h-5 w-5 text-black" strokeWidth={2} />
+            <ArrowUpRight className="h-5 w-5 text-primary" strokeWidth={2} />
           </Link>
         </div>
       </div>
