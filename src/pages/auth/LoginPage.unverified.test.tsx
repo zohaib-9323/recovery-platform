@@ -179,12 +179,10 @@ describe('LoginPage — account exists but email never verified', () => {
 
   it('leaves a genuine 401 as an invalid-credentials error', async () => {
     mockLogin.mockReturnValue({
-      unwrap: jest
-        .fn()
-        .mockRejectedValue({
-          status: 401,
-          data: { statusCode: 401, message: 'Invalid credentials' },
-        }),
+      unwrap: jest.fn().mockRejectedValue({
+        status: 401,
+        data: { statusCode: 401, message: 'Invalid credentials' },
+      }),
     })
     renderFlow()
     submitLogin()
