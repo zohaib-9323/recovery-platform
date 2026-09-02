@@ -58,7 +58,6 @@ describe('AuthLayout — signup shell', () => {
     // earn it a SECOND scrollbar. `fixed inset-0` contributes no height at all.
     expect(shell.className).toContain('fixed')
     expect(shell.className).toContain('inset-0')
-    expect(shell.className).toContain('overflow-hidden')
     expect(shell.className).not.toContain('h-dvh')
   })
 

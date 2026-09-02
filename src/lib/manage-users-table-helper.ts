@@ -7,7 +7,7 @@ import type { ManageUserStatus, UserRefundStatus, UserReportStatus } from '@/dat
  * existing tailwind tokens: rgba(46,125,50,.1) → `lightGreenOne`,
  * rgba(198,40,40,.1) → `lightRed`, rgba(227,166,2,.1) → `lightYellowThree`.
  */
-export function getUserStatusStyle(status: ManageUserStatus): string {
+export function getUserStatusStyle(status: ManageUserStatus | 'pending'): string {
   switch (status) {
     case 'active':
       return 'bg-lightGreenOne text-green'

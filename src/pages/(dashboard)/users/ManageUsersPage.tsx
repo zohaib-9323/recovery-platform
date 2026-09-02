@@ -191,7 +191,7 @@ export function ManageUsersPage() {
 
   return (
     <>
-      <div className="flex min-h-0 flex-1 flex-col gap-5 bg-white p-3 sm:p-5">
+      <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto bg-white p-3 sm:p-5">
         <ManageUsersToolbar
           search={searchQuery}
           onSearchChange={(value) => {
@@ -213,16 +213,10 @@ export function ManageUsersPage() {
             <CustomLoader />
           </div>
         ) : pageRows.length > 0 ? (
-          <div className="flex min-h-0 w-full flex-1 flex-col gap-3 rounded-lg border border-bottomBorder p-4">
+          <div className="flex w-full flex-col gap-3 rounded-lg border border-bottomBorder p-4">
             <div className="flex flex-row items-center justify-between">
               <div className="flex items-center gap-[10px]">
-                <CustomCheckboxShipment
-                  width="min-w-6"
-                  height="h-6"
-                  iconSize="text-[10px]"
-                  isChecked={isAllSelected}
-                  onChange={handleSelectAll}
-                />
+                <CustomCheckboxShipment isChecked={isAllSelected} onChange={handleSelectAll} />
                 <span className="text-normal font-light text-black">{MU.selectAll}</span>
               </div>
               <CsvExportButton

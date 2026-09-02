@@ -146,7 +146,7 @@ export function CreateUserModal({
               name="firstName"
               label={MU.firstName}
               labelClassName={USER_MODAL_LABEL_CLASS}
-              containerClassName={`${USER_MODAL_FIELD_CONTAINER_CLASS} flex-1`}
+              containerClassName={`${USER_MODAL_FIELD_CONTAINER_CLASS} min-w-0 flex-1`}
               className={USER_MODAL_FIELD_SHELL_CLASS}
               inputClassName={USER_MODAL_INPUT_CLASS}
               leftIcon={USER_ICON}
@@ -163,7 +163,7 @@ export function CreateUserModal({
               name="lastName"
               label={MU.lastName}
               labelClassName={USER_MODAL_LABEL_CLASS}
-              containerClassName={`${USER_MODAL_FIELD_CONTAINER_CLASS} flex-1`}
+              containerClassName={`${USER_MODAL_FIELD_CONTAINER_CLASS} min-w-0 flex-1`}
               className={USER_MODAL_FIELD_SHELL_CLASS}
               inputClassName={USER_MODAL_INPUT_CLASS}
               leftIcon={USER_ICON}
