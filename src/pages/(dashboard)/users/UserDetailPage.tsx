@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import { getManageUserDetail } from '@/data/mock/manage-users'
+import { useGetCompanyUserDetailQuery } from '@/app/services/recoveryCompanyUsersApi'
+import { CustomLoader } from '@/components/feedback/custom-loader'
 import { MU } from '@/lib/manage-users-copy'
 import { getUserStatusStyle } from '@/lib/manage-users-table-helper'
 
@@ -12,7 +13,11 @@ import { UserRecentShipmentsCard } from './components/user-recent-shipments-card
 export function UserDetailPage() {
   const { id = '' } = useParams()
   const navigate = useNavigate()
-  const user = getManageUserDetail(id)
+  const { data, isFetching } = useGetCompanyUserDetailQuery(id, {
+    skip: !id,
+    refetchOnMountOrArgChange: true,
+  })
+  const user = data?.content?.user
 
   const [openSections, setOpenSections] = useState({ userInfo: true, recentShipments: true })
 
@@ -55,7 +60,11 @@ export function UserDetailPage() {
         ) : null}
       </div>
 
-      {user ? (
+      {isFetching ? (
+        <div className="flex min-h-0 flex-1 items-center justify-center">
+          <CustomLoader />
+        </div>
+      ) : user ? (
         <>
           <UserInformationCard
             user={user}
@@ -64,7 +73,7 @@ export function UserDetailPage() {
           />
           <UserRecentShipmentsCard
             userName={`${user.firstName} ${user.lastName}`}
-            shipments={user.recentShipments}
+            shipments={[]}
             open={openSections.recentShipments}
             onToggle={() => toggle('recentShipments')}
           />

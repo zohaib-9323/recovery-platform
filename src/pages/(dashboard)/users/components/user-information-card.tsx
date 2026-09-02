@@ -1,10 +1,20 @@
-import type { ManageUserDetail } from '@/data/mock/manage-users'
 import { MU } from '@/lib/manage-users-copy'
 
 import { SectionCollapseToggle } from './section-collapse-toggle'
 
+const DEFAULT_AVATAR = `${process.env.PUBLIC_URL}/images/no-profile.png`
+
+export type UserInformationCardUser = {
+  firstName: string
+  lastName: string
+  email: string
+  phone?: string
+  location?: string
+  profilePic: string
+}
+
 export type UserInformationCardProps = {
-  user: ManageUserDetail
+  user: UserInformationCardUser
   open: boolean
   onToggle: () => void
 }
@@ -39,11 +49,15 @@ export function UserInformationCard({ user, open, onToggle }: UserInformationCar
     <section className="flex flex-col gap-[10px] rounded-lg bg-white p-5 shadow-[0px_4px_16px_0px_#4C67641A]">
       <div className="flex w-full items-start justify-between">
         <img
-          src={user.profilePic}
+          key={user.profilePic || DEFAULT_AVATAR}
+          src={user.profilePic?.trim() || DEFAULT_AVATAR}
           alt=""
           width={60}
           height={60}
           className="h-[60px] w-[60px] rounded-full object-cover"
+          onError={(e) => {
+            e.currentTarget.src = DEFAULT_AVATAR
+          }}
         />
         <SectionCollapseToggle open={open} onToggle={onToggle} controls="user-information-body" />
       </div>
@@ -59,7 +73,7 @@ export function UserInformationCard({ user, open, onToggle }: UserInformationCar
               gap="gap-[30px]"
               rows={[
                 [MU.fullName, `${user.firstName} ${user.lastName}`],
-                [MU.phoneNumber, user.phone],
+                [MU.phoneNumber, user.phone ?? ''],
               ]}
             />
           </div>
@@ -68,7 +82,7 @@ export function UserInformationCard({ user, open, onToggle }: UserInformationCar
               gap="gap-[20px]"
               rows={[
                 [MU.emailAddress, user.email],
-                [MU.location, user.location],
+                [MU.location, user.location ?? ''],
               ]}
             />
           </div>

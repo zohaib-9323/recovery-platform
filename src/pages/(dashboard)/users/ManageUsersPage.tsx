@@ -216,13 +216,7 @@ export function ManageUsersPage() {
           <div className="flex min-h-0 w-full flex-1 flex-col gap-3 rounded-lg border border-bottomBorder p-4">
             <div className="flex flex-row items-center justify-between">
               <div className="flex items-center gap-[10px]">
-                <CustomCheckboxShipment
-                  width="min-w-6"
-                  height="h-6"
-                  iconSize="text-[10px]"
-                  isChecked={isAllSelected}
-                  onChange={handleSelectAll}
-                />
+                <CustomCheckboxShipment isChecked={isAllSelected} onChange={handleSelectAll} />
                 <span className="text-normal font-light text-black">{MU.selectAll}</span>
               </div>
               <CsvExportButton

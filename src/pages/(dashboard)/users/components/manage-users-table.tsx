@@ -51,9 +51,6 @@ export function ManageUsersTable({
                   <td className={`${BODY_CELL_CLASS} pl-5 pr-3`}>
                     <div className="flex items-center gap-[10px]">
                       <CustomCheckboxShipment
-                        width="min-w-6"
-                        height="h-6"
-                        iconSize="text-[10px]"
                         isChecked={selectedUserIds.includes(user.id)}
                         onChange={() => onCheckChange(user.id)}
                       />
