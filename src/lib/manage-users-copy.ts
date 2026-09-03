@@ -14,14 +14,23 @@ export const MU = {
   deleteRequestsDescription:
     'Requests from your team. Your own deletion request is reviewed by the platform admin.',
   deleteRequestsEmpty: 'No pending deletion requests.',
+  deleteRequestsEmptyFiltered: 'No deletion requests match your filters.',
   deleteRequestReason: 'Reason',
   deleteRequestApprove: 'Approve',
   deleteRequestReject: 'Reject',
   deleteRequestApproved: 'Request approved. The account has been suspended.',
   deleteRequestRejected: 'Request rejected.',
+  deleteRequestApproveTitle: 'Approve delete request',
+  deleteRequestApproveDesc:
+    'Are you sure you want to approve this recovery user deletion request? The account will be suspended immediately.',
+  deleteRequestRejectTitle: 'Reject delete request',
+  deleteRequestRejectDesc: 'Are you sure you want to reject this recovery user deletion request?',
+  yesApprove: 'Yes, Approve',
+  yesReject: 'Yes, Reject',
+  requestedAt: 'Requested At',
 
   /* Microsoft connections — status only; import data stays private per user. */
-  connectionsTitle: 'Microsoft Connections',
+  connectionsTitle: 'Connection Status',
   connectionsDescription:
     "Whether each teammate's mailbox is connected. Import jobs stay private to each user.",
   connectionsEmpty: 'No team members yet.',

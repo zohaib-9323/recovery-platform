@@ -68,17 +68,32 @@ export function AppSidebar() {
   )
 
   /**
-   * Explicit open/closed state per group, for groups the user has clicked.
-   * A group with no entry here falls back to "open when its own section is the
-   * active route", so landing on a sub-route shows where you are without a click.
+   * Explicit open/closed state per group, for groups the user has clicked. A
+   * group with no entry here falls back to "open when its own section is the
+   * active route", so landing on a sub-route shows where you are without a
+   * click.
    *
-   * The fallback has to be a DEFAULT, not a requirement: gating open-ness on the
-   * route means clicking the parent from anywhere else in the app toggles a flag
-   * that can never take effect, and the menu simply never opens.
+   * The fallback has to be a DEFAULT, not a requirement: gating open-ness on
+   * the route means clicking the parent from anywhere else in the app
+   * toggles a flag that can never take effect, and the menu simply never
+   * opens.
+   *
+   * It's still an accordion, matching trade-harmonizer: opening a group
+   * explicitly closes every other one, even a group that's only open via the
+   * active-route fallback (not yet an explicit entry) — otherwise clicking
+   * Manage Users while sitting on an Imports route would show both open at
+   * once, since Imports' fallback stays true until you actually navigate
+   * away from it.
    */
+  const groupKeys = recoverySidebarItems.filter((item) => item.children).map((item) => item.key)
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
   const toggleGroup = (key: string, currentlyOpen: boolean) =>
-    setOpenGroups((prev) => ({ ...prev, [key]: !currentlyOpen }))
+    setOpenGroups(
+      currentlyOpen
+        ? { ...openGroups, [key]: false }
+        : Object.fromEntries(groupKeys.map((k) => [k, k === key])),
+    )
+  const closeAllGroups = () => setOpenGroups(Object.fromEntries(groupKeys.map((k) => [k, false])))
 
   const go = (link: string) => {
     navigate(link)
@@ -137,7 +152,17 @@ export function AppSidebar() {
                   <div key={item.key} className="group relative">
                     <button
                       type="button"
-                      onClick={() => (children ? toggleGroup(item.key, groupOpen) : go(item.link))}
+                      onClick={() => {
+                        if (children) {
+                          toggleGroup(item.key, groupOpen)
+                        } else {
+                          // A plain link closes any open accordion group, matching
+                          // trade-harmonizer — Inbox / All Shipments shouldn't leave
+                          // Manage Users or Imports expanded behind them.
+                          closeAllGroups()
+                          go(item.link)
+                        }
+                      }}
                       aria-expanded={children ? groupOpen : undefined}
                       className={`flex w-full cursor-pointer items-center justify-between truncate rounded p-2.5 text-left transition-all ${
                         menuActive
@@ -187,7 +212,7 @@ export function AppSidebar() {
                               key={child.key}
                               type="button"
                               onClick={() => go(child.link)}
-                              className={`w-full truncate rounded px-3 py-2.5 text-left text-sm transition-all ${
+                              className={`w-full truncate rounded py-2.5 pl-8 pr-3 text-left text-sm transition-all ${
                                 childActive
                                   ? 'bg-lightYellowThree font-bold text-yellow'
                                   : 'text-rp-fg hover:bg-[var(--hover-color)] hover:text-yellow'

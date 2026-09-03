@@ -16,6 +16,12 @@ export function getSideBarTitle(pathname: string): string {
   if (path === '/inbox' || path.startsWith('/inbox/')) {
     return ''
   }
+  // Same two-level pattern as the Imports sub-screens below: section stays in
+  // the prefix so the header reads "MANAGE USERS / CONNECTION STATUS" (and
+  // "MANAGE USERS / DELETION REQUESTS").
+  if (path === '/users/connections' || path === '/users/deletion-requests') {
+    return 'Manage Users /'
+  }
   if (path === '/users' || path.startsWith('/users/')) {
     return 'Manage'
   }
@@ -55,6 +61,12 @@ export function getHrefLink(pathname: string): string {
   }
   if (path === '/inbox' || path.startsWith('/inbox/')) {
     return 'Inbox'
+  }
+  if (path === '/users/connections') {
+    return 'Connection Status'
+  }
+  if (path === '/users/deletion-requests') {
+    return 'Deletion Requests'
   }
   if (path === '/users' || path.startsWith('/users/')) {
     return 'Users'

@@ -97,6 +97,10 @@ export function AppHeader() {
 
   const prefix = getSideBarTitle(pathName)
   const suffix = getHrefLink(pathName)
+  // Yellow marks a real two-level breadcrumb ("MANAGE USERS / CONNECTION
+  // STATUS") — only when the prefix itself ends in "/". A single-part title
+  // ("IMPORTS", "MANAGE USERS", "RECOVERY PLATFORM") stays all black.
+  const isBreadcrumb = prefix.trim().endsWith('/')
 
   return (
     <div className="w-full">
@@ -120,11 +124,19 @@ export function AppHeader() {
                     } text-base text-humburgerIcon`}
                   />
                 </button>
-                <div className="flex min-w-0 flex-grow items-center justify-start gap-1 font-lexend text-sm font-bold leading-tight tracking-normal text-[#000000] sm:text-2xl md:text-[34px] md:leading-[33px]">
-                  <span className={`text-nowrap capitalize ${!prefix && 'hidden'} sm:flex`}>
+                <div className="flex min-w-0 flex-grow items-center justify-start gap-1 font-lexend text-sm font-bold leading-tight tracking-normal sm:text-2xl md:text-[34px] md:leading-[33px]">
+                  <span
+                    className={`text-nowrap capitalize text-black ${!prefix && 'hidden'} sm:flex`}
+                  >
                     {prefix.toUpperCase()}
                   </span>
-                  <span className="min-w-0 truncate capitalize">{suffix.toUpperCase()}</span>
+                  <span
+                    className={`min-w-0 truncate capitalize ${
+                      isBreadcrumb ? 'text-yellow' : 'text-black'
+                    }`}
+                  >
+                    {suffix.toUpperCase()}
+                  </span>
                 </div>
               </div>
 
