@@ -93,7 +93,7 @@ const recoveryCompanyUsersApi = recoveryApi.injectEndpoints({
      */
     listCompanyDeleteRequests: builder.query<
       ApiMessageEnvelope<CompanyDeleteRequestsContent>,
-      { page?: number; limit?: number } | void
+      { page?: number; limit?: number; search?: string; status?: string } | void
     >({
       query: (params) => ({
         url: '/recovery/company-users/delete-requests',

@@ -1,5 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { Provider } from 'react-redux'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
@@ -254,6 +254,14 @@ describe('SignupPage', () => {
   })
 
   describe('email-verification step', () => {
+    beforeEach(() => {
+      jest.useFakeTimers({ advanceTimers: true })
+    })
+
+    afterEach(() => {
+      jest.useRealTimers()
+    })
+
     async function registerAndReachOtpStep() {
       mockRegister.mockReturnValue({ unwrap: jest.fn().mockResolvedValue({ status: true }) })
       renderSignup()
@@ -290,6 +298,11 @@ describe('SignupPage', () => {
 
     it('restart signup returns to the personal-info step', async () => {
       await registerAndReachOtpStep()
+
+      // The restart link only appears once the resend countdown expires.
+      act(() => {
+        jest.advanceTimersByTime(300_000)
+      })
 
       fireEvent.click(screen.getByRole('button', { name: 'Restart signup' }))
 

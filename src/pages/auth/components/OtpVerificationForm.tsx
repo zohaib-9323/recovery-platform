@@ -10,7 +10,6 @@ import { LoginButton } from '@/components/buttons'
 import { useI18n } from '@/i18n/useI18n'
 import { showCustomToast } from '@/lib/showCustomToast'
 import { AUTH_HEADING_CLASS } from '@/pages/auth/authFieldStyles'
-import { AuthBackToLogin } from '@/pages/auth/components/AuthBackToLogin'
 
 const OTP_LENGTH = 6
 const RESEND_TIMER_SECONDS = 300
@@ -170,7 +169,7 @@ export function OtpVerificationForm({
             inputMode="numeric"
             maxLength={1}
             aria-label={`${t('auth.firstLogin.otp.codeLabel')} ${index + 1}`}
-            className="h-14 w-full rounded-[10px] bg-grey text-center text-2xl font-normal text-primary focus:outline-none sm:h-20 sm:text-3xl md:h-28 md:text-4xl lg:text-5xl"
+            className="h-14 w-full rounded-[10px] bg-lightYellowThree text-center text-2xl font-normal text-primary focus:outline-none sm:h-20 sm:text-3xl md:h-28 md:text-4xl lg:text-5xl"
             value={digit}
             onChange={(e) => handleChange(index, e.target.value)}
             onKeyDown={(e) => handleKeyDown(index, e)}
@@ -195,8 +194,13 @@ export function OtpVerificationForm({
         {fromSignup ? (
           // Signup has no resend-OTP endpoint — re-issuing the code requires
           // re-submitting the full signup form (password included), which isn't
-          // safely retained across navigation. Point back to signup instead.
-          onRestartSignup ? (
+          // safely retained across navigation. Show the countdown while it's
+          // still running, then fall back to restarting signup once it expires.
+          timer > 0 ? (
+            <span className="text-sm font-bold text-primary sm:text-xsmall lg:text-normal">
+              {formatTimer(timer)}
+            </span>
+          ) : onRestartSignup ? (
             <button
               type="button"
               onClick={onRestartSignup}
@@ -236,7 +240,7 @@ export function OtpVerificationForm({
         )}
       </div>
 
-      <div className="flex justify-between sm:mt-2">
+      <div className="mt-4 flex justify-between sm:mt-6">
         <LoginButton
           type="button"
           onClick={() => {
@@ -247,11 +251,6 @@ export function OtpVerificationForm({
           {isVerifying ? t('auth.firstLogin.otp.verifying') : t('auth.firstLogin.otp.submit')}
         </LoginButton>
       </div>
-
-      <AuthBackToLogin
-        prompt={t('auth.firstLogin.otp.backToLogin')}
-        linkLabel={t('auth.firstLogin.otp.loginLink')}
-      />
     </>
   )
 }

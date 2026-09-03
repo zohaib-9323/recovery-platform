@@ -121,6 +121,9 @@ export function CompanyDetailsSection({
               setField('city', '')
             }}
             placeholder={t('auth.signup.countryPlaceholder')}
+            backgroundColor="#F2F2F2"
+            borderColor="#DADADA"
+            borderRadius={5}
           />
         </div>
       </div>
@@ -134,6 +137,9 @@ export function CompanyDetailsSection({
             countryName={values.country}
             onChange={(city) => setField('city', city)}
             placeholder={t('auth.signup.cityPlaceholder')}
+            backgroundColor="#F2F2F2"
+            borderColor="#DADADA"
+            borderRadius={5}
           />
         </div>
         <InputField
