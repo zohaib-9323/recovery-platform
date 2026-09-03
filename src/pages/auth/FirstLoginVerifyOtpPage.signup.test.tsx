@@ -1,5 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { Provider } from 'react-redux'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
@@ -65,11 +65,20 @@ describe('FirstLoginVerifyOtpPage — signup branch', () => {
     sessionStorage.clear()
   })
 
-  it('shows a restart-signup link instead of a resend action', () => {
+  it('shows a countdown, then a restart-signup link instead of a resend action', () => {
+    jest.useFakeTimers()
     renderSignupOtp()
+
+    expect(screen.getByText('5:00')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Restart signup' })).not.toBeInTheDocument()
+
+    act(() => {
+      jest.advanceTimersByTime(300_000)
+    })
 
     expect(screen.getByRole('link', { name: 'Restart signup' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /resend/i })).not.toBeInTheDocument()
+    jest.useRealTimers()
   })
 
   it('calls the real verifySignupOtp mutation on submit, not the first-login mock', async () => {

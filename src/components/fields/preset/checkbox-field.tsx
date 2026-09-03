@@ -28,6 +28,8 @@ export type CheckboxFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'ty
   containerClassName?: string
   /** Extra classes on the outer `<label>` (e.g. table cell alignment). */
   labelLayoutClassName?: string
+  /** Extra classes on the visible box `<span>` (e.g. to match a page's field border color). */
+  boxClassName?: string
 }
 
 // i18n-ignore-next-line
@@ -48,6 +50,7 @@ export const CheckboxField = forwardRef<HTMLInputElement, CheckboxFieldProps>(
       label,
       labelClassName,
       labelLayoutClassName,
+      boxClassName,
       size = 'sm',
       indeterminate = false,
       checked,
@@ -100,6 +103,7 @@ export const CheckboxField = forwardRef<HTMLInputElement, CheckboxFieldProps>(
               isOn ? 'border-rp-accent bg-rp-accent' : 'border-rp-border bg-white',
               disabled && 'opacity-50',
               'peer-focus-visible:ring-2 peer-focus-visible:ring-rp-accent peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-white',
+              !isOn && boxClassName,
             )}
             aria-hidden
           >

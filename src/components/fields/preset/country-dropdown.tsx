@@ -14,6 +14,9 @@ export type CountryDropdownProps = {
   value: string
   onChange: (country: string) => void
   placeholder?: string
+  backgroundColor?: string
+  borderColor?: string
+  borderRadius?: number
 }
 
 const DropdownIndicator = (props: DropdownIndicatorProps<CountryCityOption, false>) => {
@@ -25,7 +28,15 @@ const DropdownIndicator = (props: DropdownIndicatorProps<CountryCityOption, fals
   )
 }
 
-export function CountryDropdown({ id, value, onChange, placeholder }: CountryDropdownProps) {
+export function CountryDropdown({
+  id,
+  value,
+  onChange,
+  placeholder,
+  backgroundColor,
+  borderColor,
+  borderRadius,
+}: CountryDropdownProps) {
   const options = useMemo(() => countryList().getData(), [])
   const selectedOption = useMemo(
     () => resolveCountryOptionByLabel(options, value),
@@ -99,11 +110,11 @@ export function CountryDropdown({ id, value, onChange, placeholder }: CountryDro
           control: (base, state) => ({
             ...base,
             minHeight: 44,
-            borderRadius: 10,
-            borderColor: state.isFocused ? 'var(--rp-accent)' : 'var(--rp-border)',
-            backgroundColor: 'var(--rp-input)',
+            borderRadius: borderRadius ?? 10,
+            borderColor: state.isFocused ? 'var(--rp-accent)' : (borderColor ?? 'var(--rp-border)'),
+            backgroundColor: backgroundColor ?? 'var(--rp-input)',
             boxShadow: 'none',
-            '&:hover': { borderColor: 'var(--rp-border)' },
+            '&:hover': { borderColor: borderColor ?? 'var(--rp-border)' },
           }),
           menuPortal: (base) => ({ ...base, zIndex: 9999 }),
         }}

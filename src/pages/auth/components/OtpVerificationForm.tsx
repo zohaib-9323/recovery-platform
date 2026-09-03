@@ -194,8 +194,13 @@ export function OtpVerificationForm({
         {fromSignup ? (
           // Signup has no resend-OTP endpoint — re-issuing the code requires
           // re-submitting the full signup form (password included), which isn't
-          // safely retained across navigation. Point back to signup instead.
-          onRestartSignup ? (
+          // safely retained across navigation. Show the countdown while it's
+          // still running, then fall back to restarting signup once it expires.
+          timer > 0 ? (
+            <span className="text-sm font-bold text-primary sm:text-xsmall lg:text-normal">
+              {formatTimer(timer)}
+            </span>
+          ) : onRestartSignup ? (
             <button
               type="button"
               onClick={onRestartSignup}

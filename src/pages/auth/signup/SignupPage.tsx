@@ -328,6 +328,7 @@ export function SignupPage() {
               <div className="flex flex-row items-center gap-3">
                 <CheckboxField
                   id="signup-terms"
+                  boxClassName="border-inputBorder"
                   checked={values.termsAccepted}
                   onChange={() => {
                     if (values.termsAccepted) {
