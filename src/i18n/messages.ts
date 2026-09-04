@@ -254,6 +254,7 @@ export const messages: Record<string, string> = {
   'inbox.unprocessed.col.shipmentRef': 'Shipment Ref',
   'inbox.unprocessed.col.status': 'Status',
   'inbox.unprocessed.col.actions': 'Actions',
+  'inbox.unprocessed.actions.delete': 'Delete document',
   'inbox.actions.openMenu': 'Open actions menu',
   'inbox.actions.converting': 'Converting...',
   'inbox.actions.convertToUnprocessed': 'Convert to unprocessed',
@@ -302,6 +303,13 @@ export const messages: Record<string, string> = {
   'imports.unprocessed.emptyAction': 'Go to Import Jobs',
   'imports.unprocessed.emptyFilteredTitle': 'No matching documents',
   'imports.unprocessed.clearFilters': 'Clear filters',
+  'imports.unprocessed.delete.title': 'Delete this document?',
+  'imports.unprocessed.delete.description':
+    'This permanently removes the file from your imports and deletes the stored copy. It cannot be undone.',
+  'imports.unprocessed.delete.confirm': 'Yes, delete',
+  'imports.unprocessed.delete.cancel': 'Cancel',
+  'imports.unprocessed.delete.deleting': 'Deleting...',
+  'imports.unprocessed.delete.success': '{filename} was deleted.',
 
   // Cross-import "Processable Shipments" screen — the paired documents from
   // every import, plus the shipments those pairs became.
