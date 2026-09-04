@@ -6,6 +6,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { ForgotPasswordPage } from './ForgotPasswordPage'
 
 const mockRequestReset = jest.fn()
+const mockShowCustomToast = jest.fn()
 
 jest.mock('@/app/services/recoveryApi', () => ({
   useRequestPasswordResetMutation: () => [
@@ -14,6 +15,10 @@ jest.mock('@/app/services/recoveryApi', () => ({
       isLoading: false,
     },
   ],
+}))
+
+jest.mock('@/lib/showCustomToast', () => ({
+  showCustomToast: (payload: unknown) => mockShowCustomToast(payload),
 }))
 
 function makeTestStore() {
@@ -25,6 +30,7 @@ function makeTestStore() {
 describe('ForgotPasswordPage', () => {
   beforeEach(() => {
     mockRequestReset.mockReset()
+    mockShowCustomToast.mockReset()
   })
 
   it('submits valid email to request password reset', async () => {
@@ -69,7 +75,9 @@ describe('ForgotPasswordPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send' }))
 
     await waitFor(() => {
-      expect(screen.getByText('Email not found')).toBeInTheDocument()
+      expect(mockShowCustomToast).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'error', message: 'Email not found' }),
+      )
     })
   })
 })
