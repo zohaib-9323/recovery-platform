@@ -292,7 +292,7 @@ export function FirstLoginSetupPasswordPage() {
                 </div>
               ) : null}
               {confirmPasswordTrimmed && !passwordsReady ? (
-                <p className="text-tiny font-normal text-lightBlackOne">
+                <p className="text-tiny font-normal text-redOne">
                   {t('auth.firstLogin.setup.notMatchedYet')}
                 </p>
               ) : null}

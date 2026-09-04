@@ -33,7 +33,7 @@ export const recoverySidebarItems: RecoverySidebarItem[] = [
   { key: 'inbox', label: 'Inbox', icon: 'icon-mail', link: '/inbox' },
   {
     key: 'users',
-    label: 'Manage Users',
+    label: 'Users',
     icon: 'icon-user',
     link: '/users',
     visibleFor: [RECOVERY_COMPANY_OWNER],
@@ -42,7 +42,7 @@ export const recoverySidebarItems: RecoverySidebarItem[] = [
     // these links are owner-guarded client-side and their endpoints carry the
     // same role guard server-side.
     children: [
-      { key: 'users-list', label: 'Users', link: '/users' },
+      { key: 'users-list', label: 'Manage Users', link: '/users' },
       { key: 'users-connections', label: 'M365 Connection Status', link: '/users/connections' },
       {
         key: 'users-deletion-requests',

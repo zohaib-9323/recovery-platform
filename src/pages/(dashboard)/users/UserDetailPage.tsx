@@ -46,16 +46,6 @@ export function UserDetailPage() {
         {user ? (
           <div className="flex items-center gap-[10px]">
             <StatusTag className={getUserStatusStyle(user.status)} label={user.status} />
-            {/* Figma marks this button as the `Disabled` state — the user-logs
-                screen is not part of this design, so it stays inert for now. */}
-            <button
-              type="button"
-              disabled
-              className="flex h-10 cursor-not-allowed items-center justify-center gap-2 rounded-[4px] border border-bottomBorder bg-white px-3 text-normal font-light leading-none text-black"
-            >
-              <span aria-hidden className="icon-File-text text-normal" />
-              {MU.viewUserLogs}
-            </button>
           </div>
         ) : null}
       </div>

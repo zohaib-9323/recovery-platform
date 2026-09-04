@@ -32,4 +32,4 @@ export const USER_MODAL_DESCRIPTION_CLASS = 'text-[16px] font-normal text-lightB
 export const USER_MODAL_CANCEL_BUTTON_CLASS =
   'flex h-10 items-center justify-center rounded-[5px] border border-bottomBorder bg-white px-4 text-sm font-normal text-black transition hover:bg-greyFour'
 export const USER_MODAL_SUBMIT_BUTTON_CLASS =
-  'flex h-10 items-center justify-center rounded-[5px] bg-yellow px-4 text-sm font-normal text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-disableColor disabled:text-white'
+  'flex h-10 min-w-[140px] items-center justify-center rounded-[5px] bg-yellow px-4 text-sm font-normal text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-disableColor disabled:text-white'
