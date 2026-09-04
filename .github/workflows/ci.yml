@@ -22,8 +22,7 @@
 #
 # What `quality` adds on top of what Amplify already checks is narrow but real:
 # the dependency-cycle check, and the coverage thresholds (`test:coverage`,
-# where prebuild only runs `test:ci` without them). It also runs on pull
-# requests, before a merge exists for Amplify to build.
+# where prebuild only runs `test:ci` without them).
 #
 # Keep `amplify-build` and `amplify.yml` in step. A change to one that is not
 # made in the other is exactly the drift this job exists to catch, and it
@@ -31,10 +30,20 @@
 
 name: CI
 
+# Push only — deliberately no `pull_request` trigger.
+#
+# A `pull_request` trigger filters on the BASE branch (what you merge into),
+# but GitHub labels the resulting run with the HEAD branch. A PR from
+# feature/x into develop therefore showed up as a run "on feature/x", and
+# every PR produced two runs: one when opened, one when the merge pushed.
+# Only the merge is wanted here, so the trigger is gone.
+#
+# What that costs: a break now lands on develop before CI reports it, and
+# these jobs can no longer back a required status check on a PR. Add
+# `pull_request: branches: [develop]` back if you ever want the pre-merge
+# signal — the duplicate run is the price of it, not a bug.
 on:
   push:
-    branches: [main, master, develop]
-  pull_request:
     branches: [main, master, develop]
 
 # A merge that lands while an earlier run for the same branch is still going
