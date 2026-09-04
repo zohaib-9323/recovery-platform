@@ -29,12 +29,28 @@ export const MU = {
   yesReject: 'Yes, Reject',
   requestedAt: 'Requested At',
 
-  /* Microsoft connections — status only; import data stays private per user. */
+  /* Microsoft connections. The list is status only; the per-user detail screen
+     behind the eye icon also shows that user's import job history. */
   connectionsTitle: 'Connection Status',
   connectionsDescription:
-    "Whether each teammate's mailbox is connected. Import jobs stay private to each user.",
+    "Whether each teammate's mailbox is connected, and how their imports are running.",
   connectionsEmpty: 'No team members yet.',
   connectionsFailed: 'Could not load connection status. Please try again.',
+  viewConnection: 'View connection',
+
+  /* Connection detail */
+  connectionDetailTitle: 'Connection',
+  connectionDetailFailed: 'Could not load this connection. Please try again.',
+  connectionNotFound: 'Connection not found.',
+  connectedAccount: 'Connected Account',
+  connectedSince: 'Connected Since',
+  lastSync: 'Last Sync',
+  tokenExpiry: 'Token Expiry',
+  lastError: 'Last Error',
+  importJobsTitle: 'Import Jobs',
+  importJobsEmpty: 'No import jobs found for this user.',
+  reconnectHint:
+    'This mailbox is no longer connected, so new shipments are not arriving for this user. Ask them to reconnect from their own Imports page.',
   deleteRequestsFailed: 'Could not load deletion requests. Please try again.',
   retry: 'Retry',
   connectionConnected: 'Connected',
