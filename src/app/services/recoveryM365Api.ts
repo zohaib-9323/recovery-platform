@@ -14,6 +14,8 @@ import type {
   M365ImportJobShipmentsEnvelope,
   M365UnprocessedDocumentsEnvelope,
   M365UnprocessedDocumentsQuery,
+  M365DeleteUnprocessedDocumentBody,
+  M365DeleteUnprocessedDocumentEnvelope,
   M365CreateCrossImportShipmentBody,
   M365CreateCrossImportShipmentEnvelope,
   M365ProcessableShipmentsEnvelope,
@@ -156,6 +158,34 @@ const recoveryM365Api = recoveryApi.injectEndpoints({
       ],
     }),
     /**
+     * Permanently deletes one unprocessable document — an import leftover that
+     * will never become a shipment (an email signature, a logo, a compliments
+     * slip). Removes the row AND the stored file; there is no undo.
+     *
+     * `filename` and `s3Key` are the values the row was listed with. The API
+     * re-validates both against the entry currently at `index` and answers 409
+     * if they no longer match, so a list that moved underneath the user can
+     * never result in the wrong file being destroyed.
+     */
+    deleteUnprocessedDocument: builder.mutation<
+      M365DeleteUnprocessedDocumentEnvelope,
+      M365DeleteUnprocessedDocumentBody
+    >({
+      query: ({ documentId, index, filename, s3Key }) => ({
+        url: `/recovery/m365/unprocessed-documents/${documentId}`,
+        method: 'DELETE',
+        params: { index, filename, ...(s3Key ? { s3Key } : {}) },
+      }),
+      invalidatesTags: [
+        { type: 'M365UnprocessedDocuments', id: 'LIST' },
+        // The per-job detail screen lists the same entries through its own
+        // endpoint, so its cached copy still holds the row that just went.
+        'M365ImportJobShipments',
+        'M365ImportJobItems',
+        'M365ImportJobDetail',
+      ],
+    }),
+    /**
      * Downloads an attachment and returns it as a Blob.
      * The backend proxies bytes from Graph API (or redirects to a presigned S3 URL
      * which fetch follows automatically). Use the returned Blob to create an
@@ -184,5 +214,6 @@ export const {
   useGetM365UnprocessedDocumentsQuery,
   useGetM365ProcessableShipmentsQuery,
   useCreateCrossImportShipmentMutation,
+  useDeleteUnprocessedDocumentMutation,
   useDownloadM365ImportItemMutation,
 } = recoveryM365Api

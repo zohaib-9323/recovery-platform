@@ -35,6 +35,13 @@ export type InboxUnprocessedShipmentRow = {
    * the meantime — see RetryUnprocessableTargetDto server-side.
    */
   s3Key?: string
+  /**
+   * The recovery document the entry lives on. Only the cross-import views set
+   * it: an inbox row's document is fixed by the page it is rendered on, but the
+   * Unprocessed Documents list spans every import job, so each row has to carry
+   * its own. Required to delete a row.
+   */
+  documentId?: string
 }
 
 /**
