@@ -66,6 +66,7 @@ function PasswordToggle({ shown, onToggle }: { shown: boolean; onToggle: () => v
  * Figma frame 2341:1347 — 518×725 card, 20px padding, 478px content column.
  * Blocks are 20px apart, label→control is 10px, controls are 40px tall, and the
  * footer sits 40px below the last field.
+ * Width widened to 630px to match the Invite User modal (see invite-user-modal.tsx).
  */
 export function CreateUserModal({
   open,
@@ -129,8 +130,8 @@ export function CreateUserModal({
     <Popup
       open={open}
       onClose={close}
-      closeOnBackdrop={!isSubmitting}
-      className="max-h-[90vh] max-w-[518px] overflow-y-auto rounded-[20px] border-0 p-5"
+      closeOnBackdrop={false}
+      className="max-h-[90vh] max-w-[630px] overflow-y-auto rounded-[20px] border-0 p-5"
     >
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-[10px]">
