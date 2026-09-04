@@ -43,7 +43,7 @@ export const recoverySidebarItems: RecoverySidebarItem[] = [
     // same role guard server-side.
     children: [
       { key: 'users-list', label: 'Users', link: '/users' },
-      { key: 'users-connections', label: 'Connection Status', link: '/users/connections' },
+      { key: 'users-connections', label: 'M365 Connection Status', link: '/users/connections' },
       {
         key: 'users-deletion-requests',
         label: 'Deletion Requests',
