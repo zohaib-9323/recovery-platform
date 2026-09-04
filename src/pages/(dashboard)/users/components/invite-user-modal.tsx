@@ -51,6 +51,7 @@ export function InviteUserModal({ open, onClose, onSubmit, ownerDomain }: Invite
     <Popup
       open={open}
       onClose={close}
+      closeOnBackdrop={false}
       className="max-h-[90vh] max-w-[630px] overflow-y-auto rounded-[20px] border-0 p-5"
     >
       <div className="flex flex-col gap-5">

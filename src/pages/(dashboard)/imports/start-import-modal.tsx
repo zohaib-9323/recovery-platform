@@ -117,6 +117,7 @@ export function StartImportModal({ open, onClose }: StartImportModalProps) {
     <Popup
       open={open}
       onClose={handleClose}
+      closeOnBackdrop={false}
       className="max-w-[670px] rounded-[22px] border-0 p-5 shadow-[0px_8px_12px_rgba(0,0,0,0.06)]"
     >
       <div className="flex flex-col gap-5">
