@@ -63,7 +63,7 @@ export function getHrefLink(pathname: string): string {
     return 'Inbox'
   }
   if (path === '/users/connections') {
-    return 'Connection Status'
+    return 'M365 Connection Status'
   }
   if (path === '/users/deletion-requests') {
     return 'Deletion Requests'
