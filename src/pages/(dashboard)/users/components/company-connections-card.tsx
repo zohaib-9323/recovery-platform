@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import { useListCompanyM365StatusQuery } from '@/app/services/recoveryCompanyUsersApi'
 import { CsvExportButton } from '@/components/buttons'
@@ -18,11 +19,13 @@ import type { CompanyConnectionStatusValue } from '@/types/recovery-company-user
  * one shape means a status that renders correctly for an admin renders
  * correctly here too.
  *
- * Each user connects their own mailbox, so import jobs and their documents are
- * never shared. This is status only: it exposes no tokens, no import data, and
- * gives the owner no way to act on someone else's mailbox — but a lapsed
- * connection silently stops that person's shipments arriving, which the owner
- * does need to see.
+ * Each user connects their own mailbox. This list is status only; the eye icon
+ * opens a per-user detail screen that adds that user's import job history —
+ * job counts, not the emails or attachments themselves, which still need the
+ * user's own session. Neither screen exposes a token, and neither gives the
+ * owner a way to act on someone else's mailbox — but a lapsed connection
+ * silently stops that person's shipments arriving, which the owner does need
+ * to see and chase.
  */
 const PAGE_SIZE = 10
 
@@ -59,6 +62,7 @@ const formatDateTime = (value: string | null | undefined) =>
   value ? new Date(value).toLocaleString() : 'N/A'
 
 export function CompanyConnectionsCard() {
+  const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
@@ -230,10 +234,10 @@ export function CompanyConnectionsCard() {
                           </td>
                           <td className="whitespace-nowrap p-3">{formatDateTime(row.lastSync)}</td>
                           <td className="whitespace-nowrap p-3 text-center">
-                            {/* Not wired yet — no connection detail route/API exists on this side. */}
                             <button
                               type="button"
-                              aria-label="View connection"
+                              aria-label={MU.viewConnection}
+                              onClick={() => navigate(`/users/connections/${row.recoveryUserId}`)}
                               className="group flex h-6 w-6 items-center justify-center rounded-full border border-bottomBorder bg-white transition disabled:opacity-50"
                             >
                               <span className="icon-open-eye text-[12px] text-black transition group-hover:text-yellow" />

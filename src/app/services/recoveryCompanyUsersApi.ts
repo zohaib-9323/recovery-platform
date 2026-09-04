@@ -9,6 +9,8 @@ import type {
   ListCompanyUsersContent,
   ListCompanyUsersQuery,
   CompanyDeleteRequestsContent,
+  CompanyConnectionDetail,
+  CompanyConnectionDetailQuery,
   CompanyM365StatusContent,
   CompanyUserDetail,
   UpdateCompanyUserStatusBody,
@@ -131,6 +133,23 @@ const recoveryCompanyUsersApi = recoveryApi.injectEndpoints({
       }),
       providesTags: ['RecoveryCompanyUsers'],
     }),
+
+    /**
+     * One teammate's connection detail plus their import job history — the
+     * owner twin of the admin detail screen. Scoping is enforced server-side,
+     * so a hand-edited userId from another company returns 404, not data.
+     */
+    getCompanyConnectionDetail: builder.query<
+      ApiMessageEnvelope<CompanyConnectionDetail | null>,
+      CompanyConnectionDetailQuery
+    >({
+      query: ({ userId, jobPage, jobLimit }) => ({
+        url: `/recovery/m365/company-status/${userId}`,
+        method: 'GET',
+        params: { jobPage, jobLimit },
+      }),
+      providesTags: ['RecoveryCompanyUsers'],
+    }),
   }),
 })
 
@@ -145,4 +164,5 @@ export const {
   useListCompanyDeleteRequestsQuery,
   useDecideCompanyDeleteRequestMutation,
   useListCompanyM365StatusQuery,
+  useGetCompanyConnectionDetailQuery,
 } = recoveryCompanyUsersApi
