@@ -331,7 +331,7 @@ export function LandedCostComparisonModal({
                       </div>
                     ) : null}
 
-                    <div className="-mt-5 flex w-full items-center justify-end">
+                    <div className="mt-2 flex w-full items-center justify-end">
                       <PrimaryButton
                         type="button"
                         onClick={() => handleDownloadPair(item, c88Item)}
