@@ -5,6 +5,7 @@ import { useRequestPasswordResetMutation } from '@/app/services/recoveryApi'
 import { InputField } from '@/components/fields'
 import { LoginButton } from '@/components/buttons'
 import { useI18n } from '@/i18n/useI18n'
+import { showCustomToast } from '@/lib/showCustomToast'
 import { isValidEmail } from '@/lib/validation'
 import {
   AUTH_FIELD_SHELL_CLASS,
@@ -31,7 +32,6 @@ export function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [showCheckEmail, setShowCheckEmail] = useState(false)
   const [submittedEmail, setSubmittedEmail] = useState('')
-  const [error, setError] = useState<string | null>(null)
   const [requestReset, { isLoading }] = useRequestPasswordResetMutation()
 
   const trimmedEmail = email.trim()
@@ -43,10 +43,13 @@ export function ForgotPasswordPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    setError(null)
 
     if (!isValidEmail(trimmedEmail)) {
-      setError(t('auth.forgot.pleaseEnterValidEmail'))
+      showCustomToast({
+        type: 'error',
+        title: t('auth.forgot.title'),
+        message: t('auth.forgot.pleaseEnterValidEmail'),
+      })
       return
     }
 
@@ -55,7 +58,11 @@ export function ForgotPasswordPage() {
       setSubmittedEmail(trimmedEmail)
       setShowCheckEmail(true)
     } catch (err) {
-      setError(readApiMessage(err, t('auth.forgot.failedToSend')))
+      showCustomToast({
+        type: 'error',
+        title: t('auth.forgot.title'),
+        message: readApiMessage(err, t('auth.forgot.failedToSend')),
+      })
     }
   }
 
@@ -90,20 +97,11 @@ export function ForgotPasswordPage() {
                 leftIcon={<Mail className="h-5 w-5 text-primary" strokeWidth={2} />}
                 placeholder={t('auth.forgot.emailPlaceholder')}
                 value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value.replace(/\s/g, ''))
-                  setError(null)
-                }}
+                onChange={(e) => setEmail(e.target.value.replace(/\s/g, ''))}
                 error={emailError}
                 aria-invalid={Boolean(emailError)}
               />
             </div>
-
-            {error ? (
-              <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-                {error}
-              </p>
-            ) : null}
 
             <div className="mt-5 w-full">
               <LoginButton type="submit" disabled={!canSubmit || isLoading}>

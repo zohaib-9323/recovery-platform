@@ -12,7 +12,6 @@ export type SignupFormValues = {
   companyName: string
   companyWebsite: string
   address1: string
-  address2: string
   country: string
   city: string
   postalCode: string
@@ -34,7 +33,6 @@ export const EMPTY_SIGNUP_FORM: SignupFormValues = {
   companyName: '',
   companyWebsite: '',
   address1: '',
-  address2: '',
   country: '',
   city: '',
   postalCode: '',

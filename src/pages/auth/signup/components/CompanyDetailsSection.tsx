@@ -1,6 +1,6 @@
-import { Briefcase, Globe, Hash, MapPin } from 'lucide-react'
+import { Briefcase, Hash, MapPin } from 'lucide-react'
 
-import { CityDropdown, CountryDropdown, DropdownField, InputField } from '@/components/fields'
+import { CityDropdown, CountryDropdown, InputField } from '@/components/fields'
 import { useI18n } from '@/i18n/useI18n'
 import { PhoneCodeDropdown } from '@/pages/(dashboard)/users/components/phone-code-dropdown'
 import {
@@ -14,7 +14,6 @@ import {
 import type { SetSignupField, SignupFormValues } from '@/pages/auth/signup/signup-types'
 
 const BRIEFCASE_ICON = <Briefcase className="h-5 w-5 text-primary" strokeWidth={2} />
-const GLOBE_ICON = <Globe className="h-5 w-5 text-primary" strokeWidth={2} />
 const MAP_PIN_ICON = <MapPin className="h-5 w-5 text-primary" strokeWidth={2} />
 const HASH_ICON = <Hash className="h-5 w-5 text-primary" strokeWidth={2} />
 
@@ -25,7 +24,7 @@ export type CompanyDetailsSectionProps = {
   markTouched: (field: keyof SignupFormValues) => void
 }
 
-/** Figma "Company Details" block: company name/website, address, country/city, postal code, phone. */
+/** Figma "Company Details" block: company name, address, country/city, postal code, phone. */
 export function CompanyDetailsSection({
   values,
   setField,
@@ -63,54 +62,28 @@ export function CompanyDetailsSection({
               : undefined
           }
         />
+
         <InputField
           fieldType="text"
-          id="signup-company-website"
-          name="companyWebsite"
-          label={t('auth.signup.companyWebsiteLabel')}
-          labelClassName={SIGNUP_LABEL_CLASS}
-          containerClassName={SIGNUP_FIELD_CONTAINER_CLASS}
-          className={SIGNUP_FIELD_SHELL_CLASS}
-          inputClassName={SIGNUP_INPUT_CLASS}
-          leftIcon={GLOBE_ICON}
-          placeholder={t('auth.signup.companyWebsitePlaceholder')}
-          value={values.companyWebsite}
-          onChange={(e) => setField('companyWebsite', e.target.value)}
-        />
-      </div>
-
-      <InputField
-        fieldType="text"
-        id="signup-address1"
-        name="address1"
-        label={t('auth.signup.address1Label')}
-        labelClassName={SIGNUP_LABEL_CLASS}
-        containerClassName={SIGNUP_FIELD_CONTAINER_CLASS}
-        className={SIGNUP_FIELD_SHELL_CLASS}
-        inputClassName={SIGNUP_INPUT_CLASS}
-        leftIcon={MAP_PIN_ICON}
-        placeholder={t('auth.signup.address1Placeholder')}
-        value={values.address1}
-        onChange={(e) => setField('address1', e.target.value)}
-        onBlur={() => markTouched('address1')}
-        error={touched.address1 && !values.address1.trim() ? t('auth.signup.required') : undefined}
-      />
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <InputField
-          fieldType="text"
-          id="signup-address2"
-          name="address2"
-          label={t('auth.signup.address2Label')}
+          id="signup-address1"
+          name="address1"
+          label={t('auth.signup.address1Label')}
           labelClassName={SIGNUP_LABEL_CLASS}
           containerClassName={SIGNUP_FIELD_CONTAINER_CLASS}
           className={SIGNUP_FIELD_SHELL_CLASS}
           inputClassName={SIGNUP_INPUT_CLASS}
           leftIcon={MAP_PIN_ICON}
-          placeholder={t('auth.signup.address2Placeholder')}
-          value={values.address2}
-          onChange={(e) => setField('address2', e.target.value)}
+          placeholder={t('auth.signup.address1Placeholder')}
+          value={values.address1}
+          onChange={(e) => setField('address1', e.target.value)}
+          onBlur={() => markTouched('address1')}
+          error={
+            touched.address1 && !values.address1.trim() ? t('auth.signup.required') : undefined
+          }
         />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-[10px]">
           <span className={SIGNUP_LABEL_CLASS}>{t('auth.signup.countryLabel')}</span>
           <CountryDropdown
@@ -126,9 +99,6 @@ export function CompanyDetailsSection({
             borderRadius={5}
           />
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-[10px]">
           <span className={SIGNUP_LABEL_CLASS}>{t('auth.signup.cityLabel')}</span>
           <CityDropdown
@@ -142,6 +112,9 @@ export function CompanyDetailsSection({
             borderRadius={5}
           />
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <InputField
           fieldType="text"
           id="signup-postal-code"
@@ -160,9 +133,7 @@ export function CompanyDetailsSection({
             touched.postalCode && !values.postalCode.trim() ? t('auth.signup.required') : undefined
           }
         />
-      </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-[10px]">
           <span className={SIGNUP_LABEL_CLASS} id="signup-company-phone-label">
             {t('auth.signup.companyPhoneLabel')}
@@ -191,20 +162,6 @@ export function CompanyDetailsSection({
             />
           </div>
         </div>
-
-        <DropdownField
-          id="signup-status"
-          label={t('auth.signup.statusLabel')}
-          labelClassName={SIGNUP_LABEL_CLASS}
-          containerClassName={SIGNUP_FIELD_CONTAINER_CLASS}
-          className="h-10 rounded-[5px] border-inputBorder bg-grey text-[14px] text-black"
-          options={[
-            { value: 'active', label: t('auth.signup.statusActive') },
-            { value: 'inactive', label: t('auth.signup.statusInactive') },
-          ]}
-          value={values.status}
-          onChange={(e) => setField('status', e.target.value as SignupFormValues['status'])}
-        />
       </div>
     </div>
   )

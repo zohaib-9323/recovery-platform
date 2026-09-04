@@ -120,7 +120,9 @@ export function AppSidebar() {
             : expanded
               ? 'w-64'
               : 'hidden w-20 sm:flex'
-        } flex h-screen shrink-0 flex-col overflow-hidden border-r border-bottomBorder bg-bgColor`}
+        } flex h-screen shrink-0 flex-col border-r border-bottomBorder bg-bgColor ${
+          expanded ? 'overflow-hidden' : 'overflow-visible'
+        }`}
       >
         <nav>
           <button
@@ -147,7 +149,10 @@ export function AppSidebar() {
                 // navigate-on-click behaviour unchanged.
                 const children = expanded ? item.children : undefined
                 const groupOpen = children ? (openGroups[item.key] ?? menuActive) : false
-                const activeChild = children ? activeChildKey(children) : null
+                // Computed from item.children (not the expanded-only `children`
+                // var) so the collapsed-rail hover popover below can also
+                // highlight the active sub-route.
+                const activeChild = item.children ? activeChildKey(item.children) : null
                 return (
                   <div key={item.key} className="group relative">
                     <button
@@ -225,11 +230,38 @@ export function AppSidebar() {
                       </div>
                     ) : null}
 
-                    {!expanded && (
+                    {/* Hover popover listing sub-routes, shown on the collapsed rail
+                        (mirrors trade-harmonizer's admin sidebar). */}
+                    {!expanded && item.children ? (
+                      <div className="pointer-events-none absolute left-[58px] top-0 z-50 w-52 origin-left scale-95 rounded-br-lg rounded-tr-lg bg-[var(--hover-color)] p-2 opacity-0 shadow-[0px_8px_8px_0px_#00000024] transition-all duration-200 group-hover:pointer-events-auto group-hover:scale-100 group-hover:opacity-100">
+                        <div className="flex flex-row items-center justify-between">
+                          <p className="px-2 text-sm font-bold text-yellow">{item.label}</p>
+                        </div>
+                        {item.children.map((child) => {
+                          const childActive = activeChild === child.key
+                          return (
+                            <div
+                              key={child.key}
+                              role="presentation"
+                              onClick={() => go(child.link)}
+                              className={`cursor-pointer rounded px-3 py-1 text-sm font-normal hover:bg-[var(--hover-color)] hover:text-yellow ${
+                                childActive
+                                  ? 'bg-lightYellowThree font-bold text-yellow'
+                                  : 'text-rp-fg'
+                              }`}
+                            >
+                              {child.label}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    ) : null}
+
+                    {!expanded && !item.children && (
                       <div
                         role="presentation"
                         onClick={() => go(item.link)}
-                        className={`pointer-events-none absolute left-[58px] top-1/2 z-10 w-52 origin-left -translate-y-1/2 cursor-pointer whitespace-nowrap rounded-br-lg rounded-tr-lg bg-[var(--hover-color)] p-2 text-sm opacity-0 shadow-[0px_8px_8px_0px_#00000024] transition-opacity duration-200 hover:text-yellow group-hover:pointer-events-auto group-hover:opacity-100 ${
+                        className={`pointer-events-none absolute left-[58px] top-1/2 z-50 w-52 origin-left -translate-y-1/2 cursor-pointer whitespace-nowrap rounded-br-lg rounded-tr-lg bg-[var(--hover-color)] p-2 text-sm opacity-0 shadow-[0px_8px_8px_0px_#00000024] transition-opacity duration-200 hover:text-yellow group-hover:pointer-events-auto group-hover:opacity-100 ${
                           menuActive ? 'font-bold text-yellow' : 'text-rp-fg'
                         }`}
                       >
