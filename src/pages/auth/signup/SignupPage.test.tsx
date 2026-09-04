@@ -207,12 +207,13 @@ describe('SignupPage', () => {
       )
     })
 
-    it('sends every Company Details field the form collects', () => {
+    it('sends every Company Details field the form collects', async () => {
       mockRegister.mockReturnValue({ unwrap: jest.fn().mockResolvedValue({ status: true }) })
 
       renderSignup()
       fillValidForm()
       fireEvent.click(screen.getByRole('button', { name: 'Proceed' }))
+      await screen.findAllByLabelText(/code \d/i)
 
       // These were once collected, required, and then dropped, because
       // RegisterRecoveryUserDto had no property for any of them.
@@ -228,12 +229,13 @@ describe('SignupPage', () => {
       expect(mockRegister.mock.calls[0][0].companyPhone).toMatch(/5559876543$/)
     })
 
-    it('sends the phone number with its dial code, like trade-harmonizer does', () => {
+    it('sends the phone number with its dial code, like trade-harmonizer does', async () => {
       mockRegister.mockReturnValue({ unwrap: jest.fn().mockResolvedValue({ status: true }) })
 
       renderSignup()
       fillValidForm()
       fireEvent.click(screen.getByRole('button', { name: 'Proceed' }))
+      await screen.findAllByLabelText(/code \d/i)
 
       expect(mockRegister.mock.calls[0][0].phone).toMatch(/5551234567$/)
     })

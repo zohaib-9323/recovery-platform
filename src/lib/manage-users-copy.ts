@@ -111,7 +111,6 @@ export const MU = {
   /* Detail header */
   back: 'Back',
   userIdPrefix: 'User ID #',
-  viewUserLogs: 'View User Logs',
 
   /* User information card */
   userInformation: 'User Information',
