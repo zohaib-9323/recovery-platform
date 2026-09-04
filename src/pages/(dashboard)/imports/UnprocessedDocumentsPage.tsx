@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 import {
   useCreateCrossImportShipmentMutation,
+  useDeleteUnprocessedDocumentMutation,
   useGetM365UnprocessedDocumentsQuery,
 } from '@/app/services/recoveryM365Api'
 import { CustomLoader } from '@/components/feedback/custom-loader'
@@ -22,6 +23,7 @@ import {
   CrossImportCreateShipmentModal,
   type CrossImportShipmentSubmitPayload,
 } from './cross-import-create-shipment-modal'
+import { DeleteUnprocessedDocumentModal } from './delete-unprocessed-document-modal'
 
 const PAGE_SIZE = 10
 const SEARCH_DEBOUNCE_MS = 300
@@ -67,6 +69,10 @@ export function UnprocessedDocumentsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   const [createCrossImportShipment] = useCreateCrossImportShipmentMutation()
+  const [deleteUnprocessedDocument, { isLoading: isDeleting }] =
+    useDeleteUnprocessedDocumentMutation()
+  /** The row awaiting confirmation. Null closes the modal. */
+  const [pendingDelete, setPendingDelete] = useState<InboxUnprocessedShipmentRow | null>(null)
   const navigate = useNavigate()
 
   // Debounced search. Page 1 is forced alongside it — any narrowing of the list
@@ -125,6 +131,7 @@ export function UnprocessedDocumentsPage() {
         status: getUnprocessableStatusLabel(row.failureReasonCode),
         statusDetail: row.summary ?? row.failureReasonCode ?? undefined,
         s3Key: row.s3Key ?? undefined,
+        documentId: row.documentId,
       })),
     [rows],
   )
@@ -147,6 +154,36 @@ export function UnprocessedDocumentsPage() {
     () => (allData?.content?.items ?? []).filter((row) => !pendingIdSet.has(row.id)),
     [allData, pendingIdSet],
   )
+
+  /**
+   * Deletes the confirmed row. `filename` and `s3Key` go back exactly as they
+   * were listed so the server can reject a stale index (409) instead of
+   * destroying whatever has since moved into that position — see
+   * DeleteUnprocessableDocumentQueryDto server-side.
+   */
+  const handleDelete = async () => {
+    const row = pendingDelete
+    if (!row?.documentId) return
+
+    try {
+      await deleteUnprocessedDocument({
+        documentId: row.documentId,
+        index: row.sourceIndex,
+        filename: row.fileName,
+        s3Key: row.s3Key ?? null,
+      }).unwrap()
+      showCustomToast({
+        type: 'success',
+        title: 'Success',
+        message: t('imports.unprocessed.delete.success', { filename: row.fileName }),
+      })
+      setPendingDelete(null)
+    } catch (error) {
+      showCustomToast({ type: 'error', title: 'Error', message: getRtkErrorMessage(error) })
+      // The modal stays open on failure: a 409 means the list moved, and
+      // closing would hide why nothing happened.
+    }
+  }
 
   const handleSubmit = ({ title, ciRow, c88Row, plRow }: CrossImportShipmentSubmitPayload) => {
     if (!ciRow.s3Key || !c88Row.s3Key) return
@@ -271,6 +308,8 @@ export function UnprocessedDocumentsPage() {
           rows={tableRows}
           scrollWrapperClassName="overflow-x-auto"
           hideActionsColumn
+          onDelete={(row) => setPendingDelete(row)}
+          deletingIndex={isDeleting ? (pendingDelete?.sourceIndex ?? null) : null}
         />
       )}
 
@@ -281,6 +320,18 @@ export function UnprocessedDocumentsPage() {
           onPageChange={setPage}
         />
       ) : null}
+
+      <DeleteUnprocessedDocumentModal
+        open={pendingDelete !== null}
+        fileName={pendingDelete?.fileName ?? ''}
+        isDeleting={isDeleting}
+        onConfirm={() => {
+          void handleDelete()
+        }}
+        onClose={() => {
+          if (!isDeleting) setPendingDelete(null)
+        }}
+      />
 
       {isModalOpen ? (
         <CrossImportCreateShipmentModal

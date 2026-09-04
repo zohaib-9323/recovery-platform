@@ -24,6 +24,13 @@ let mockQueryState: {
   isError: boolean
 }
 
+const mockDeleteUnprocessedDocument = jest.fn(() => ({
+  unwrap: () =>
+    Promise.resolve({
+      content: { filename: 'x', s3ObjectDeleted: true, remainingUnprocessable: 0 },
+    }),
+}))
+
 jest.mock('@/app/services/recoveryM365Api', () => ({
   useGetM365UnprocessedDocumentsQuery: (args: ListQueryArgs | undefined) => {
     mockQueryCalls.push(args)
@@ -35,6 +42,7 @@ jest.mock('@/app/services/recoveryM365Api', () => ({
     return mockQueryState
   },
   useCreateCrossImportShipmentMutation: () => [mockCreateCrossImportShipment],
+  useDeleteUnprocessedDocumentMutation: () => [mockDeleteUnprocessedDocument, { isLoading: false }],
 }))
 
 jest.mock('@/lib/showCustomToast', () => ({ showCustomToast: jest.fn() }))

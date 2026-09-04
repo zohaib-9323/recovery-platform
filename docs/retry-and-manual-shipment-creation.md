@@ -280,6 +280,54 @@ Tests: `UnprocessedDocumentsPage.test.tsx` (9 tests). Backend companion:
 
 ---
 
+## Deleting an unprocessable document
+
+An import routinely pulls in files that will never be part of a shipment —
+email signatures, logos, scanned compliments slips. They cannot be paired away,
+so without a delete they sit on the Unprocessable list permanently.
+
+**Where it appears.** Every M365 import surface that lists unprocessable files:
+
+| Screen                               | File                                                         |
+| ------------------------------------ | ------------------------------------------------------------ |
+| Unprocessed Documents (cross-import) | `src/pages/(dashboard)/imports/UnprocessedDocumentsPage.tsx` |
+| Import Job detail                    | `src/pages/(dashboard)/imports/import-detail-shipments.tsx`  |
+
+Both render `InboxUnprocessedShipmentsTable`, which grows an optional
+`onDelete` / `deletingIndex` pair. A caller that omits `onDelete` gets no
+delete control — which is why the **Inbox** keeps its existing action set
+unchanged: those documents are email-ingested, not import leftovers.
+
+`hideActionsColumn` no longer means "no Actions column". It selects the compact
+column ORDER (File Name / Status / Type) and still renders an Actions column
+when there is an action to put in it.
+
+**Contract.** `DELETE /recovery/m365/unprocessed-documents/:documentId`
+with `index`, `filename` and `s3Key` as query parameters. Deletion is
+**permanent**: the entry leaves the document's `unprocessable[]` and the stored
+S3 object goes with it. There is no undo, hence the confirmation modal
+(`delete-unprocessed-document-modal.tsx`).
+
+**Why filename travels alongside s3Key.** This is the same index-fragility
+problem the retry/pair guard solves, one notch tighter. The existing guard
+compares `s3Key` only, which is `null` for every entry whose bytes were never
+stored — two such rows are indistinguishable, so a shifted index would delete
+the wrong one. Delete therefore re-validates `filename` too, and a mismatch is
+a **409**, not a best-effort delete.
+
+The modal deliberately stays open on failure: a 409 means the list moved under
+the user, and closing it would hide why nothing happened.
+
+**Two things that are easy to get wrong when extending this:**
+
+- The per-job screen filters out rows with no `s3Key` (they can never be
+  paired), so they cannot be deleted there. They _are_ listed — and deletable —
+  on the cross-import Unprocessed Documents screen.
+- The mutation must invalidate `M365ImportJobShipments` as well as
+  `M365UnprocessedDocuments`. The per-job screen reads through a different
+  endpoint, so invalidating only the cross-import list leaves the deleted row
+  on screen.
+
 ## Live import status: toasts and auto-refresh
 
 An import job runs for minutes in the background, so the Imports list and detail screens

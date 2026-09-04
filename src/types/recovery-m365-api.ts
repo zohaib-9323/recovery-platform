@@ -339,6 +339,29 @@ export type M365CreateCrossImportShipmentBody = {
   pl?: M365UnprocessedDocumentSelection
 }
 
+/**
+ * Identifies the one unprocessable entry to delete.
+ *
+ * `filename` and `s3Key` are not redundant with `index`: the server
+ * re-validates them against whatever currently sits at that index and answers
+ * 409 on a mismatch, so a row that shifted (another tab retried or paired
+ * something) cannot cause the wrong file to be destroyed. `s3Key` is null for
+ * rows whose bytes were never stored.
+ */
+export type M365DeleteUnprocessedDocumentBody = {
+  documentId: string
+  index: number
+  filename: string
+  s3Key: string | null
+}
+
+export type M365DeleteUnprocessedDocumentEnvelope = RecoveryApiEnvelope<{
+  filename: string
+  /** False when the stored file was kept because another entry still points at it. */
+  s3ObjectDeleted: boolean
+  remainingUnprocessable: number
+}>
+
 export type M365UnprocessedDocumentsEnvelope = RecoveryApiEnvelope<M365UnprocessedDocumentsContent>
 export type M365CreateCrossImportShipmentEnvelope = RecoveryApiEnvelope<{
   documentId: string

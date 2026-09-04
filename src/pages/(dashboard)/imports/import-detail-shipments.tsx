@@ -2,7 +2,10 @@ import { useMemo, useState } from 'react'
 
 import { useGetRecoveryDownloadUrlMutation } from '@/app/services/recoveryApi'
 import { useCreateManualShipmentMutation } from '@/app/services/recoveryDocumentActionsApi'
-import { useGetM365ImportJobShipmentsQuery } from '@/app/services/recoveryM365Api'
+import {
+  useDeleteUnprocessedDocumentMutation,
+  useGetM365ImportJobShipmentsQuery,
+} from '@/app/services/recoveryM365Api'
 import { CustomLoader } from '@/components/feedback/custom-loader'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n/useI18n'
@@ -14,7 +17,13 @@ import { InboxInProcessingShipmentsTable } from '@/pages/(dashboard)/inbox/compo
 import { InboxProcessedShipmentsTable } from '@/pages/(dashboard)/inbox/components/inbox-processed-shipments-table'
 import { InboxUnprocessedShipmentsTable } from '@/pages/(dashboard)/inbox/components/inbox-unprocessed-shipments-table'
 import { mapRecoveryDocumentToInboxEmail } from '@/pages/(dashboard)/inbox/inbox-mappers'
-import type { InboxAttachment, InboxInProcessingShipmentRow } from '@/pages/(dashboard)/inbox/types'
+import type {
+  InboxAttachment,
+  InboxInProcessingShipmentRow,
+  InboxUnprocessedShipmentRow,
+} from '@/pages/(dashboard)/inbox/types'
+
+import { DeleteUnprocessedDocumentModal } from './delete-unprocessed-document-modal'
 
 export type ImportDetailShipmentsProps = {
   jobId: string
@@ -58,6 +67,9 @@ export function ImportDetailShipments({ jobId, isJobActive }: ImportDetailShipme
   const [getRecoveryDownloadUrl] = useGetRecoveryDownloadUrlMutation()
 
   const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false)
+  const [deleteUnprocessedDocument, { isLoading: isDeleting }] =
+    useDeleteUnprocessedDocumentMutation()
+  const [pendingDelete, setPendingDelete] = useState<InboxUnprocessedShipmentRow | null>(null)
   // Which attachment's presign is currently in flight. Used to ignore repeat
   // clicks: the presigned URL is handed to the browser via a location change, so
   // firing two overlapping requests would race for the navigation.
@@ -112,6 +124,35 @@ export function ImportDetailShipments({ jobId, isJobActive }: ImportDetailShipme
       ),
     [document, claimedSourceIndexes],
   )
+
+  /**
+   * Permanently deletes one unprocessable file from this job.
+   *
+   * Every row here belongs to this job's single document, so the id comes from
+   * the page rather than the row. `filename`/`s3Key` are echoed back for the
+   * server's stale-index check — the same guard Create Shipment relies on.
+   */
+  const handleDeleteUnprocessed = async () => {
+    const row = pendingDelete
+    if (!row || !documentId) return
+
+    try {
+      await deleteUnprocessedDocument({
+        documentId,
+        index: row.sourceIndex,
+        filename: row.fileName,
+        s3Key: row.s3Key ?? null,
+      }).unwrap()
+      showCustomToast({
+        type: 'success',
+        title: 'Success',
+        message: t('imports.unprocessed.delete.success', { filename: row.fileName }),
+      })
+      setPendingDelete(null)
+    } catch (error) {
+      showCustomToast({ type: 'error', title: 'Error', message: getRtkErrorMessage(error) })
+    }
+  }
 
   /**
    * Fires the mutation in the background and returns immediately — the modal has
@@ -296,14 +337,34 @@ export function ImportDetailShipments({ jobId, isJobActive }: ImportDetailShipme
           ) : null}
         </div>
         {/*
-          No Actions column here. The per-row Retry action belongs to the Inbox,
-          which has a retry endpoint for a single email's attachments; an import
-          job has no equivalent, so the column rendered controls that could not
-          do anything. Pairing from this screen happens through Create Shipment
-          above, not per row.
+          No per-row Retry action here. Retry belongs to the Inbox, which has a
+          retry endpoint for a single email's attachments; an import job has no
+          equivalent, so the control would do nothing. Pairing from this screen
+          happens through Create Shipment above, not per row.
+
+          Delete is the one per-row action that does apply: an import routinely
+          pulls in files that will never be part of a shipment, and they would
+          otherwise sit here permanently.
         */}
-        <InboxUnprocessedShipmentsTable rows={visibleUnprocessed} hideActionsColumn />
+        <InboxUnprocessedShipmentsTable
+          rows={visibleUnprocessed}
+          hideActionsColumn
+          onDelete={(row) => setPendingDelete(row)}
+          deletingIndex={isDeleting ? (pendingDelete?.sourceIndex ?? null) : null}
+        />
       </div>
+
+      <DeleteUnprocessedDocumentModal
+        open={pendingDelete !== null}
+        fileName={pendingDelete?.fileName ?? ''}
+        isDeleting={isDeleting}
+        onConfirm={() => {
+          void handleDeleteUnprocessed()
+        }}
+        onClose={() => {
+          if (!isDeleting) setPendingDelete(null)
+        }}
+      />
 
       {isCreateShipmentOpen ? (
         <CreateShipmentModal

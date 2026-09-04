@@ -11,7 +11,7 @@ import { ImportDetailShipments } from './import-detail-shipments'
  *
  *  - the lists are unified across every email in the job, because the endpoint
  *    returns one document for the whole job;
- *  - Retry is scoped out here, so no row action menu renders;
+ *  - Retry is scoped out here, so Delete is the only row action that renders;
  *  - Create Shipment posts against the job's document id and hides the two
  *    claimed rows while the request is in flight.
  */
@@ -26,11 +26,25 @@ let mockQueryState: {
   isError: boolean
 }
 
+type DeleteCall = { documentId: string; index: number; filename: string; s3Key: string | null }
+
+// The argument tuple is declared on jest.fn rather than on an unused implementation
+// parameter, so `mock.calls[0][0]` stays typed as DeleteCall without a dead binding.
+const mockDeleteUnprocessedDocument = jest.fn<{ unwrap: () => Promise<unknown> }, [DeleteCall]>(
+  () => ({
+    unwrap: () =>
+      Promise.resolve({
+        content: { filename: 'x', s3ObjectDeleted: true, remainingUnprocessable: 0 },
+      }),
+  }),
+)
+
 jest.mock('@/app/services/recoveryM365Api', () => ({
   useGetM365ImportJobShipmentsQuery: () => ({
     ...mockQueryState,
     refetch: jest.fn().mockResolvedValue(undefined),
   }),
+  useDeleteUnprocessedDocumentMutation: () => [mockDeleteUnprocessedDocument, { isLoading: false }],
 }))
 
 jest.mock('@/app/services/recoveryDocumentActionsApi', () => ({
@@ -109,11 +123,35 @@ describe('ImportDetailShipments', () => {
     expect(screen.getByText('Container #1')).toBeInTheDocument()
   })
 
-  it('renders no per-row action menu, because Retry is not part of this view', () => {
+  it('offers Delete but not Retry, which is not part of this view', () => {
+    // Retry belongs to the Inbox, which has an endpoint for re-running a single
+    // email's attachments; an import job has none, so the control would be dead.
+    // Delete does apply — an import routinely pulls in files that will never be
+    // part of a shipment.
     render(<ImportDetailShipments jobId={JOB_ID} isJobActive={false} />)
 
     const row = screen.getByText('from-email-one.pdf').closest('tr')!
-    expect(row.querySelector('button')).toBeNull()
+    const buttons = Array.from(row.querySelectorAll('button'))
+    expect(buttons.map((button) => button.getAttribute('aria-label'))).toEqual(['Delete document'])
+  })
+
+  it('deletes a row with the identity it was listed with, so a stale index is caught', async () => {
+    render(<ImportDetailShipments jobId={JOB_ID} isJobActive={false} />)
+
+    const row = screen.getByText('from-email-one.pdf').closest('tr')!
+    fireEvent.click(row.querySelector('button')!)
+
+    // Confirmation is required: the file and its stored copy both go, for good.
+    fireEvent.click(screen.getByRole('button', { name: 'Yes, delete' }))
+
+    await waitFor(() => expect(mockDeleteUnprocessedDocument).toHaveBeenCalled())
+    const call = mockDeleteUnprocessedDocument.mock.calls[0][0]
+    expect(call.filename).toBe('from-email-one.pdf')
+    // The index is the row's position in the document's unprocessable[], and
+    // filename/s3Key are echoed back so the server can reject a shifted index
+    // rather than deleting whatever moved into that slot.
+    expect(call.index).toBe(0)
+    expect(call.s3Key).toBeTruthy()
   })
 
   it('hides files whose bytes were never stored', () => {
