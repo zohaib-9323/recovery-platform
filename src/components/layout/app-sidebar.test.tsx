@@ -10,7 +10,7 @@ import { AppSidebar } from './app-sidebar'
  * the active route only supplies a DEFAULT, and gating open-ness on it instead
  * made the menu impossible to open from anywhere outside /imports.
  *
- * Also covers the one role-gated nav item ("Manage Users") added for the
+ * Also covers the one role-gated nav item ("Users") added for the
  * owner-invite feature — every other item stays visible to any authenticated
  * user, unchanged.
  */
@@ -97,22 +97,22 @@ describe('AppSidebar — Imports group', () => {
 })
 
 describe('AppSidebar — role-gated items', () => {
-  it('hides Manage Users from a company user', () => {
+  it('hides Users from a company user', () => {
     renderSidebar('/dashboard', true, 'recovery_company_user')
 
-    expect(screen.queryByText('Manage Users')).not.toBeInTheDocument()
+    expect(screen.queryByText('Users')).not.toBeInTheDocument()
     expect(screen.getByText('Dashboard')).toBeInTheDocument()
   })
 
-  it('shows Manage Users to a company owner', () => {
+  it('shows Users to a company owner', () => {
     renderSidebar('/dashboard', true, 'recovery_company_owner')
 
-    expect(screen.getByText('Manage Users')).toBeInTheDocument()
+    expect(screen.getByText('Users')).toBeInTheDocument()
   })
 
-  it('hides Manage Users when role is not yet known (e.g. still loading)', () => {
+  it('hides Users when role is not yet known (e.g. still loading)', () => {
     renderSidebar('/dashboard')
 
-    expect(screen.queryByText('Manage Users')).not.toBeInTheDocument()
+    expect(screen.queryByText('Users')).not.toBeInTheDocument()
   })
 })

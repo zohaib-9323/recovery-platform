@@ -17,10 +17,10 @@ export function getSideBarTitle(pathname: string): string {
     return ''
   }
   // Same two-level pattern as the Imports sub-screens below: section stays in
-  // the prefix so the header reads "MANAGE USERS / CONNECTION STATUS" (and
-  // "MANAGE USERS / DELETION REQUESTS").
+  // the prefix so the header reads "USERS / CONNECTION STATUS" (and
+  // "USERS / DELETION REQUESTS").
   if (path === '/users/connections' || path === '/users/deletion-requests') {
-    return 'Manage Users /'
+    return 'Users /'
   }
   if (path === '/users' || path.startsWith('/users/')) {
     return 'Manage'
