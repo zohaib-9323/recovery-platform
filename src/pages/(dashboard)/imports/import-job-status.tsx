@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, Clock, RefreshCw, XCircle } from 'lucide-react'
+import { AlertTriangle, Clock, RefreshCw, XCircle } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import type { M365ImportJobFailure, M365ImportJobStatus } from '@/types/recovery-m365-api'
@@ -19,7 +19,7 @@ export const ACTIVE_STATUSES = new Set<M365ImportJobStatus>([
 
 const STATUS_BADGE: Record<
   M365ImportJobStatus,
-  { label: string; className: string; spin?: boolean; Icon: typeof Clock }
+  { label: string; className: string; spin?: boolean; Icon?: typeof Clock }
 > = {
   queued: {
     label: 'Queued',
@@ -45,13 +45,11 @@ const STATUS_BADGE: Record<
   },
   completed: {
     label: 'Completed',
-    className: 'border border-rp-green bg-[#2e7d32]/10 text-rp-green',
-    Icon: CheckCircle2,
+    className: 'rounded-md bg-[#2e7d32]/10 px-4 py-1.5 text-rp-green font-semibold',
   },
   completed_with_errors: {
     label: 'Completed',
-    className: 'border border-rp-green bg-[#2e7d32]/10 text-rp-green',
-    Icon: CheckCircle2,
+    className: 'rounded-md bg-[#2e7d32]/10 px-4 py-1.5 text-rp-green font-semibold',
   },
   failed: {
     label: 'Failed',
@@ -92,7 +90,11 @@ export function StatusBadge({ status }: { status: M365ImportJobStatus }) {
         cfg.className,
       )}
     >
-      <cfg.Icon className={cn('size-3.5 shrink-0', cfg.spin && 'animate-spin')} aria-hidden />
+      {cfg.Icon ? (
+        <cfg.Icon className={cn('size-3.5 shrink-0', cfg.spin && 'animate-spin')} aria-hidden />
+      ) : (
+        <span className="size-1.5 shrink-0 rounded-full bg-current" aria-hidden />
+      )}
       {cfg.label}
     </span>
   )

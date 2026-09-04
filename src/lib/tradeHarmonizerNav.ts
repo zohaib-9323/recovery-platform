@@ -16,6 +16,15 @@ export function getSideBarTitle(pathname: string): string {
   if (path === '/inbox' || path.startsWith('/inbox/')) {
     return ''
   }
+  // Same two-level pattern as the Imports sub-screens below: section stays in
+  // the prefix so the header reads "USERS / CONNECTION STATUS" (and
+  // "USERS / DELETION REQUESTS").
+  if (path === '/users/connections' || path === '/users/deletion-requests') {
+    return 'Users /'
+  }
+  if (path === '/users' || path.startsWith('/users/')) {
+    return 'Manage'
+  }
   if (path === '/notifications' || path.startsWith('/notifications/')) {
     return ''
   }
@@ -52,6 +61,15 @@ export function getHrefLink(pathname: string): string {
   }
   if (path === '/inbox' || path.startsWith('/inbox/')) {
     return 'Inbox'
+  }
+  if (path === '/users/connections') {
+    return 'M365 Connection Status'
+  }
+  if (path === '/users/deletion-requests') {
+    return 'Deletion Requests'
+  }
+  if (path === '/users' || path.startsWith('/users/')) {
+    return 'Users'
   }
   if (path === '/notifications' || path.startsWith('/notifications/')) {
     return 'Notifications'

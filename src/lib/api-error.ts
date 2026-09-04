@@ -42,3 +42,16 @@ export function normalizeApiError(error: unknown, fallback: string): AppError {
 
   return new AppError(fallback, fallback, 'UNKNOWN_ERROR', error)
 }
+
+/**
+ * Whether an RTK Query error is an HTTP 409.
+ *
+ * `status` is typed `unknown` because RTK Query also uses it for transport
+ * failures (`'FETCH_ERROR'`, `'PARSING_ERROR'`), so it is not always a number.
+ * Callers use this to pin a conflict to the field that caused it — e.g. a
+ * signup rejected because the email, or its company domain, is already taken.
+ */
+export function isConflictError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false
+  return (error as ErrorWithData).status === 409
+}

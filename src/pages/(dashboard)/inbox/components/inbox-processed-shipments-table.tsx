@@ -51,7 +51,7 @@ export function InboxProcessedShipmentsTable({
   }
 
   return (
-    <div className={cn('overflow-hidden rounded-lg border border-[#E0E0E0]', className)}>
+    <div className={cn('rounded-lg border border-[#E0E0E0]', className)}>
       <div className={scrollWrapperClassName}>
         {/*
           A min-width so the wrapper's `overflow-x-auto` actually scrolls on narrow

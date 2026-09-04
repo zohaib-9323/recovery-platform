@@ -16,18 +16,27 @@ npm run typecheck    # tsc --noEmit
 
 # Testing
 npm test             # Interactive watch mode
-npm run test:ci      # Single run with coverage (required in CI)
+npm run test:ci      # Single run, no coverage
+npm run test:coverage # Single run + coverage gates (this is what CI runs)
 
 # Dependency checks
-npx madge --circular src/  # Detect circular imports (runs in CI)
-npm run security          # Trivy + npm audit
+npm run dep:cycles         # Detect circular imports (runs in CI)
+# Always via the script, never bare `npx madge --circular src/` — madge
+# defaults to js,jsx and would silently report "Processed 0 files". The
+# extensions and the tsconfig alias resolution live in `.madgerc`.
+npm run security:audit    # npm audit --audit-level=high (report-only in CI)
+npm run security:trivy    # Trivy filesystem scan (report-only in CI)
 ```
 
 ### Custom Claude Command
 
 - `/strict-ai-code-review <scope>`: Runs a strict tabular production review using the enforced checklist and summary format.
 
-Coverage thresholds (enforced in CI): 70% lines/statements/functions, 65% branches. Critical paths have higher targets: `api.ts` 90%, `authSession.ts` 85%.
+Coverage thresholds (enforced by `npm run test:coverage` in CI, configured in
+`craco.config.cjs`): 70% lines/statements/functions, 65% branches. Critical paths
+have higher targets: `api.ts` 90%, `authSession.ts` 85%. Coverage is collected from
+an explicit `collectCoverageFrom` allow-list, not the whole tree — adding a file to
+that list without tests will fail the global gate.
 
 ## Environment
 
