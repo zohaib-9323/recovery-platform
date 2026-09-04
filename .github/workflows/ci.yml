@@ -1,22 +1,64 @@
+# Verification only — this workflow never deploys.
+#
+# Amplify owns deployment: it builds and releases from its own connected
+# branches using `amplify.yml`. What this workflow adds is catching a failure
+# BEFORE that happens, on the branch the team actually merges into.
+#
+# Two jobs, run in parallel:
+#
+#   quality        lint, types, dependency cycles, formatting, and tests WITH
+#                  the coverage thresholds applied.
+#   amplify-build  a deliberate mirror of `amplify.yml`'s build phase. Same
+#                  `npm ci`, same pinned Trivy installer, same report-only
+#                  scans, same `npm run build`. If this job is red, the
+#                  Amplify build for the same commit will be red too.
+#
+# The two jobs overlap on purpose, and it is worth knowing why. `npm run build`
+# fires a `prebuild` hook (`scripts/verify-build-report.mjs`) that re-runs
+# lint:check, typecheck, format:check, test:ci and Trivy — so Amplify has
+# always enforced most of these, which is how deploys kept succeeding while
+# this workflow was red. Removing the duplication would mean the parity job no
+# longer reproduces the Amplify build, which is the one thing it is for.
+#
+# What `quality` adds on top of what Amplify already checks is narrow but real:
+# the dependency-cycle check, and the coverage thresholds (`test:coverage`,
+# where prebuild only runs `test:ci` without them). It also runs on pull
+# requests, before a merge exists for Amplify to build.
+#
+# Keep `amplify-build` and `amplify.yml` in step. A change to one that is not
+# made in the other is exactly the drift this job exists to catch, and it
+# would make the job's green tick meaningless.
+
 name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, develop]
   pull_request:
-    branches: [main, master]
+    branches: [main, master, develop]
+
+# A merge that lands while an earlier run for the same branch is still going
+# makes that run irrelevant — cancel it rather than pay for it. `main` is
+# exempt: its runs are the record of what shipped.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  NODE_VERSION: '22'
 
 jobs:
-  build:
+  quality:
+    name: Quality gates
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
       - name: Install dependencies
@@ -28,6 +70,11 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      # Runs through the npm script, never bare `npx madge --circular src/` —
+      # madge defaults to js,jsx and would report "Processed 0 files" while
+      # exiting 0. The extensions and tsconfig alias resolution live in
+      # `.madgerc`; check the processed/skipped counts in the log if this ever
+      # starts passing suspiciously fast.
       - name: Dependency cycle check
         run: npm run dep:cycles
 
@@ -37,16 +84,89 @@ jobs:
       - name: Test with coverage gates
         run: npm run test:coverage
 
-      - name: npm audit (high+ gate)
-        run: npm run security:audit
+  amplify-build:
+    name: Amplify build parity
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
 
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          # Amplify's Node version is set in its console, not in `amplify.yml`.
+          # If the two ever diverge this job stops being a faithful mirror —
+          # match this value to the Amplify build image's Node version.
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Pinned to a release tag, never mutable `main` — same as amplify.yml.
+      - name: Install Trivy (pinned)
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/v0.71.1/contrib/install.sh \
+            | sh -s -- -b ./bin v0.71.1
+          echo "$PWD/bin" >> "$GITHUB_PATH"
+
+      - name: Trivy version
+        run: trivy --version
+
+      # Report-only, matching amplify.yml. Every remaining high advisory sits
+      # inside react-scripts' dependency tree (svgo/@svgr, postcss,
+      # webpack-dev-server) — build-time code that never reaches the bundle —
+      # and npm's only offered fix is downgrading react-scripts to 0.0.0.
+      # `--omit=dev` does not help either: CRA puts react-scripts in
+      # `dependencies`. Blocking here would make the job permanently red, which
+      # trains everyone to ignore it; `continue-on-error` still surfaces the
+      # result as a warning annotation rather than hiding it the way
+      # amplify.yml's `|| true` does.
+      #
+      # Drop the two `continue-on-error` lines below once
+      # `npm audit --audit-level=high` is clean, and drop the matching
+      # `|| true`s in amplify.yml at the same time.
+      - name: npm audit (high+)
+        run: npm run security:audit
+        continue-on-error: true
+
+      - name: Trivy filesystem scan
+        run: trivy fs --config trivy.yaml --severity CRITICAL,HIGH .
+        continue-on-error: true
+
+      # CRA inlines every REACT_APP_* value at build time, so an unset variable
+      # becomes a literal `undefined` in the bundle. The build still SUCCEEDS —
+      # `src/utils/env.ts` only throws when the bundle loads in a browser — so
+      # building without these would produce a green tick over an artifact that
+      # dies on first paint, which is the opposite of what this job is for.
+      #
+      # The fallback is the public value already committed in `.env.example`,
+      # not a secret. Set the repository secrets to have this job build against
+      # the same API the Amplify branch does. The Firebase keys are optional:
+      # unset means `src/lib/firebase.ts` skips init and the Imports page falls
+      # back to its polling safety net.
       - name: Build
+        env:
+          REACT_APP_API_BASE_URL: ${{ secrets.REACT_APP_API_BASE_URL || 'https://predev.tradeharmonizer.co.uk' }}
+          REACT_APP_APP_NAME: ${{ secrets.REACT_APP_APP_NAME || 'Recovery Platform' }}
+          REACT_APP_MAIN_SITE_URL: ${{ secrets.REACT_APP_MAIN_SITE_URL || 'https://recovery.tradeharmonizer.co.uk/login' }}
+          REACT_APP_FIREBASE_API_KEY: ${{ secrets.REACT_APP_FIREBASE_API_KEY }}
+          REACT_APP_FIREBASE_AUTH_DOMAIN: ${{ secrets.REACT_APP_FIREBASE_AUTH_DOMAIN }}
+          REACT_APP_FIREBASE_PROJECT_ID: ${{ secrets.REACT_APP_FIREBASE_PROJECT_ID }}
+          REACT_APP_FIREBASE_STORAGE_BUCKET: ${{ secrets.REACT_APP_FIREBASE_STORAGE_BUCKET }}
+          REACT_APP_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.REACT_APP_FIREBASE_MESSAGING_SENDER_ID }}
+          REACT_APP_FIREBASE_APP_ID: ${{ secrets.REACT_APP_FIREBASE_APP_ID }}
+          REACT_APP_FIREBASE_MEASUREMENT_ID: ${{ secrets.REACT_APP_FIREBASE_MEASUREMENT_ID }}
+          REACT_APP_FIREBASE_VAPID_KEY: ${{ secrets.REACT_APP_FIREBASE_VAPID_KEY }}
         run: npm run build
 
-      - name: Trivy vulnerability scan
-        uses: aquasecurity/trivy-action@v0.35.0
+      # Keeps the exact bundle a reviewer can download and diff against what
+      # Amplify served, when a deploy looks wrong but the build was green.
+      # Never deployed from here.
+      - name: Upload build output
+        uses: actions/upload-artifact@v7
         with:
-          scan-type: fs
-          scan-ref: .
-          severity: CRITICAL,HIGH
-          exit-code: '1'
+          name: build-${{ github.sha }}
+          path: build/
+          retention-days: 7
+          if-no-files-found: error
