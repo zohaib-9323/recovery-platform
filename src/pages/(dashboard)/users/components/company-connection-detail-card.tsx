@@ -135,7 +135,7 @@ export function CompanyConnectionDetailCard({ userId }: { userId: string }) {
         <div className="flex items-center justify-between gap-3">
           <p className="text-lg font-semibold text-backTwo">{MU.connectionDetailTitle}</p>
           <span
-            className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded px-2 py-1 text-xs font-semibold ${style.bg}`}
+            className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-4 py-1.5 text-xs font-semibold ${style.bg}`}
           >
             <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${style.dot}`} />
             <span className={style.text}>
