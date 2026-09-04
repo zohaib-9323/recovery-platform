@@ -56,7 +56,7 @@ describe('ForgotPasswordPage', () => {
     })
   })
 
-  it('shows API error message when reset request fails', async () => {
+  it('shows the check-email popup even when the reset request fails, so account existence is never revealed', async () => {
     mockRequestReset.mockReturnValue({
       unwrap: jest.fn().mockRejectedValue({ data: { message: 'Email not found' } }),
     })
@@ -75,9 +75,8 @@ describe('ForgotPasswordPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send' }))
 
     await waitFor(() => {
-      expect(mockShowCustomToast).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'error', message: 'Email not found' }),
-      )
+      expect(screen.getByText(/check your email/i)).toBeInTheDocument()
     })
+    expect(mockShowCustomToast).not.toHaveBeenCalled()
   })
 })
