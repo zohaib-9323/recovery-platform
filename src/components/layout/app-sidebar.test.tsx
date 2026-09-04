@@ -79,14 +79,20 @@ describe('AppSidebar — Imports group', () => {
     expect(screen.getByRole('button', { name: 'Import Jobs' })).toHaveClass('text-yellow')
   })
 
-  it('renders no children in the collapsed rail, leaving it as it was', () => {
-    renderSidebar('/imports', false)
+  it('shows children in a hover popover on the collapsed rail and navigates on click', () => {
+    // The rail has no room for an accordion toggle (no aria-expanded button),
+    // but the sub-routes are still in the DOM as a CSS-only hover popover —
+    // as divs, not buttons, matching the single-link flyout's existing
+    // pattern — matching admin's collapsed-rail behavior.
+    renderSidebar('/dashboard', false)
 
-    // The collapsed rail hides every label, so there is no button named
-    // "Imports" to query here — that is itself the point: no room for children.
-    expect(screen.queryByRole('button', { name: 'Import Jobs' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Processable Shipments' })).not.toBeInTheDocument()
     expect(document.querySelector('[aria-expanded]')).toBeNull()
+    const target = screen.getByText('Processable Shipments')
+    expect(target).toBeInTheDocument()
+
+    fireEvent.click(target)
+
+    expect(screen.getByText('Processable Shipments')).toHaveClass('text-yellow')
   })
 })
 

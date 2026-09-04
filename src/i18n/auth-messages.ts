@@ -149,8 +149,6 @@ export const authMessages: Record<string, string> = {
   'auth.signup.companyWebsitePlaceholder': 'Enter Company website',
   'auth.signup.address1Label': 'Address 1',
   'auth.signup.address1Placeholder': '123 Main Street',
-  'auth.signup.address2Label': 'Address 2',
-  'auth.signup.address2Placeholder': 'Apt, Suite, Unit (Optional)',
   'auth.signup.countryLabel': 'Country',
   'auth.signup.countryPlaceholder': 'Select Country',
   'auth.signup.cityLabel': 'City',

@@ -7,14 +7,15 @@ export type StatusTagProps = {
 }
 
 /**
- * Figma "Tag": 6px padding, 5px radius, 4px dot, 5px gap, 14px regular label.
+ * Figma "Tag": 6px padding, 5px radius, 4px dot, 5px gap, 16px regular label
+ * (matches the Inbox attachment "Passed" status pill).
  * The dot inherits the label colour via `bg-current`.
  */
 export function StatusTag({ className, label }: StatusTagProps) {
   return (
     <span
       className={cn(
-        'inline-flex w-fit items-center gap-[5px] rounded-[5px] p-[6px] text-xsmall font-normal capitalize',
+        'inline-flex w-fit items-center gap-[5px] rounded-[5px] p-[6px] text-base font-normal capitalize',
         className,
       )}
     >

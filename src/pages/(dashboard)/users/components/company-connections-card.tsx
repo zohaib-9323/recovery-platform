@@ -220,7 +220,9 @@ export function CompanyConnectionsCard() {
                               className={`inline-flex items-center gap-1.5 rounded px-2 py-1 ${style.bg}`}
                             >
                               <span className={`h-1 w-1 shrink-0 rounded-full ${style.dot}`} />
-                              <span className={`whitespace-nowrap ${style.text}`}>
+                              <span
+                                className={`whitespace-nowrap text-base font-normal ${style.text}`}
+                              >
                                 {STATUS_LABELS[row.connectionStatus] ?? row.connectionStatus}
                               </span>
                             </span>

@@ -233,7 +233,6 @@ export function SignupPage() {
         companyEmail: values.companyEmail.trim(),
         companyWebsite: values.companyWebsite.trim(),
         address1: values.address1.trim(),
-        address2: values.address2.trim(),
         country: values.country.trim(),
         city: values.city.trim(),
         postalCode: values.postalCode.trim(),
