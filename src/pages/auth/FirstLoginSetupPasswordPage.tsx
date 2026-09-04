@@ -8,6 +8,7 @@ import { useSetupFirstLoginPasswordMutation } from '@/app/services/recoveryApi'
 import { LoginButton } from '@/components/buttons'
 import { InputField } from '@/components/fields'
 import { useI18n } from '@/i18n/useI18n'
+import { showCustomToast } from '@/lib/showCustomToast'
 import { isValidPassword } from '@/lib/validation'
 import {
   AUTH_FIELD_SHELL_CLASS,
@@ -64,7 +65,6 @@ export function FirstLoginSetupPasswordPage() {
   const [showTemporaryPassword, setShowTemporaryPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [showSuccess, setShowSuccess] = useState(false)
   const [redirectIn, setRedirectIn] = useState(AUTO_REDIRECT_SECONDS)
   const [setupPassword, { isLoading }] = useSetupFirstLoginPasswordMutation()
@@ -119,13 +119,8 @@ export function FirstLoginSetupPasswordPage() {
     digit: /\d/.test(newPasswordTrimmed),
   }
   const passwordsReady = isValidPassword(newPasswordTrimmed) && matches
+  const canSubmit = temporaryPasswordTrimmed.length > 0 && passwordsReady
 
-  /**
-   * Why the button is not disabled on validation: it used to be, and a click
-   * with any field unfinished did nothing at all — no request, no message,
-   * nothing to react to. Submitting always runs the checks and says which
-   * field is wrong; only an in-flight request disables it.
-   */
   const validationError = (): string | null => {
     if (temporaryPasswordTrimmed.length === 0) {
       return t('auth.firstLogin.setup.temporaryPasswordRequired')
@@ -137,11 +132,14 @@ export function FirstLoginSetupPasswordPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    setError(null)
 
     const invalid = validationError()
     if (invalid) {
-      setError(invalid)
+      showCustomToast({
+        type: 'error',
+        title: t('auth.firstLogin.setup.title'),
+        message: invalid,
+      })
       return
     }
 
@@ -157,7 +155,11 @@ export function FirstLoginSetupPasswordPage() {
       dispatch(logout())
       setShowSuccess(true)
     } catch (err) {
-      setError(readApiMessage(err, t('auth.firstLogin.setup.failed')))
+      showCustomToast({
+        type: 'error',
+        title: t('auth.firstLogin.setup.title'),
+        message: readApiMessage(err, t('auth.firstLogin.setup.failed')),
+      })
     }
   }
 
@@ -188,10 +190,7 @@ export function FirstLoginSetupPasswordPage() {
                 leftIcon={<KeyRound className="h-5 w-5 text-primary" strokeWidth={2} />}
                 placeholder={t('auth.firstLogin.setup.temporaryPasswordPlaceholder')}
                 value={temporaryPassword}
-                onChange={(e) => {
-                  setTemporaryPassword(e.target.value)
-                  setError(null)
-                }}
+                onChange={(e) => setTemporaryPassword(e.target.value)}
                 rightSlot={
                   <button
                     type="button"
@@ -225,10 +224,7 @@ export function FirstLoginSetupPasswordPage() {
                 leftIcon={<KeyRound className="h-5 w-5 text-primary" strokeWidth={2} />}
                 placeholder={t('auth.firstLogin.setup.newPasswordPlaceholder')}
                 value={newPassword}
-                onChange={(e) => {
-                  setNewPassword(e.target.value.trim())
-                  setError(null)
-                }}
+                onChange={(e) => setNewPassword(e.target.value.trim())}
                 aria-invalid={newPasswordTrimmed.length > 0 && !isValidPassword(newPasswordTrimmed)}
                 rightSlot={
                   <button
@@ -261,10 +257,7 @@ export function FirstLoginSetupPasswordPage() {
                 leftIcon={<KeyRound className="h-5 w-5 text-primary" strokeWidth={2} />}
                 placeholder={t('auth.firstLogin.setup.confirmPasswordPlaceholder')}
                 value={confirmPassword}
-                onChange={(e) => {
-                  setConfirmPassword(e.target.value.trim())
-                  setError(null)
-                }}
+                onChange={(e) => setConfirmPassword(e.target.value.trim())}
                 aria-invalid={confirmPasswordTrimmed.length > 0 && !matches}
                 rightSlot={
                   <button
@@ -292,20 +285,14 @@ export function FirstLoginSetupPasswordPage() {
                 </div>
               ) : null}
               {confirmPasswordTrimmed && !passwordsReady ? (
-                <p className="text-tiny font-normal text-lightBlackOne">
+                <p className="text-tiny font-normal text-redOne">
                   {t('auth.firstLogin.setup.notMatchedYet')}
                 </p>
               ) : null}
             </div>
 
-            {error ? (
-              <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-                {error}
-              </p>
-            ) : null}
-
             <div className="w-full">
-              <LoginButton type="submit" disabled={isLoading}>
+              <LoginButton type="submit" disabled={!canSubmit || isLoading}>
                 {isLoading
                   ? t('auth.firstLogin.setup.submitting')
                   : t('auth.firstLogin.setup.submit')}

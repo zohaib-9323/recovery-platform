@@ -173,7 +173,6 @@ export function SignupPage() {
     values.country.trim().length > 0 &&
     values.city.trim().length > 0 &&
     values.postalCode.trim().length > 0 &&
-    values.companyPhone.trim().length > 0 &&
     values.termsAccepted
 
   const handleSubmit = async (e: FormEvent) => {
@@ -195,7 +194,6 @@ export function SignupPage() {
       country: true,
       city: true,
       postalCode: true,
-      companyPhone: true,
     })
     setShowTermsError(!values.termsAccepted)
 

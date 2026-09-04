@@ -5,6 +5,7 @@ import { useRequestPasswordResetMutation } from '@/app/services/recoveryApi'
 import { InputField } from '@/components/fields'
 import { LoginButton } from '@/components/buttons'
 import { useI18n } from '@/i18n/useI18n'
+import { reportRuntimeError } from '@/lib/error-reporting'
 import { showCustomToast } from '@/lib/showCustomToast'
 import { isValidEmail } from '@/lib/validation'
 import {
@@ -15,17 +16,6 @@ import {
 } from '@/pages/auth/authFieldStyles'
 import { AuthBackToLogin } from '@/pages/auth/components/AuthBackToLogin'
 import { CheckEmailPopup } from '@/pages/auth/components/CheckEmailPopup'
-
-function readApiMessage(error: unknown, fallback: string): string {
-  if (error && typeof error === 'object' && 'data' in error) {
-    const data = (error as { data?: unknown }).data
-    if (typeof data === 'object' && data !== null && 'message' in data) {
-      const message = (data as { message?: unknown }).message
-      if (typeof message === 'string' && message) return message
-    }
-  }
-  return fallback
-}
 
 export function ForgotPasswordPage() {
   const { t } = useI18n()
@@ -55,22 +45,23 @@ export function ForgotPasswordPage() {
 
     try {
       await requestReset({ email: trimmedEmail }).unwrap()
-      setSubmittedEmail(trimmedEmail)
-      setShowCheckEmail(true)
     } catch (err) {
-      showCustomToast({
-        type: 'error',
-        title: t('auth.forgot.title'),
-        message: readApiMessage(err, t('auth.forgot.failedToSend')),
-      })
+      // Always show the "check your email" popup regardless of outcome
+      // (including a "user not found" response) so the UI never reveals
+      // whether an account exists for this email.
+      reportRuntimeError('forgot-password:request-reset', err)
     }
+
+    setSubmittedEmail(trimmedEmail)
+    setShowCheckEmail(true)
   }
 
   const handleResend = async () => {
     try {
       await requestReset({ email: submittedEmail || trimmedEmail }).unwrap()
-    } catch {
+    } catch (err) {
       // The popup stays open — the user can retry the resend action.
+      reportRuntimeError('forgot-password:resend', err)
     }
   }
 
