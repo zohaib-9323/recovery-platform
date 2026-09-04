@@ -1,3 +1,5 @@
+import type { M365ImportJobSummary } from '@/types/recovery-m365-api'
+
 /** Recovery `/recovery/company-users/*` API shapes (envelope matches other Recovery endpoints). */
 export type ApiMessageEnvelope<T = null> = {
   statusCode?: number
@@ -140,4 +142,46 @@ export type CompanyM365StatusContent = {
   page: number
   limit: number
   totalPages: number
+}
+
+/**
+ * One teammate's connection detail, as returned by
+ * `GET /recovery/m365/company-status/:userId`.
+ *
+ * Same payload the admin detail screen renders, scoped server-side to the
+ * caller's own company — a userId outside it comes back 404, so the id in the
+ * URL cannot be swapped for someone else's.
+ *
+ * `tokenExpiry` is a timestamp only, never a token: it is what turns "Auth
+ * Expired" from a bare status pill into something the owner can act on.
+ */
+export type CompanyConnectionDetail = {
+  recoveryUserId: string
+  firstName: string
+  lastName: string
+  email: string
+  tenantId: string | null
+  tenantName: string | null
+  connection: {
+    id: string | null
+    connectedAccount: string | null
+    connectionStatus: CompanyConnectionStatusValue
+    connectedSince: string | null
+    lastSync: string | null
+    tokenExpiry: string | null
+    lastError: string | null
+  }
+  importJobs: {
+    items: M365ImportJobSummary[]
+    total: number
+    page: number
+    limit: number
+    totalPages: number
+  }
+}
+
+export type CompanyConnectionDetailQuery = {
+  userId: string
+  jobPage?: number
+  jobLimit?: number
 }

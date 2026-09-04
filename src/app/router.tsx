@@ -27,6 +27,7 @@ import { AllShipmentsPage } from '@/pages/(dashboard)/shipments/AllShipmentsPage
 import { ShipmentDetailPageV2 as ShipmentDetailPage } from '@/pages/(dashboard)/shipments/ShipmentDetailPageV2'
 import { ShipmentLogsPage } from '@/pages/(dashboard)/shipments/ShipmentLogsPage'
 import { SettingsPage } from '@/pages/(dashboard)/settings/SettingsPage'
+import { CompanyConnectionDetailPage } from '@/pages/(dashboard)/users/CompanyConnectionDetailPage'
 import { CompanyConnectionsPage } from '@/pages/(dashboard)/users/CompanyConnectionsPage'
 import { CompanyDeleteRequestsPage } from '@/pages/(dashboard)/users/CompanyDeleteRequestsPage'
 import { ManageUsersPage } from '@/pages/(dashboard)/users/ManageUsersPage'
@@ -78,6 +79,7 @@ export function AppRouter() {
                   user whose id is "connections".
                 */}
                 <Route path="/users/connections" element={<CompanyConnectionsPage />} />
+                <Route path="/users/connections/:id" element={<CompanyConnectionDetailPage />} />
                 <Route path="/users/deletion-requests" element={<CompanyDeleteRequestsPage />} />
                 <Route path="/users/:id" element={<UserDetailPage />} />
                 <Route path="/imports" element={<ImportsPage />} />
