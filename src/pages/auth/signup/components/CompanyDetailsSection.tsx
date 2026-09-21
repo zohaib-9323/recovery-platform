@@ -33,6 +33,13 @@ export function CompanyDetailsSection({
 }: CompanyDetailsSectionProps) {
   const { t } = useI18n()
 
+  // Country and postal code are optional. City is only required once a country
+  // has been picked — "country without city" is the one combination we reject.
+  const cityError =
+    touched.city && values.country.trim() && !values.city.trim()
+      ? t('auth.signup.required')
+      : undefined
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-1">
@@ -105,12 +112,20 @@ export function CompanyDetailsSection({
             id="signup-city"
             value={values.city}
             countryName={values.country}
-            onChange={(city) => setField('city', city)}
+            onChange={(city) => {
+              markTouched('city')
+              setField('city', city)
+            }}
             placeholder={t('auth.signup.cityPlaceholder')}
             backgroundColor="#F2F2F2"
             borderColor="#DADADA"
             borderRadius={5}
           />
+          {cityError ? (
+            <p id="signup-city-err" role="alert" className="text-tiny font-light text-redOne">
+              {cityError}
+            </p>
+          ) : null}
         </div>
       </div>
 
@@ -128,10 +143,6 @@ export function CompanyDetailsSection({
           placeholder={t('auth.signup.postalCodePlaceholder')}
           value={values.postalCode}
           onChange={(e) => setField('postalCode', e.target.value)}
-          onBlur={() => markTouched('postalCode')}
-          error={
-            touched.postalCode && !values.postalCode.trim() ? t('auth.signup.required') : undefined
-          }
         />
 
         <div className="flex flex-col gap-[10px]">

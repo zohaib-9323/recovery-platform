@@ -159,7 +159,14 @@ export function SignupPage() {
       ? t('auth.login.enterValidEmail')
       : undefined
 
-  /** Every field that blocks submission. `REQUIRED_FIELDS` mirrors it exactly. */
+  /**
+   * City is only required once a country has been picked — an address with
+   * neither is allowed, but "country without city" is not. Country and postal
+   * code never block submission.
+   */
+  const cityRequired = values.country.trim().length > 0
+
+  /** Every field that blocks submission. The `setTouched` call below mirrors it exactly. */
   const canSubmit =
     values.firstName.trim().length > 0 &&
     values.lastName.trim().length > 0 &&
@@ -170,9 +177,7 @@ export function SignupPage() {
     passwordsMatch &&
     values.companyName.trim().length > 0 &&
     values.address1.trim().length > 0 &&
-    values.country.trim().length > 0 &&
-    values.city.trim().length > 0 &&
-    values.postalCode.trim().length > 0 &&
+    (!cityRequired || values.city.trim().length > 0) &&
     values.termsAccepted
 
   const handleSubmit = async (e: FormEvent) => {
@@ -191,9 +196,7 @@ export function SignupPage() {
       confirmPassword: true,
       companyName: true,
       address1: true,
-      country: true,
       city: true,
-      postalCode: true,
     })
     setShowTermsError(!values.termsAccepted)
 

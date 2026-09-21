@@ -228,10 +228,42 @@ describe('ProcessableShipmentsPage', () => {
   })
 
   it('sends the user to All Shipments from View All', () => {
+    setShipments([{ _id: 's-1', shipmentTitle: 'Shipment One', status: 'draft' }])
     renderPage()
 
     fireEvent.click(screen.getByRole('button', { name: 'View All' }))
 
     expect(mockNavigate).toHaveBeenCalledWith('/shipments')
+  })
+
+  describe('Processed Shipments with nothing in it', () => {
+    it('renders the section empty state as a card, not a bare sentence', () => {
+      setShipments([])
+      renderPage()
+
+      // The sentence alone sat where a table was about to appear and read as a
+      // half-loaded screen. It belongs in the same card the tables above use.
+      const description = screen.getByText('No shipments have been created from your imports yet.')
+      expect(screen.getByText('No processed shipments')).toBeInTheDocument()
+      expect(description.tagName).toBe('P')
+      expect(screen.getByRole('button', { name: 'View All Shipments' })).toBeInTheDocument()
+    })
+
+    it('drops the header View All link, leaving the card as the only way through', () => {
+      setShipments([])
+      renderPage()
+
+      expect(screen.queryByRole('button', { name: 'View All' })).toBeNull()
+
+      fireEvent.click(screen.getByRole('button', { name: 'View All Shipments' }))
+      expect(mockNavigate).toHaveBeenCalledWith('/shipments')
+    })
+
+    it('still labels the section so the empty state is attributable', () => {
+      setShipments([])
+      renderPage()
+
+      expect(screen.getByText('Processed Shipments')).toBeInTheDocument()
+    })
   })
 })

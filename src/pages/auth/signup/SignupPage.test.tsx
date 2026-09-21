@@ -255,6 +255,51 @@ describe('SignupPage', () => {
     })
   })
 
+  describe('optional address fields', () => {
+    it('submits with postal code, country and city all left empty', async () => {
+      mockRegister.mockReturnValue({ unwrap: jest.fn().mockResolvedValue({ status: true }) })
+
+      renderSignup()
+      fillValidForm()
+      fireEvent.change(screen.getByLabelText('Country'), { target: { value: '' } })
+      fireEvent.change(screen.getByLabelText('City'), { target: { value: '' } })
+      fireEvent.change(screen.getByLabelText('Postal code'), { target: { value: '' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Proceed' }))
+
+      expect(await screen.findAllByLabelText(/code \d/i)).toHaveLength(6)
+      expect(mockRegister).toHaveBeenCalledWith(
+        expect.objectContaining({ country: '', city: '', postalCode: '' }),
+      )
+    })
+
+    it('submits with a country and city but no postal code', async () => {
+      mockRegister.mockReturnValue({ unwrap: jest.fn().mockResolvedValue({ status: true }) })
+
+      renderSignup()
+      fillValidForm()
+      fireEvent.change(screen.getByLabelText('Postal code'), { target: { value: '' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Proceed' }))
+
+      expect(await screen.findAllByLabelText(/code \d/i)).toHaveLength(6)
+      expect(mockRegister).toHaveBeenCalledWith(
+        expect.objectContaining({ country: 'United Kingdom', city: 'London', postalCode: '' }),
+      )
+    })
+
+    it('requires a city once a country has been picked', async () => {
+      mockRegister.mockReturnValue({ unwrap: jest.fn().mockResolvedValue({ status: true }) })
+
+      renderSignup()
+      fillValidForm()
+      fireEvent.change(screen.getByLabelText('City'), { target: { value: '' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Proceed' }))
+
+      await Promise.resolve()
+      expect(mockRegister).not.toHaveBeenCalled()
+      expect(screen.getByText('This field is required.')).toBeInTheDocument()
+    })
+  })
+
   describe('email-verification step', () => {
     beforeEach(() => {
       jest.useFakeTimers({ advanceTimers: true })
