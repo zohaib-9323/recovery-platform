@@ -353,19 +353,35 @@ export function ProcessableShipmentsPage() {
             <h2 className="text-base font-bold text-rp-heading">
               {t('imports.processable.shipments')}
             </h2>
-            <button
-              type="button"
-              onClick={() => navigate('/shipments')}
-              className="text-sm text-yellow underline underline-offset-2"
-            >
-              {t('imports.processable.viewAll')}
-            </button>
+            {/*
+              The header link is the section's shortcut to All Shipments, so it
+              only earns its place when the section has rows. When it is empty
+              the same route is the empty card's own action, and two links to
+              one destination either side of a gap read as two different ones.
+            */}
+            {shipmentRows.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => navigate('/shipments')}
+                className="text-sm text-yellow underline underline-offset-2"
+              >
+                {t('imports.processable.viewAll')}
+              </button>
+            ) : null}
           </div>
 
           {shipmentRows.length === 0 ? (
-            <p className="text-base font-light text-blackFive">
-              {t('imports.processable.shipmentsEmpty')}
-            </p>
+            // Same empty-state card the documents table above uses. A bare
+            // sentence here read as a loading artefact rather than a state.
+            <div className="flex items-center justify-center py-10">
+              <ImportActionCard
+                icon={<NoImportsIcon />}
+                title={t('imports.processable.shipmentsEmptyTitle')}
+                description={t('imports.processable.shipmentsEmpty')}
+                actionLabel={t('imports.processable.shipmentsEmptyAction')}
+                onAction={() => navigate('/shipments')}
+              />
+            </div>
           ) : (
             <>
               <AllShipmentsDataTable

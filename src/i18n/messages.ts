@@ -332,7 +332,9 @@ export const messages: Record<string, string> = {
   'imports.processable.emptyTitle': 'No processable shipments',
   'imports.processable.emptyFiltered': 'No processable shipments match these filters.',
   'imports.processable.emptyAction': 'Go to Unprocessed Documents',
+  'imports.processable.shipmentsEmptyTitle': 'No processed shipments',
   'imports.processable.shipmentsEmpty': 'No shipments have been created from your imports yet.',
+  'imports.processable.shipmentsEmptyAction': 'View All Shipments',
   'inbox.createShipment.button': 'Create Shipment',
   'inbox.createShipment.title': 'Create Shipment from Files',
   'inbox.createShipment.description':
