@@ -93,7 +93,7 @@ export const InputField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Inp
             <p
               id={props.id ? `${props.id}-err` : undefined}
               role="alert"
-              className="text-sm text-red-600"
+              className="text-tiny font-light text-redOne"
             >
               {props.error}
             </p>
@@ -150,7 +150,7 @@ export const InputField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Inp
             <p
               id={props.id ? `${props.id}-err` : undefined}
               role="alert"
-              className="text-sm text-red-600"
+              className="text-tiny font-light text-redOne"
             >
               {props.error}
             </p>
@@ -202,7 +202,7 @@ export const InputField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Inp
           <p
             id={props.id ? `${props.id}-err` : undefined}
             role="alert"
-            className="text-sm text-red-600"
+            className="text-tiny font-light text-redOne"
           >
             {props.error}
           </p>

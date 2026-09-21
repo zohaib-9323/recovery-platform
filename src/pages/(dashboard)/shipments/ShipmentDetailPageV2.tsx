@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import {
+  useChallengeRecoveryHsCodeMutation,
   useGetRecoveryPreferencesQuery,
   useGetRecoveryShipmentByIdQuery,
   useLazyGetRecoveryShipmentLandedCostQuery,
@@ -34,11 +35,20 @@ import {
 import { showCustomToast } from '@/lib/showCustomToast'
 import { DetailsGridCard } from '@/pages/(dashboard)/shipments/components/details-grid-card'
 import {
+  FileUploadsSidebar,
+  type ShipmentDocumentRow,
+} from '@/pages/(dashboard)/shipments/components/file-uploads-sidebar'
+import {
   LandedCostComparisonModal,
   type LandedCostComparisonContent,
 } from '@/pages/(dashboard)/shipments/components/landed-cost-comparison-modal'
 import { SanctionResultModal } from '@/pages/(dashboard)/shipments/components/sanction-result-modal'
 import { ShipmentItemsTable } from '@/pages/(dashboard)/shipments/components/shipment-items-table'
+import { ChallengeHsCodeModal } from '@/pages/(dashboard)/shipments/components/challenge-hs-code-modal'
+import {
+  TradeAgreementItemModal,
+  type TradeAgreementModalItem,
+} from '@/pages/(dashboard)/shipments/components/trade-agreement-item-modal'
 import { UploadC88DocumentModal } from '@/pages/(dashboard)/shipments/components/upload-c88-document-modal'
 import type { RecoveryShipmentDetail, RecoveryShipmentItem } from '@/types/recovery-shipments-api'
 
@@ -83,6 +93,9 @@ function normalizeShipmentItem(item: RecoveryShipmentItem, index: number): Recov
     duty: getItemDutyAmount(item),
     landedCost: getItemLandedCostAmount(item),
     Total: item.Total ?? item.totalPrice,
+    // Position in the raw poItems[]/items[] array — the `preferential-duty` endpoint
+    // addresses items by this index, so it must survive later filtering of the list.
+    poItemIndex: index,
   }
 }
 
@@ -131,7 +144,12 @@ export function ShipmentDetailPageV2() {
     null,
   )
   const [uploadDocument, setUploadDocument] = useState(false)
+  const [showFileUploads, setShowFileUploads] = useState(false)
   const [isSanctionModalOpen, setIsSanctionModalOpen] = useState(false)
+  const [challengeItem, setChallengeItem] = useState<RecoveryShipmentItem | null>(null)
+  const [preferentialDutyItem, setPreferentialDutyItem] = useState<TradeAgreementModalItem | null>(
+    null,
+  )
   const [isPdfDownloading, setIsPdfDownloading] = useState(false)
   const [csvData, setCsvData] = useState<Record<string, unknown>[]>([])
 
@@ -140,11 +158,15 @@ export function ShipmentDetailPageV2() {
 
   const { data, isLoading, isFetching, refetch } = useGetRecoveryShipmentByIdQuery(id, {
     skip: !id,
+    // Keeps the HS code challenge/item status in sync when an admin approves/rejects
+    // it while this page is already open — there's no push channel, so poll instead.
+    pollingInterval: 15_000,
   })
   const [fetchLandedCost, { isFetching: isLandedCostFetching }] =
     useLazyGetRecoveryShipmentLandedCostQuery()
   const [updateSanctionDecision, { isLoading: isUpdatingSanctionDecision }] =
     useUpdateRecoveryShipmentSanctionDecisionMutation()
+  const [challengeHsCode, { isLoading: isChallengingHsCode }] = useChallengeRecoveryHsCodeMutation()
 
   const detail = data?.content
   const allItems = useMemo(() => getDisplayItems(detail), [detail])
@@ -184,7 +206,9 @@ export function ShipmentDetailPageV2() {
     )
   }
 
-  if (isLoading || isFetching) {
+  // Only the initial load (no cached data yet) blocks the page — background polling
+  // refetches (isFetching without isLoading) must not re-show this full-page loader.
+  if (isLoading || (isFetching && !data)) {
     return (
       <div
         id="report-content"
@@ -242,6 +266,33 @@ export function ShipmentDetailPageV2() {
     }
   }
 
+  const handleChallengeSubmit = async (values: {
+    proposedHsCode: string
+    reason: string
+    description?: string
+  }) => {
+    if (!id || !challengeItem?._id) return
+    try {
+      await challengeHsCode({
+        recoveryShipmentId: id,
+        poItemId: challengeItem._id,
+        ...values,
+      }).unwrap()
+      setChallengeItem(null)
+      refetch()
+      showCustomToast({
+        type: 'success',
+        title: 'Challenge Submitted',
+        message: 'Your HS code challenge has been submitted for admin review.',
+      })
+    } catch (err) {
+      const message =
+        (err as { data?: { message?: string } })?.data?.message ||
+        'Failed to submit HS code challenge'
+      showCustomToast({ type: 'error', title: MS.error, message })
+    }
+  }
+
   const generateCsv = () => {
     const baseShipmentData = {
       ShipmentTitle: detail.shipmentTitle || 'N/A',
@@ -291,6 +342,36 @@ export function ShipmentDetailPageV2() {
     } finally {
       setIsPdfDownloading(false)
     }
+  }
+
+  const hasDocValue = (value?: string | null) => typeof value === 'string' && value.trim() !== ''
+  const shipmentDocuments: ShipmentDocumentRow[] = []
+  if (hasC88Document) {
+    shipmentDocuments.push({
+      type: 'c88',
+      label: 'C88 Document',
+      fileName: detail.c88Filename ?? undefined,
+    })
+  }
+  if (
+    hasDocValue(detail.poS3Key) ||
+    hasDocValue(detail.poFilename) ||
+    hasDocValue(detail.poDocumentUrl)
+  ) {
+    shipmentDocuments.push({
+      type: 'po',
+      label: 'Commercial Invoice Document',
+      fileName: detail.poFilename ?? undefined,
+    })
+  }
+  // Optional third leg. Most shipments have no packing list, so this row simply
+  // does not render rather than showing an empty or disabled entry.
+  if (hasDocValue(detail.plS3Key) || hasDocValue(detail.plFilename)) {
+    shipmentDocuments.push({
+      type: 'pl',
+      label: 'Packing List Document',
+      fileName: detail.plFilename ?? undefined,
+    })
   }
 
   return (
@@ -400,6 +481,16 @@ export function ShipmentDetailPageV2() {
             />
             <button
               type="button"
+              onClick={() => setShowFileUploads(true)}
+              className="flex flex-row items-center gap-2 rounded-md border border-bottomBorder bg-white p-2 transition-colors"
+            >
+              <span className="icon-File-text text-xs text-black md:text-sm" />
+              <p className="text-xs font-light text-black md:text-sm">
+                {t('shipments.detail.fileUploads')}
+              </p>
+            </button>
+            <button
+              type="button"
               onClick={() => setUploadDocument(true)}
               disabled={
                 hasC88Document || [1, 6, 7].includes(legacyStatus) || needsSanctionDecision(detail)
@@ -418,12 +509,15 @@ export function ShipmentDetailPageV2() {
 
         <div id="shipment-overview" className="flex flex-col gap-5">
           <div className="item-center flex justify-between rounded-lg bg-greyFour px-4 py-2">
-            <div className="flex flex-col">
+            <div className="flex min-w-0 max-w-64 flex-col md:max-w-xs">
               <p className="text-xs font-normal text-lightBlackOne sm:text-sm">
                 {MS.purchaseOrderNumber}
               </p>
-              <div className="flex items-center gap-2 sm:gap-3">
-                <p className="text-sm font-normal text-yellow sm:text-lg">
+              <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+                <p
+                  className="min-w-0 truncate text-sm font-normal text-yellow sm:text-lg"
+                  title={detail.purchaseOrderNumber || undefined}
+                >
                   {detail.purchaseOrderNumber}
                 </p>
                 <button
@@ -434,7 +528,7 @@ export function ShipmentDetailPageV2() {
                     setCopied(true)
                     setTimeout(() => setCopied(false), 2000)
                   }}
-                  className="text-black"
+                  className="shrink-0 text-black"
                 >
                   <span
                     className={`${
@@ -447,7 +541,13 @@ export function ShipmentDetailPageV2() {
               </div>
             </div>
             <div className="flex flex-col">
-              <p className="text-xs font-normal text-lightBlackOne sm:text-sm">{MS.date}</p>
+              <p className="text-xs font-normal text-lightBlackOne sm:text-sm">{MS.uploadDate}</p>
+              <p className="text-sm font-normal text-black sm:text-lg">
+                {formatShipmentListDate(detail.createdAt, timeZone)}
+              </p>
+            </div>
+            <div className="flex flex-col">
+              <p className="text-xs font-normal text-lightBlackOne sm:text-sm">{MS.shipmentDate}</p>
               <p className="text-sm font-normal text-black sm:text-lg">
                 {formatShipmentListDate(detail.date, timeZone)}
               </p>
@@ -525,6 +625,17 @@ export function ShipmentDetailPageV2() {
             items={filteredItems}
             itemsUnit={detail.unit}
             shipmentStatus={legacyStatus}
+            onChallenge={(item) => setChallengeItem(item)}
+            disableChallenge={detail.status === 'rejected'}
+            onViewPreferentialDuty={(item) =>
+              setPreferentialDutyItem({
+                poItemIndex: item.poItemIndex ?? 0,
+                itemNumber: item.itemNumber,
+                description: item.description,
+                hsCode: item.hsCode,
+                tradeAgreement: item.tradeAgreement,
+              })
+            }
           />
           <div data-pdf-exclude className="mb-2 mt-5 w-full">
             <div id="landed-cost-btn" className="float-right">
@@ -552,6 +663,14 @@ export function ShipmentDetailPageV2() {
         />
       ) : null}
 
+      {showFileUploads ? (
+        <FileUploadsSidebar
+          shipmentId={id}
+          documents={shipmentDocuments}
+          onClose={() => setShowFileUploads(false)}
+        />
+      ) : null}
+
       {uploadDocument ? (
         <UploadC88DocumentModal
           shipmentId={id}
@@ -562,6 +681,21 @@ export function ShipmentDetailPageV2() {
           }}
         />
       ) : null}
+
+      {challengeItem ? (
+        <ChallengeHsCodeModal
+          item={challengeItem}
+          onClose={() => setChallengeItem(null)}
+          onSubmit={handleChallengeSubmit}
+          isLoading={isChallengingHsCode}
+        />
+      ) : null}
+
+      <TradeAgreementItemModal
+        shipmentId={id}
+        item={preferentialDutyItem}
+        onClose={() => setPreferentialDutyItem(null)}
+      />
 
       {hasSanctionMatch(detail) ? (
         <SanctionResultModal

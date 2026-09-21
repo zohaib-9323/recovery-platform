@@ -45,6 +45,12 @@ export function ShipmentLogsPage() {
     data?.content?.ShipmentName ||
     'Shipment'
 
+  // A group's heading normally shows just that day's date. Since a day with no new
+  // events simply gets no group at all, the most recent group's heading also carries
+  // the range through today (e.g. "09/08/2026 - 11/08/2026") so it's clear nothing
+  // has changed since — today's own group (if one exists) just shows today's date.
+  const todayLabel = formatLogDisplayDate(new Date().toISOString(), timeZone)
+
   const logs = data?.content?.logs ?? []
   const totalPages = data?.content?.pagination?.totalPages ?? 1
   const isPageLoading = isLoading || isFetching
@@ -96,66 +102,71 @@ export function ShipmentLogsPage() {
           </div>
         ) : logs.length > 0 ? (
           <>
-            {logs.map((item, index) => (
-              <div key={`${item.date}-${index}`} className="flex flex-col gap-2">
-                <div className="flex flex-row items-center gap-3">
-                  <p className="ml-2 text-xs font-medium text-black sm:text-sm">
-                    {formatLogDisplayDate(item.date, timeZone)}
-                  </p>
-                  {isLogDateToday(item.date, timeZone) ? (
-                    <>
-                      <div className="h-1 min-w-1 rounded-full bg-lightGreyFour" />
-                      <p className="text-xs font-medium text-black sm:text-sm">{MS.today}</p>
-                    </>
-                  ) : null}
-                </div>
+            {logs.map((item, index) => {
+              const isToday = isLogDateToday(item.date, timeZone)
+              // Only the most recent group (index 0) carries the range through
+              // today — older groups just show their own day, unchanged.
+              const showsRangeToToday = index === 0 && !isToday
 
-                <div className="flex flex-col gap-4">
-                  {item.events.map((event) => {
-                    const descriptionText = formatLogValue(event.description)
-                    const hasLongWord = descriptionText
-                      .split(/\s+/)
-                      .some((word) => word.length > 15)
+              return (
+                <div key={`${item.date}-${index}`} className="flex flex-col gap-2">
+                  <div className="flex flex-row items-center gap-3">
+                    <p className="ml-2 text-xs font-medium text-black sm:text-sm">
+                      {formatLogDisplayDate(item.date, timeZone)}
+                      {showsRangeToToday ? ` - ${todayLabel}` : ''}
+                    </p>
+                    {isToday ? (
+                      <>
+                        <div className="h-1 min-w-1 rounded-full bg-lightGreyFour" />
+                        <p className="text-xs font-medium text-black sm:text-sm">{MS.today}</p>
+                      </>
+                    ) : null}
+                  </div>
 
-                    return (
-                      <div key={event._id} className="flex flex-row items-start">
-                        <div className="flex h-full w-1/3 items-center justify-center">
-                          <div className="flex h-full flex-col items-center gap-1">
-                            <p className="text-xs font-normal text-darkColor sm:text-sm">
-                              {event.time}
-                            </p>
-                            <div className="flex h-full flex-col items-center justify-center">
-                              <div
-                                className={`min-h-3 min-w-3 ${shipmentLogStatusColor(event.color)} rounded-full`}
-                              />
-                              <div className="h-10 w-0 border border-searchBorder" />
+                  <div className="flex flex-col gap-4">
+                    {item.events.map((event) => {
+                      const descriptionText = formatLogValue(event.description)
+                      const hasLongWord = descriptionText
+                        .split(/\s+/)
+                        .some((word) => word.length > 15)
+
+                      return (
+                        <div key={event._id} className="flex flex-row items-start">
+                          <div className="flex h-full w-1/3 items-center justify-center">
+                            <div className="flex h-full flex-col items-center gap-1">
+                              <p className="text-xs font-normal text-darkColor sm:text-sm">
+                                {event.time}
+                              </p>
+                              <div className="flex h-full flex-col items-center justify-center">
+                                <div
+                                  className={`min-h-3 min-w-3 ${shipmentLogStatusColor(event.color)} rounded-full`}
+                                />
+                                <div className="h-10 w-0 border border-searchBorder" />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="mb-2 flex w-2/3 items-start rounded border border-bottomBorder px-4 py-3">
+                            <div className="w-1/2">
+                              <p className="text-xs font-medium capitalize text-backTwo sm:text-sm">
+                                {event.title}
+                              </p>
+                            </div>
+                            <div className="flex w-1/2 flex-col gap-1">
+                              <p
+                                className={`break-words text-xs font-normal text-backTwo first-letter:uppercase sm:text-sm ${hasLongWord ? 'break-words' : ''}`}
+                              >
+                                {descriptionText}
+                              </p>
                             </div>
                           </div>
                         </div>
-
-                        <div className="mb-2 flex w-2/3 items-start rounded border border-bottomBorder px-4 py-3">
-                          <div className="w-1/2">
-                            <p className="text-xs font-medium capitalize text-backTwo sm:text-sm">
-                              {event.title}
-                            </p>
-                          </div>
-                          <div className="flex w-1/2 flex-col gap-1">
-                            <p
-                              className={`break-words text-xs font-normal text-backTwo first-letter:uppercase sm:text-sm ${hasLongWord ? 'break-words' : ''}`}
-                            >
-                              {descriptionText}
-                            </p>
-                            <p className="break-words text-xs font-light text-darkColor">
-                              {formatLogValue(event.details)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
 
             {totalPages > 1 ? (
               <CustomPagination

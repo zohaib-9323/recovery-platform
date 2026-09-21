@@ -1,7 +1,7 @@
+import { CustomLoader } from '@/components/feedback/custom-loader'
 import { useI18n } from '@/i18n/useI18n'
 import { cn } from '@/lib/utils'
 import type { InboxAttachment, InboxShipmentRow } from '@/pages/(dashboard)/inbox/types'
-import { InboxRowActionMenu } from './inbox-row-action-menu'
 
 const thCell =
   'px-3 py-3 text-left text-[13px] font-normal leading-[100%] tracking-[0] text-[#000000]'
@@ -12,81 +12,123 @@ export type InboxProcessedShipmentsTableProps = {
   onConvertToUnprocessed?: (processableIndex: number) => Promise<void> | void
   onDownloadAttachment?: (attachment: InboxAttachment) => Promise<void> | void
   convertingIndex?: number | null
+  /**
+   * Opens the shipment a row became. The Actions column renders ONLY when this
+   * is passed — same rule as `onRetry` on the unprocessed table, so callers with
+   * nowhere to navigate (the Inbox, the import-job detail panel) get no column
+   * rather than a column of dead buttons.
+   */
+  onViewShipment?: (row: InboxShipmentRow) => void
+  /** Rows with no shipment yet: shown, but their action is disabled. */
+  isViewDisabled?: (row: InboxShipmentRow) => boolean
   className?: string
+  /** Overrides the default fixed-height scroll wrapper (`max-h-[360px] overflow-auto`) — pass e.g. `''` for a full-height list that scrolls with its page instead. */
+  scrollWrapperClassName?: string
+  /**
+   * Renders the loader in the table BODY, keeping the header row in place.
+   *
+   * Deliberately not an overlay: a translucent layer over the previous rows left
+   * stale results fully readable underneath, which reads as though they were the
+   * new ones. While this is true the caller's `rows` are not rendered at all.
+   */
+  isLoading?: boolean
 }
 
 export function InboxProcessedShipmentsTable({
   rows,
-  onConvertToUnprocessed,
   onDownloadAttachment,
-  convertingIndex = null,
+  onViewShipment,
+  isViewDisabled,
   className,
+  scrollWrapperClassName = 'max-h-[360px] overflow-auto',
+  isLoading = false,
 }: InboxProcessedShipmentsTableProps) {
   const { t } = useI18n()
-  if (rows.length === 0) {
+  // The empty state must not win over loading, or a search that is still in
+  // flight briefly claims there is nothing to show.
+  if (rows.length === 0 && !isLoading) {
     return <p className="text-base font-light text-blackFive">{t('inbox.processed.empty')}</p>
   }
 
   return (
     <div className={cn('rounded-lg border border-[#E0E0E0]', className)}>
-      <div className="max-h-[360px] overflow-auto">
-        <table className="w-full">
-          <thead className="sticky top-0 z-10 bg-[#F8F8F8]">
+      <div className={scrollWrapperClassName}>
+        {/*
+          A min-width so the wrapper's `overflow-x-auto` actually scrolls on narrow
+          containers instead of squeezing every column down to unreadable widths —
+          same reasoning as AllShipmentsDataTable's min-w-[1100px].
+        */}
+        <table className="w-full min-w-[720px] bg-white">
+          <thead className="sticky top-0 z-10 bg-greyFour">
             <tr>
               <th className={thCell}>{t('inbox.processed.col.title')}</th>
               <th className={thCell}>{t('inbox.processed.col.date')}</th>
               <th className={thCell}>{t('inbox.processed.col.c88')}</th>
               <th className={thCell}>{t('inbox.processed.col.po')}</th>
-              <th className={thCell}>{t('inbox.processed.col.actions')}</th>
+              {onViewShipment ? (
+                <th className={cn(thCell, 'text-right')}>{t('inbox.processed.col.actions')}</th>
+              ) : null}
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
-              <tr key={row.id} className="border-b border-bottomBorder">
-                <td className={cn('max-w-[280px] truncate', tdCell)} title={row.title}>
-                  {row.title}
-                </td>
-                <td className={tdCell}>{row.date}</td>
-                <td className={cn('max-w-[220px] truncate', tdCell)} title={row.c88?.name}>
-                  {row.c88 ? (
-                    <button
-                      type="button"
-                      className="max-w-full truncate text-left text-[#0B57D0] underline"
-                      onClick={() => onDownloadAttachment?.(row.c88!)}
-                    >
-                      {row.c88.name}
-                    </button>
-                  ) : (
-                    '-'
-                  )}
-                </td>
-                <td className={cn('max-w-[220px] truncate', tdCell)} title={row.po?.name}>
-                  {row.po ? (
-                    <button
-                      type="button"
-                      className="max-w-full truncate text-left text-[#0B57D0] underline"
-                      onClick={() => onDownloadAttachment?.(row.po!)}
-                    >
-                      {row.po.name}
-                    </button>
-                  ) : (
-                    '-'
-                  )}
-                </td>
-                <td className="px-3 py-3">
-                  <InboxRowActionMenu
-                    disabled={convertingIndex === row.sourceIndex}
-                    optionLabel={
-                      convertingIndex === row.sourceIndex
-                        ? t('inbox.actions.converting')
-                        : t('inbox.actions.convertToUnprocessed')
-                    }
-                    optionTextClassName="text-redOne"
-                    onSelect={() => onConvertToUnprocessed?.(row.sourceIndex)}
-                  />
+            {isLoading ? (
+              <tr>
+                <td colSpan={onViewShipment ? 5 : 4} className="px-3 py-16">
+                  <div className="flex items-center justify-center">
+                    <CustomLoader />
+                  </div>
                 </td>
               </tr>
-            ))}
+            ) : null}
+            {!isLoading &&
+              rows.map((row) => (
+                <tr key={row.id} className="border-b border-bottomBorder">
+                  <td className={cn('max-w-[280px] truncate', tdCell)} title={row.title}>
+                    {row.title}
+                  </td>
+                  <td className={tdCell}>{row.date}</td>
+                  <td className={cn('max-w-[220px] truncate', tdCell)} title={row.c88?.name}>
+                    {row.c88 ? (
+                      <button
+                        type="button"
+                        className="max-w-full truncate text-left text-[#0B57D0] underline"
+                        onClick={() => onDownloadAttachment?.(row.c88!)}
+                      >
+                        {row.c88.name}
+                      </button>
+                    ) : (
+                      '-'
+                    )}
+                  </td>
+                  <td className={cn('max-w-[220px] truncate', tdCell)} title={row.po?.name}>
+                    {row.po ? (
+                      <button
+                        type="button"
+                        className="max-w-full truncate text-left text-[#0B57D0] underline"
+                        onClick={() => onDownloadAttachment?.(row.po!)}
+                      >
+                        {row.po.name}
+                      </button>
+                    ) : (
+                      '-'
+                    )}
+                  </td>
+                  {onViewShipment ? (
+                    <td className="px-3 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => onViewShipment(row)}
+                        disabled={isViewDisabled?.(row) ?? false}
+                        aria-label={t('inbox.processed.view')}
+                        title={t('inbox.processed.view')}
+                        className="ml-auto flex size-6 items-center justify-center rounded-full border border-bottomBorder bg-white transition disabled:opacity-50"
+                      >
+                        <span className="icon-open-eye text-[12px] text-black transition group-hover:text-yellow" />
+                      </button>
+                    </td>
+                  ) : null}
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>

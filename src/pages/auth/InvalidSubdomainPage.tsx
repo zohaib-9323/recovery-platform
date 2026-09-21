@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { useI18n } from '@/i18n/useI18n'
+import { isAllowedRedirectUrl } from '@/lib/safe-redirect'
 import { env } from '@/utils/env'
 
 export function InvalidSubdomainPage() {
@@ -9,7 +10,9 @@ export function InvalidSubdomainPage() {
   const [searchParams] = useSearchParams()
 
   const subdomain = searchParams.get('subdomain')
-  const redirectUrl = searchParams.get('redirectUrl') || env.mainSiteUrl
+  const requestedUrl = searchParams.get('redirectUrl')
+  const redirectUrl =
+    requestedUrl && isAllowedRedirectUrl(requestedUrl) ? requestedUrl : env.mainSiteUrl
 
   useEffect(() => {
     if (typeof window === 'undefined') return

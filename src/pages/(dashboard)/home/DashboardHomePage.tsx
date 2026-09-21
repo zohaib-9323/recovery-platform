@@ -1,5 +1,5 @@
 import { Inbox, Package } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import {
@@ -9,6 +9,7 @@ import {
 } from '@/app/services/recoveryApi'
 import { ActionCard } from '@/components/dashboard/action-card'
 import { StatCard } from '@/components/dashboard/stat-card'
+import { CustomLoader } from '@/components/feedback/custom-loader'
 import type { KpiStat } from '@/data/mock/dashboard'
 import { useI18n } from '@/i18n/useI18n'
 import { mapRecoveryStatusToLegacy } from '@/lib/recovery-shipment-status-map'
@@ -72,6 +73,7 @@ function toManageShipmentsTableRow(shipment: RecoveryShipmentRecord): ManageShip
     _id: shipment._id,
     shipmentTitle: shipment.shipmentTitle || shipment.shipmentReference || 'Untitled Shipment',
     dateRaw: shipment.date,
+    createdAtRaw: shipment.createdAt,
     shipVia: shipment.shipVia || '',
     purchaseOrderNumber: shipment.purchaseOrderNumber || '',
     status,
@@ -91,14 +93,29 @@ function toManageShipmentsTableRow(shipment: RecoveryShipmentRecord): ManageShip
 export function DashboardHomePage() {
   const { t } = useI18n()
   const navigate = useNavigate()
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
-  const { data: dashboardData } = useGetRecoveryDashboardQuery()
-  const { data: prefs } = useGetRecoveryPreferencesQuery()
-  const { data: shipmentsData } = useGetRecoveryShipmentsListQuery({
-    page: 1,
-    limit: 10,
-    pageSize: 10,
+  // Always hit the API when the dashboard is (re)opened instead of showing the
+  // cached stats from a previous visit.
+  const { data: dashboardData, isFetching: isDashboardFetching } = useGetRecoveryDashboardQuery(
+    undefined,
+    { refetchOnMountOrArgChange: true },
+  )
+  const { data: prefs } = useGetRecoveryPreferencesQuery(undefined, {
+    refetchOnMountOrArgChange: true,
   })
+  const { data: shipmentsData } = useGetRecoveryShipmentsListQuery(
+    {
+      page: 1,
+      limit: 5,
+      pageSize: 5,
+    },
+    { refetchOnMountOrArgChange: true },
+  )
+  // Tracks whether this visit's dashboard fetch has been dispatched yet — see the loader below.
+  const [hasStartedDashboardFetch, setHasStartedDashboardFetch] = useState(false)
+  if (isDashboardFetching && !hasStartedDashboardFetch) {
+    setHasStartedDashboardFetch(true)
+  }
+
   const dashboardStats = dashboardData?.content?.data
   const timeZone = prefs?.content?.timezone ?? null
   const emailsTrend = dashboardStats?.emailsReceivedTrend
@@ -112,9 +129,13 @@ export function DashboardHomePage() {
       ),
     [shipmentsData?.content?.data, shipmentsData?.content?.shipments],
   )
-  const handleSelect = useCallback((id: string) => {
-    setSelectedUserIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
-  }, [])
+
+  // Show the loader on every visit, not only the first. On a revisit RTK Query serves the
+  // cached stats on the first render (isFetching is still false until the mount refetch is
+  // dispatched in an effect), so waiting on isFetching alone would flash stale content.
+  if (!hasStartedDashboardFetch || isDashboardFetching) {
+    return <CustomLoader />
+  }
 
   const overviewKpis: KpiStat[] = [
     {
@@ -150,7 +171,6 @@ export function DashboardHomePage() {
       trend: mapTrendDirection(filesTrend),
     },
   ]
-
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-8 p-4 md:p-6">
       <section>
@@ -161,20 +181,29 @@ export function DashboardHomePage() {
           ))}
         </div>
       </section>
-
       <section>
-        <h2 className="mb-4 text-base font-semibold text-rp-fg">
-          {t('dashboard.home.latestShipments')}
-        </h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-rp-fg">
+            {t('dashboard.home.latestShipments')}
+          </h2>
+          <button
+            type="button"
+            onClick={() => navigate('/shipments')}
+            className="text-sm font-semibold text-rp-accent underline underline-offset-2 hover:opacity-80"
+          >
+            {t('dashboard.home.viewAll')}
+          </button>
+        </div>
         <AllShipmentsDataTable
           data={latestShipmentRows}
-          selectedUserIds={selectedUserIds}
-          onCheckChange={handleSelect}
+          selectedUserIds={[]}
+          onCheckChange={() => {}}
+          showCheckboxColumn={false}
           onSanctionWarning={() => {}}
           timeZone={timeZone}
+          showDateSplit={true}
         />
       </section>
-
       <section>
         <h2 className="mb-4 text-base font-semibold text-rp-fg">
           {t('dashboard.home.quickActions')}

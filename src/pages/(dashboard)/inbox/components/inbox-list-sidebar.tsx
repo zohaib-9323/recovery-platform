@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 
+import { CustomLoader } from '@/components/feedback/custom-loader'
 import { Button } from '@/components/ui/button'
 import { ShipmentsSearchInput } from '@/pages/(dashboard)/shipments/components/shipments-search-input'
 import { cn } from '@/lib/utils'
@@ -54,9 +55,7 @@ export function InboxListSidebar({
   let listContent: ReactNode
 
   if (isLoading) {
-    listContent = (
-      <p className="px-1 text-sm font-light text-blackFive">{t('inbox.sidebar.loading')}</p>
-    )
+    listContent = <CustomLoader />
   } else if (errorMessage) {
     listContent = <p className="px-1 text-sm text-redOne">{errorMessage}</p>
   } else if (filtered.length === 0) {

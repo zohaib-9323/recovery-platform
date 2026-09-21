@@ -12,11 +12,10 @@ import {
   getShipmentStatusText,
   isShipmentListDisplayStatus,
 } from '@/lib/manage-shipments-table-helper'
-import { mapRecoveryStatusToLegacy } from '@/lib/recovery-shipment-status-map'
+import { toManageShipmentsTableRow } from '@/lib/manage-shipments-row'
 import { buildSanctionModalProps } from '@/lib/sanction-modal-helper'
 import { resolveShipmentStatusForDisplay } from '@/lib/sanction-decision'
 import { showCustomToast } from '@/lib/showCustomToast'
-import type { RecoveryShipmentRecord } from '@/types/recovery-shipments-api'
 
 import {
   AllShipmentsDataTable,
@@ -28,68 +27,6 @@ import type { ShipmentListCsvRow } from './components/shipments-csv-types'
 import { ShipmentsPageToolbar } from './components/shipments-page-toolbar'
 import { UploadC88DocumentModal } from './components/upload-c88-document-modal'
 import { MS } from '@/lib/manage-shipments-copy'
-
-function toNumericRefundStatus(s: RecoveryShipmentRecord): number | undefined {
-  const raw = s.refund_status ?? s.refundStatus
-  if (raw === undefined || raw === null || raw === '') return undefined
-  const n = Number(raw)
-  return Number.isFinite(n) ? n : undefined
-}
-
-/** Recovery list payloads often omit `c88DocumentUrl` but include S3 key / filename / items. */
-function recoveryListShipmentHasC88Document(shipment: RecoveryShipmentRecord): boolean {
-  const url = shipment.c88DocumentUrl
-  if (url !== null && url !== undefined && String(url).trim() !== '') {
-    return true
-  }
-  const key = shipment.c88S3Key
-  if (key !== null && key !== undefined && String(key).trim() !== '') {
-    return true
-  }
-  const name = shipment.c88Filename
-  if (name !== null && name !== undefined && String(name).trim() !== '') {
-    return true
-  }
-  const items = shipment.c88Items
-  if (Array.isArray(items) && items.length > 0) {
-    return true
-  }
-  return false
-}
-
-function toManageShipmentsTableRow(shipment: RecoveryShipmentRecord): ManageShipmentsTableRow {
-  const status = mapRecoveryStatusToLegacy(shipment.status)
-  const refund_status = toNumericRefundStatus(shipment)
-  const c88Raw = shipment.c88DocumentUrl
-  const trimmed = c88Raw === null || c88Raw === undefined ? '' : String(c88Raw).trim()
-  const c88DocumentUrl = trimmed === '' ? '' : trimmed
-  const hasC88Document = recoveryListShipmentHasC88Document(shipment)
-  const fnRaw = shipment.c88Filename
-  const c88Filename =
-    fnRaw === null || fnRaw === undefined ? undefined : String(fnRaw).trim() || undefined
-
-  return {
-    _id: shipment._id,
-    shipmentTitle: shipment.shipmentTitle || shipment.shipmentReference || 'Untitled Shipment',
-    dateRaw: shipment.date,
-    shipVia: shipment.shipVia || '',
-    purchaseOrderNumber: shipment.purchaseOrderNumber || '',
-    status,
-    refund_status,
-    refunded_amount: shipment.refund?.refunded_amount,
-    c88DocumentUrl,
-    hasC88Document,
-    c88Filename,
-    screeningStatus: shipment.screeningStatus,
-    sanctionsScreeningStatus: shipment.sanctionsScreeningStatus,
-    sanctionDecision: shipment.sanctionDecision,
-    is_flagged: shipment.is_flagged,
-    is_challenged: shipment.is_challenged,
-    vendor: shipment.vendor,
-    vendorId: shipment.vendorId,
-    sanctionsMatch: shipment.sanctionsMatch,
-  }
-}
 
 export function AllShipmentsPage() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -107,12 +44,18 @@ export function AllShipmentsPage() {
   const { data: prefs } = useGetRecoveryPreferencesQuery()
   const timeZone = prefs?.content?.timezone ?? null
 
-  const { data, isFetching, refetch } = useGetRecoveryShipmentsListQuery({
-    page: currentPage,
-    limit: pageSize,
-    pageSize,
-    search: debouncedSearch.trim() || undefined,
-  })
+  const { data, isFetching, refetch } = useGetRecoveryShipmentsListQuery(
+    {
+      page: currentPage,
+      limit: pageSize,
+      pageSize,
+      search: debouncedSearch.trim() || undefined,
+    },
+    // Without this, navigating away and back to this page (component remount, same
+    // args) serves the RTK Query cache as-is instead of refetching — the list looks
+    // stale until a full page reload until the cache naturally expires.
+    { refetchOnMountOrArgChange: true },
+  )
 
   const [updateSanctionDecision, { isLoading: isUpdatingSanctionDecision }] =
     useUpdateRecoveryShipmentSanctionDecisionMutation()

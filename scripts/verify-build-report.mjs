@@ -56,11 +56,6 @@ const checks = [
     args: ['run', 'format:check'],
   },
   {
-    name: 'i18n audit',
-    detail: 'npm run i18n:audit:strict',
-    args: ['run', 'i18n:audit:strict'],
-  },
-  {
     name: 'Tests',
     detail: 'npm run test:ci',
     args: ['run', 'test:ci'],

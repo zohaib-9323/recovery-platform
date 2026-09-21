@@ -108,12 +108,27 @@ function getMainRedirectUrlForCurrentHost(): string {
   return env.mainSiteUrl
 }
 
+// Only #rgb / #rrggbb are accepted so a hostile tenant value can't break out of the CSS value.
+const HEX_COLOR = /^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/
+
+function isValidHexColor(value: string): boolean {
+  return HEX_COLOR.test(value)
+}
+
+function isHttpsUrl(value: string): boolean {
+  try {
+    return new URL(value).protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 function applyTenantTheme(theme?: TenantThemeData) {
   if (!theme) return
 
   const root = document.documentElement
 
-  if (theme.primaryColor) {
+  if (theme.primaryColor && isValidHexColor(theme.primaryColor)) {
     root.style.setProperty('--primary-color', theme.primaryColor)
     root.style.setProperty('--rp-accent', theme.primaryColor)
     root.style.setProperty('--rp-accent-dark', darkenHex(theme.primaryColor, 15))
@@ -121,16 +136,16 @@ function applyTenantTheme(theme?: TenantThemeData) {
     root.style.setProperty('--hover-color', lightTintHex(theme.primaryColor, 0.08))
   }
 
-  if (theme.secondaryColor) {
+  if (theme.secondaryColor && isValidHexColor(theme.secondaryColor)) {
     root.style.setProperty('--secondary-color', theme.secondaryColor)
   }
 
-  if (theme.textOnPrimaryColor) {
+  if (theme.textOnPrimaryColor && isValidHexColor(theme.textOnPrimaryColor)) {
     root.style.setProperty('--text-on-primary-color', theme.textOnPrimaryColor)
   }
 
-  // Set tenant logo as CSS variable so components can read it
-  if (theme.logoUrl) {
+  // Set tenant logo as CSS variable so components can read it (https only)
+  if (theme.logoUrl && isHttpsUrl(theme.logoUrl)) {
     root.style.setProperty('--logo-url', `url('${theme.logoUrl}')`)
     root.dataset.tenantLogo = theme.logoUrl
 

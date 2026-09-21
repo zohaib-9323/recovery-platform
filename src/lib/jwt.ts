@@ -1,10 +1,12 @@
 import type { User } from '@/types'
+import type { RecoveryUserRole } from '@/types/roles'
 import { reportRuntimeError } from '@/lib/error-reporting'
 
 type JwtPayload = {
   sub?: string
   email?: string
   recoveryUserId?: string
+  role?: RecoveryUserRole
   exp?: number
   iat?: number
 }
@@ -44,5 +46,6 @@ export function userFromAccessToken(accessToken: string): User | null {
     id,
     email,
     displayName: displayName || undefined,
+    role: p.role,
   }
 }

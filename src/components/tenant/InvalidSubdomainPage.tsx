@@ -1,5 +1,6 @@
 import { type FC, useEffect } from 'react'
 import { useI18n } from '@/i18n/useI18n'
+import { isAllowedRedirectUrl } from '@/lib/safe-redirect'
 import { env } from '@/utils/env'
 
 type InvalidSubdomainPageProps = {
@@ -12,19 +13,20 @@ export const InvalidSubdomainPage: FC<InvalidSubdomainPageProps> = ({
   redirectUrl = env.mainSiteUrl,
 }) => {
   const { t } = useI18n()
+  const safeRedirectUrl = isAllowedRedirectUrl(redirectUrl) ? redirectUrl : env.mainSiteUrl
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      window.location.replace(redirectUrl)
+      window.location.replace(safeRedirectUrl)
     }, 600)
 
     return () => {
       window.clearTimeout(timer)
     }
-  }, [redirectUrl])
+  }, [safeRedirectUrl])
 
   const handleRedirect = () => {
-    window.location.href = redirectUrl
+    window.location.href = safeRedirectUrl
   }
 
   return (

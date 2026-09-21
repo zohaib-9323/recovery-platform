@@ -10,6 +10,21 @@ if [ "${SKIP_TRIVY:-}" = "1" ] || [ "${SKIP_TRIVY:-}" = "true" ]; then
   exit 0
 fi
 
+# Trivy pulls its vulnerability DB from an OCI registry (mirror.gcr.io) using
+# go-containerregistry, which reads the developer's real ~/.docker/config.json
+# for registry auth. On machines where Docker Desktop was removed (or never
+# installed) but an old "credsStore": "desktop" entry is still on disk, that
+# lookup shells out to a `docker-credential-desktop` binary that no longer
+# exists, and the DB download hard-fails before any scanning happens — even
+# though no registry auth is actually needed to pull the public trivy-db
+# artifact. Point DOCKER_CONFIG at an isolated, empty config for this
+# invocation only so Trivy's OCI pull never touches the host's Docker
+# credential helpers.
+TRIVY_DOCKER_CONFIG_DIR="$(mktemp -d)"
+trap 'rm -rf "$TRIVY_DOCKER_CONFIG_DIR"' EXIT
+echo '{}' > "$TRIVY_DOCKER_CONFIG_DIR/config.json"
+export DOCKER_CONFIG="$TRIVY_DOCKER_CONFIG_DIR"
+
 run_trivy() {
   "$@" fs \
     --scanners vuln \

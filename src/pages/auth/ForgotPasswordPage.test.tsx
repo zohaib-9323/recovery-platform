@@ -6,6 +6,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { ForgotPasswordPage } from './ForgotPasswordPage'
 
 const mockRequestReset = jest.fn()
+const mockShowCustomToast = jest.fn()
 
 jest.mock('@/app/services/recoveryApi', () => ({
   useRequestPasswordResetMutation: () => [
@@ -14,6 +15,10 @@ jest.mock('@/app/services/recoveryApi', () => ({
       isLoading: false,
     },
   ],
+}))
+
+jest.mock('@/lib/showCustomToast', () => ({
+  showCustomToast: (payload: unknown) => mockShowCustomToast(payload),
 }))
 
 function makeTestStore() {
@@ -25,6 +30,7 @@ function makeTestStore() {
 describe('ForgotPasswordPage', () => {
   beforeEach(() => {
     mockRequestReset.mockReset()
+    mockShowCustomToast.mockReset()
   })
 
   it('submits valid email to request password reset', async () => {
@@ -50,7 +56,7 @@ describe('ForgotPasswordPage', () => {
     })
   })
 
-  it('shows API error message when reset request fails', async () => {
+  it('shows the check-email popup even when the reset request fails, so account existence is never revealed', async () => {
     mockRequestReset.mockReturnValue({
       unwrap: jest.fn().mockRejectedValue({ data: { message: 'Email not found' } }),
     })
@@ -69,7 +75,8 @@ describe('ForgotPasswordPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send' }))
 
     await waitFor(() => {
-      expect(screen.getByText('Email not found')).toBeInTheDocument()
+      expect(screen.getByText(/check your email/i)).toBeInTheDocument()
     })
+    expect(mockShowCustomToast).not.toHaveBeenCalled()
   })
 })

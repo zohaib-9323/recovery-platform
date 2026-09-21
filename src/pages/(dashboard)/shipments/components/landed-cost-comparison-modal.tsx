@@ -4,6 +4,7 @@ import { CSVLink } from 'react-csv'
 import { PrimaryButton } from '@/components/buttons/preset/primary-button'
 import { Tooltip } from '@/components/ui/tooltip'
 import { useI18n } from '@/i18n/useI18n'
+import { neutralizeFormula } from '@/lib/csv'
 import { formatCurrency } from '@/lib/format-currency'
 import { getCurrencySymbol } from '@/lib/format-shipment-list-date'
 import { MS } from '@/lib/manage-shipments-copy'
@@ -165,7 +166,15 @@ function generatePairCsv(
     'Shipment ID': (c88Item as { shipment_id?: string }).shipment_id || 'N/A',
   })
   selectedData.push({})
-  return selectedData
+  // Neutralize spreadsheet formula injection on every string cell before react-csv serializes it.
+  return selectedData.map((row) =>
+    Object.fromEntries(
+      Object.entries(row).map(([key, value]) => [
+        key,
+        typeof value === 'string' ? neutralizeFormula(value) : value,
+      ]),
+    ),
+  )
 }
 
 export type LandedCostComparisonModalProps = {
@@ -322,7 +331,7 @@ export function LandedCostComparisonModal({
                       </div>
                     ) : null}
 
-                    <div className="-mt-5 flex w-full items-center justify-end">
+                    <div className="mt-2 flex w-full items-center justify-end">
                       <PrimaryButton
                         type="button"
                         onClick={() => handleDownloadPair(item, c88Item)}
@@ -340,6 +349,7 @@ export function LandedCostComparisonModal({
                         className="hidden"
                         ref={csvLinkRef}
                         target="_blank"
+                        rel="noopener noreferrer"
                       >
                         {t('shipments.landedCost.export')}
                       </CSVLink>

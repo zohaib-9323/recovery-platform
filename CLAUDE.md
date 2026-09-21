@@ -16,18 +16,27 @@ npm run typecheck    # tsc --noEmit
 
 # Testing
 npm test             # Interactive watch mode
-npm run test:ci      # Single run with coverage (required in CI)
+npm run test:ci      # Single run, no coverage
+npm run test:coverage # Single run + coverage gates (this is what CI runs)
 
 # Dependency checks
-npx madge --circular src/  # Detect circular imports (runs in CI)
-npm run security          # Trivy + npm audit
+npm run dep:cycles         # Detect circular imports (runs in CI)
+# Always via the script, never bare `npx madge --circular src/` — madge
+# defaults to js,jsx and would silently report "Processed 0 files". The
+# extensions and the tsconfig alias resolution live in `.madgerc`.
+npm run security:audit    # npm audit --audit-level=high (report-only in CI)
+npm run security:trivy    # Trivy filesystem scan (report-only in CI)
 ```
 
 ### Custom Claude Command
 
 - `/strict-ai-code-review <scope>`: Runs a strict tabular production review using the enforced checklist and summary format.
 
-Coverage thresholds (enforced in CI): 70% lines/statements/functions, 65% branches. Critical paths have higher targets: `api.ts` 90%, `authSession.ts` 85%.
+Coverage thresholds (enforced by `npm run test:coverage` in CI, configured in
+`craco.config.cjs`): 70% lines/statements/functions, 65% branches. Critical paths
+have higher targets: `api.ts` 90%, `authSession.ts` 85%. Coverage is collected from
+an explicit `collectCoverageFrom` allow-list, not the whole tree — adding a file to
+that list without tests will fail the global gate.
 
 ## Environment
 
@@ -82,3 +91,9 @@ Direct HTTP utilities in `src/services/api.ts` are used only for the session ref
 ### Multi-Tenant Theming
 
 Tenant config (colors, logo) is fetched once on load and stored in the `tenantTheme` Redux slice. `src/app/TenantThemeBootstrap.tsx` applies CSS variables; `src/lib/tenantTheme.ts` contains the mapping logic.
+
+## Feature reference docs
+
+`docs/` mostly holds ADRs (`docs/adr/`, decisions) and pre-build design briefs (`docs/design/`). A small number of already-shipped features that are easy to get wrong on a follow-up change get a flat reference doc directly under `docs/` instead — check there before re-deriving a feature's design from the diff:
+
+- [`docs/retry-and-manual-shipment-creation.md`](./docs/retry-and-manual-shipment-creation.md) — Inbox → Unprocessable Files "Retry" and "Create Shipment" actions (file map, API contract incl. the `s3Key` stale-selection guard, test coverage, known gaps). Companion backend doc: `trade-harmonizer-be/docs/10-business-flows/recovery-retry-manual-shipment.md`. Its last section covers how the **Import Jobs** detail screen reuses the same flow with a single _unified_ processable/unprocessable list (one recovery document per import job, not per email) and a deliberately narrower action set.

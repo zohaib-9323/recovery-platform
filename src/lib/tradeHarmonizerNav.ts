@@ -16,7 +16,27 @@ export function getSideBarTitle(pathname: string): string {
   if (path === '/inbox' || path.startsWith('/inbox/')) {
     return ''
   }
+  // Same two-level pattern as the Imports sub-screens below: section stays in
+  // the prefix so the header reads "USERS / CONNECTION STATUS" (and
+  // "USERS / DELETION REQUESTS").
+  if (path === '/users/connections' || path === '/users/deletion-requests') {
+    return 'Users /'
+  }
+  if (path === '/users' || path.startsWith('/users/')) {
+    return 'Manage'
+  }
+  if (path === '/notifications' || path.startsWith('/notifications/')) {
+    return ''
+  }
   if (path === '/settings' || path.startsWith('/settings/')) {
+    return ''
+  }
+  // The Imports sub-screens are the only two-level titles in the app: the
+  // section stays in the prefix so the header reads "IMPORTS / <SCREEN>".
+  if (path === '/imports/processable-shipments' || path === '/imports/unprocessed-documents') {
+    return 'Imports /'
+  }
+  if (path === '/imports' || path.startsWith('/imports/')) {
     return ''
   }
   if (path === '/dashboard') {
@@ -41,6 +61,27 @@ export function getHrefLink(pathname: string): string {
   }
   if (path === '/inbox' || path.startsWith('/inbox/')) {
     return 'Inbox'
+  }
+  if (path === '/users/connections') {
+    return 'M365 Connection Status'
+  }
+  if (path === '/users/deletion-requests') {
+    return 'Deletion Requests'
+  }
+  if (path === '/users' || path.startsWith('/users/')) {
+    return 'Users'
+  }
+  if (path === '/notifications' || path.startsWith('/notifications/')) {
+    return 'Notifications'
+  }
+  if (path === '/imports/processable-shipments') {
+    return 'Processable Shipments'
+  }
+  if (path === '/imports/unprocessed-documents') {
+    return 'Unprocessed Documents'
+  }
+  if (path === '/imports' || path.startsWith('/imports/')) {
+    return 'Imports'
   }
   if (path.startsWith('/dashboard')) {
     return 'Platform'

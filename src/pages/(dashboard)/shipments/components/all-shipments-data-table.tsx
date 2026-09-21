@@ -29,6 +29,7 @@ export type ManageShipmentsTableRow = SanctionShipmentSource & {
   _id: string
   shipmentTitle: string
   dateRaw?: string | null
+  createdAtRaw?: string | null
   shipVia: string
   purchaseOrderNumber: string
   status: number
@@ -56,6 +57,12 @@ export type AllShipmentsDataTableProps = {
   uploadC88Document?: (id: string) => void
   timeZone?: string | null
   className?: string
+  /** Show separate Upload Date / Shipment Date columns instead of a single Date column. */
+  showDateSplit?: boolean
+  /** Show the row-selection checkbox column. Defaults to true. */
+  showCheckboxColumn?: boolean
+  /** Overrides the default horizontal-scroll wrapper (`no-scrollbar w-full overflow-x-auto`) — pass e.g. `'w-full overflow-x-auto'` to keep the scrollbar visible as a discoverability hint. */
+  scrollWrapperClassName?: string
 }
 
 export function AllShipmentsDataTable({
@@ -65,27 +72,53 @@ export function AllShipmentsDataTable({
   onSanctionWarning,
   uploadC88Document,
   timeZone,
+  showDateSplit = true,
+  showCheckboxColumn = true,
+  scrollWrapperClassName = 'no-scrollbar w-full overflow-x-auto',
 }: AllShipmentsDataTableProps) {
   const navigate = useNavigate()
   const { t } = useI18n()
+  const columnCount = (showCheckboxColumn ? 1 : 0) + (showDateSplit ? 2 : 1) + 5
 
   return (
     <div className="mx-auto w-full overflow-hidden rounded-lg border border-bottomBorder">
-      <div className="no-scrollbar w-full overflow-x-auto">
-        <table className="w-[350%] rounded-lg bg-white sm:w-[250%] md:w-[200%] lg:w-[150%] ipadLarge:w-full">
+      <div className={scrollWrapperClassName}>
+        {/*
+          A fixed min-width instead of viewport-breakpoint percentages: the old
+          `w-[X%] ... ipadLarge:w-full` chain snapped to 100% width once the *viewport*
+          crossed 1100px, but the sidebar + padding mean the actual table container is
+          narrower than that — so between ~1024-1300px viewport width the table was
+          forced into a container too small for its columns and squeezed instead of
+          scrolling. A min-width lets the overflow-x-auto wrapper above scroll whenever
+          the container (not the viewport) is too narrow, at any screen size.
+        */}
+        <table className="w-full min-w-[1100px] rounded-lg bg-white">
           <thead className="bg-greyFour text-black">
             <tr className="text-left text-sm font-medium">
-              <th className="p-3" />
+              {showCheckboxColumn && <th className="p-3" />}
               <th className="p-3 text-left text-xs font-normal capitalize sm:text-sm">
                 {MS.shipmentTitle}
               </th>
-              <th className="p-3 text-left text-xs font-normal capitalize sm:text-sm">{MS.date}</th>
+              {showDateSplit ? (
+                <>
+                  <th className="p-3 text-left text-xs font-normal capitalize sm:text-sm">
+                    {MS.uploadDate}
+                  </th>
+                  <th className="p-3 text-left text-xs font-normal capitalize sm:text-sm">
+                    {MS.shipmentDate}
+                  </th>
+                </>
+              ) : (
+                <th className="p-3 text-left text-xs font-normal capitalize sm:text-sm">
+                  {MS.date}
+                </th>
+              )}
               <th className="p-3 text-left text-xs font-normal sm:text-sm">{MS.shipVia}</th>
               <th className="max-w-[150px] p-3 text-left text-xs font-normal sm:text-sm">
                 {MS.PO}
               </th>
               <th className="p-3 text-left text-xs font-normal sm:text-sm">{MS.status}</th>
-              <th className="p-3 text-left text-xs font-normal sm:text-sm">{MS.actions}</th>
+              <th className="p-3 text-right text-xs font-normal sm:text-sm">{MS.actions}</th>
             </tr>
           </thead>
           <tbody>
@@ -107,12 +140,14 @@ export function AllShipmentsDataTable({
                       shipment?.is_flagged ? 'bg-lightRedOne' : ''
                     }`}
                   >
-                    <td className="p-3">
-                      <CustomCheckboxShipment
-                        onChange={() => onCheckChange(shipment._id)}
-                        isChecked={selectedUserIds.includes(shipment._id)}
-                      />
-                    </td>
+                    {showCheckboxColumn && (
+                      <td className="p-3">
+                        <CustomCheckboxShipment
+                          onChange={() => onCheckChange(shipment._id)}
+                          isChecked={selectedUserIds.includes(shipment._id)}
+                        />
+                      </td>
+                    )}
                     <td className="max-w-24 truncate break-all p-3 text-xs font-medium capitalize text-black sm:max-w-36 sm:text-sm md:max-w-80 2xl:max-w-full">
                       <span title={shipment.shipmentTitle}>{shipment.shipmentTitle}</span>
                       {hasSanctionMatch(shipment) &&
@@ -140,17 +175,22 @@ export function AllShipmentsDataTable({
                         </Tooltip>
                       ) : null}
                     </td>
+                    {showDateSplit && (
+                      <td className="break-all p-3 text-xs font-medium text-black sm:text-sm">
+                        {formatShipmentListDate(shipment.createdAtRaw, timeZone)}
+                      </td>
+                    )}
                     <td className="break-all p-3 text-xs font-medium text-black sm:text-sm">
                       {formatShipmentListDate(shipment.dateRaw, timeZone)}
                     </td>
                     <td className="p-3 text-xs font-medium text-black sm:text-sm">
-                      {shipment.shipVia}
+                      {shipment.shipVia || 'N/A'}
                     </td>
                     <td className="max-w-[150px] p-3 text-xs font-medium text-black sm:text-sm">
                       <div className="flex flex-row items-center gap-2">
                         <p className="min-w-0 max-w-[150px] truncate">
                           <span title={shipment.purchaseOrderNumber || undefined}>
-                            {shipment.purchaseOrderNumber}
+                            {shipment.purchaseOrderNumber || 'N/A'}
                           </span>
                         </p>
                         {shipment.is_flagged ? (
@@ -218,7 +258,7 @@ export function AllShipmentsDataTable({
                         </Tooltip>
                       </span>
                     </td>
-                    <td className="flex flex-nowrap items-center gap-[5px] p-3 text-sm font-medium text-black">
+                    <td className="flex flex-nowrap items-center justify-end gap-[5px] p-3 text-sm font-medium text-black">
                       <ActionColumnSlot>
                         <button
                           type="button"
@@ -276,7 +316,7 @@ export function AllShipmentsDataTable({
               })
             ) : (
               <tr className="h-[40svh]">
-                <td colSpan={7} className="p-4 text-center text-black">
+                <td colSpan={columnCount} className="p-4 text-center text-black">
                   {MS.noshipmentsAvailable}
                 </td>
               </tr>

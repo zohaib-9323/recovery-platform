@@ -16,6 +16,9 @@ export type CityDropdownProps = {
   onChange: (city: string) => void
   placeholder?: string
   formatCreateLabel?: (inputValue: string) => string
+  backgroundColor?: string
+  borderColor?: string
+  borderRadius?: number
 }
 
 const DropdownIndicator = (props: DropdownIndicatorProps<CountryCityOption, false>) => {
@@ -37,6 +40,9 @@ export function CityDropdown({
   onChange,
   placeholder,
   formatCreateLabel,
+  backgroundColor,
+  borderColor,
+  borderRadius,
 }: CityDropdownProps) {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLElement | null>(null)
@@ -126,11 +132,11 @@ export function CityDropdown({
           control: (base, state) => ({
             ...base,
             minHeight: 44,
-            borderRadius: 10,
-            borderColor: state.isFocused ? 'var(--rp-accent)' : 'var(--rp-border)',
-            backgroundColor: 'var(--rp-input)',
+            borderRadius: borderRadius ?? 10,
+            borderColor: state.isFocused ? 'var(--rp-accent)' : (borderColor ?? 'var(--rp-border)'),
+            backgroundColor: backgroundColor ?? 'var(--rp-input)',
             boxShadow: 'none',
-            '&:hover': { borderColor: 'var(--rp-border)' },
+            '&:hover': { borderColor: borderColor ?? 'var(--rp-border)' },
           }),
           menuPortal: (base) => ({ ...base, zIndex: 9999 }),
         }}

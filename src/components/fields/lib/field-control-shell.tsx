@@ -15,21 +15,26 @@ export const fieldControlVariants = cva(
         center: 'items-center',
         start: 'items-start py-2',
       },
-      invalid: {
-        true: 'border-red-400 focus-within:ring-red-500',
-        false: '',
-      },
     },
     defaultVariants: {
       size: 'default',
       align: 'center',
-      invalid: false,
     },
   },
 )
 
+/**
+ * Error styling, matching trade-harmonizer's `InputField` (red border over a
+ * light red fill). Applied *after* the caller's `className` so a page-level
+ * border/background override — e.g. `AUTH_FIELD_SHELL_CLASS` — can't win the
+ * tailwind-merge conflict and silently leave an invalid field looking normal.
+ */
+export const fieldControlInvalidClass =
+  'border-redOne bg-lightRed focus-within:border-redOne focus-within:ring-redOne'
+
 export type FieldControlShellProps = VariantProps<typeof fieldControlVariants> & {
   className?: string
+  invalid?: boolean
   leftIcon?: ReactNode
   rightSlot?: ReactNode
   children: ReactNode
@@ -45,7 +50,13 @@ export function FieldControlShell({
   children,
 }: FieldControlShellProps) {
   return (
-    <div className={cn(fieldControlVariants({ size, align, invalid }), className)}>
+    <div
+      className={cn(
+        fieldControlVariants({ size, align }),
+        className,
+        invalid && fieldControlInvalidClass,
+      )}
+    >
       {leftIcon ? (
         <span
           className={cn('flex shrink-0 text-rp-icon [&_svg]:size-5', align === 'start' && 'mt-0.5')}
